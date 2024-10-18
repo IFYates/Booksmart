@@ -1,0 +1,60 @@
+layout {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    width: 100%;
+}
+
+layout>column {
+    border-radius: 3px;
+    flex: 1;
+}
+
+layout>column>.collections {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+layout>column>.collections>collection {
+    background: #444;
+    border: 1px solid black;
+    padding: 5px;
+    margin: 5px;
+    border-radius: 3px;
+    flex: 1;
+}
+
+collection>title {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5em;
+}
+
+collection>bookmark {
+    background: #444;
+    border: 1px solid black;
+    padding: 10px;
+    margin: 5px;
+    border-radius: 3px;
+    display: inline-block;
+    min-width: 25%;
+}
+
+bookmark.favourite {
+    border-color: yellow;
+    background-color: #ff8;
+}
+
+bookmark>button {
+    visibility: hidden;
+}
+
+bookmark:hover button {
+    visibility: visible;
+}
+
+::backdrop {
+    background-color: black;
+    opacity: 0.75;
+}
