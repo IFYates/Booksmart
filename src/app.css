@@ -1,3 +1,45 @@
+/*** Colours ***/
+
+collection {
+    border-color: black;
+    background: #444;
+}
+
+collection>title {
+    border-bottom-color: black;
+    background: #666;
+}
+
+bookmark {
+    border-color: black;
+    background: none;
+}
+
+bookmark:hover {
+    border-color: #ddd;
+    background: #666;
+}
+
+bookmark>* {
+    color: white;
+}
+
+bookmark.add {
+    border-color: #666;
+    background: #333;
+}
+
+bookmark.favourite {
+    border-color: yellow;
+    background: #ff8;
+}
+
+bookmark.favourite>* {
+    color: black;
+}
+
+/*** Layout ***/
+
 layout {
     display: flex;
     flex-direction: row;
@@ -16,24 +58,41 @@ layout>column>.collections {
     width: 100%;
 }
 
-layout>column>.collections>collection {
-    background: #444;
-    border: 1px solid black;
-    padding: 5px;
+collection {
+    border: 1px solid;
     margin: 5px;
+    margin-bottom: 1em;
     border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+collection>.bookmarks {
     flex: 1;
 }
 
 collection>title {
     display: block;
+    border-bottom: 1px solid;
+    padding: 5px;
+    width: calc(100% - 10px);
     font-weight: bold;
-    margin-bottom: 0.5em;
 }
 
-collection>bookmark {
-    background: #444;
-    border: 1px solid black;
+collection>.actions {
+    position: absolute;
+    top: 4px;
+    right: 5px;
+    visibility: hidden;
+}
+
+collection:hover>.actions {
+    visibility: visible;
+}
+
+bookmark {
+    border: 1px solid;
     padding: 10px;
     margin: 5px;
     border-radius: 3px;
@@ -41,20 +100,30 @@ collection>bookmark {
     min-width: 25%;
 }
 
-bookmark.favourite {
-    border-color: yellow;
-    background-color: #ff8;
+bookmark a {
+    text-decoration: none;
 }
 
-bookmark>button {
+bookmark.add {
+    text-align: center;
+    cursor: pointer;
+    min-width: initial;
+}
+
+bookmark>.actions {
+    position: absolute;
     visibility: hidden;
 }
 
-bookmark:hover button {
+bookmark:hover>.actions {
     visibility: visible;
 }
 
 ::backdrop {
     background-color: black;
     opacity: 0.75;
+}
+
+.actions>button {
+    padding: 1px 2px;
 }

@@ -2,26 +2,46 @@
 The collection layout.
 */
 class Layout {
+    #folder = null
     #collections = [] // Collections
-
-    collectionIds = [] // Collection IDs in manual order
     columns = 2 // Number of columns to display
 
-    constructor(params) {
-        this.collectionIds = params?.collectionIds || []
-        this.columns = params?.columns ?? 2
+    constructor(folder) {
+        this.#apply(folder)
+    }
+    async reload() {
+        const folder = await Layout.folder()
+        this.#apply(folder)
+    }
+    #apply(folder) {
+        // TODO: this.columns = params?.columns ?? 2
+        this.#folder = folder
+
+        this.#collections.splice(0, this.#collections.length)
+        for (const child of folder.children.filter(c => Array.isArray(c.children))) {
+            this.#collections.push(new Collection(this, child))
+            // TODO: deep?
+        }        
     }
 
+    static async folder() {
+        const tree = (await chrome.bookmarks.getTree())[0].children
+        var layoutFolder = tree.find(b => b.title === 'Other bookmarks').children.find(b => b.title === LayoutTitle)
+        if (!layoutFolder) {
+            layoutFolder = await chrome.bookmarks.create({ title: LayoutTitle })
+        }
+        return layoutFolder
+    }
     static async load() {
-        const data = await Storage.get('layout')
-        return new Layout(data)
+        const layoutFolder = await Layout.folder()
+        return new Layout(layoutFolder)
     }
     async save() {
-        await Storage.set('layout', this)
+        // TODO
     }
 
     nextCollectionId() {
-        return this.collectionIds.length > 0 ? Math.max(...this.collectionIds) + 1 : 1
+        return this.#collections.length + 1
     }
     nextBookmarkId() {
         return this.#collections.length > 0 ? Math.max(...this.#collections.flatMap(c => c.bookmarks.length > 0 ? c.bookmarks.map(b => b.id) : 0)) + 1 : 1
@@ -29,18 +49,19 @@ class Layout {
 
     collections = {
         create: async (title) => {
-            const collection = new Collection(this, { id: this.nextCollectionId(), title: title })
-            this.collectionIds.push(collection.id)
+            const child = await chrome.bookmarks.create({
+                parentId: this.#folder.id,
+                title: JSON.stringify({ title: title })
+            })
+            const collection = new Collection(this, child)
             this.#collections.push(collection)
-            await collection.save()
-            await this.save()
             return collection
         },
 
         list: async () => {
             const collections = []
-            for (const collectionId of this.collectionIds) {
-                collections.push(await this.collections.get(collectionId))
+            for (const collection of this.#collections) {
+                collections.push(collection)
             }
             return collections
         },
@@ -55,17 +76,14 @@ class Layout {
         },
 
         setIndex: async (collection, index) => {
-            index = Math.min(Math.max(0, index), this.collectionIds.length - 1)
-
-            this.collectionIds = this.collectionIds.filter(id => id !== collection.id)
-            this.collectionIds.splice(index, 0, collection.id)
-            await this.save()
-        },
-
-        remove: async (collection) => {
-            this.collectionIds = this.collectionIds.filter(id => id !== collection.id)
-            this.#collections = this.#collections.filter(c => c !== collection)
-            await this.save()
+            index = Math.min(Math.max(0, index), this.#collections.length)
+            if (collection.index !== index) {
+                if (collection.index < index) {
+                    index += 1
+                }
+                await chrome.bookmarks.move(collection.id, { index: index })
+                await this.reload()
+            }
         }
     }
 
@@ -81,6 +99,6 @@ class Layout {
     }
 }
 
-import Storage from './storage.js'
+const LayoutTitle = '(Booksmart)'
 import Collection from './collection.js'
 export default Layout

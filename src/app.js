@@ -1,17 +1,12 @@
 import './display.js'
 
 import Layout from './models/layout.js'
-import Collection from './models/collection.js'
-import Bookmark from './models/bookmark.js'
 
 var _layout = await Layout.load()
 if (!_layout) {
     _layout = new Layout()
     await _layout.save()
 }
-console.log(_layout)
-
-console.log(await chrome.bookmarks.getTree())
 
 async function refreshList() {
     const elLayout = document.getElementsByTagName('layout')[0]
@@ -36,22 +31,15 @@ function displayCollection(collection, isFirst, isLast) {
     child('collection', () => {
         child('title', collection.title)
 
-        const bookmarks = collection.bookmarks.list()
-        for (var i = 0; i < bookmarks.length; ++i) {
-            displayBookmark(collection, bookmarks[i], i == 0, i == bookmarks.length - 1)
-        }
+        child('div', { className: 'bookmarks' }, () => {
+            const bookmarks = collection.bookmarks.list()
+            for (var i = 0; i < bookmarks.length; ++i) {
+                displayBookmark(collection, bookmarks[i], i == 0, i == bookmarks.length - 1)
+            }
 
-        // Collection actions
-        child('div', () => {
-            if (!isFirst) {
-                child('button', { onclick: () => { _layout.collections.setIndex(collection, collection.index() - 1); refreshList() } })
-                    .append('i', { className: 'fa-fw fas fa-arrow-up', title: 'Move up' })
-            }
-            if (!isLast) {
-                child('button', { onclick: () => { _layout.collections.setIndex(collection, collection.index() + 1); refreshList() } })
-                    .append('i', { className: 'fa-fw fas fa-arrow-down', title: 'Move down' })
-            }
-            child('button', {
+            child('bookmark', {
+                className: 'add',
+                title: 'Add bookmark',
                 onclick: async () => {
                     const id = _layout.nextBookmarkId()
                     await collection.bookmarks.create(`Bookmark ${id}`, `https://google.com/search?q=${id}`)
@@ -59,42 +47,59 @@ function displayCollection(collection, isFirst, isLast) {
                 }
             })
                 .append('i', { className: 'fa-fw fas fa-plus', title: 'Add bookmark' })
+        })
+
+        // Collection actions
+        child('div', { className: 'actions' }, () => {
+            if (!isFirst) {
+                child('button', { onclick: () => { collection.setIndex(collection.index - 1).then(refreshList) } })
+                    .append('i', { className: 'fa-fw fas fa-arrow-up', title: 'Move up' })
+            }
+            if (!isLast) {
+                child('button', { onclick: () => { collection.setIndex(collection.index + 1).then(refreshList) } })
+                    .append('i', { className: 'fa-fw fas fa-arrow-down', title: 'Move down' })
+            }
+
             child('button', { onclick: () => { editCollection(collection) } })
                 .append('i', { className: 'fa-fw fas fa-pen', title: 'Edit collection' })
-            child('button', { onclick: () => { _layout.collections.remove(collection); refreshList() } })
+            child('button', { onclick: () => { collection.delete().then(refreshList) } })
                 .append('i', { className: 'fa-fw fas fa-trash', title: 'Delete collection' })
         })
     })
 }
 function displayBookmark(collection, bookmark, isFirst, isLast) {
     child('bookmark', { className: bookmark.favourite ? 'favourite' : '' }, () => {
-        child('i', { className: 'fa-fw fas fa-bookmark', style: 'padding-right:1em' })
-        child('a', bookmark.title, { href: bookmark.url, onclick: bookmark.click })
-        child('span', bookmark.clicks)
+        child('a', { href: bookmark.url, onclick: () => bookmark.click() }, () => {
+            child('i', { className: 'fa-fw fas fa-bookmark', style: 'padding-right:1em' })
+            child('span', `${bookmark.id}: ${bookmark.title} (${bookmark.index})`)
+            child('span', bookmark.clicks)
+        })
 
-        if (collection.sortOrder === 0) {
-            if (!isFirst) {
-                child('button', { onclick: () => { collection.bookmarks.add(bookmark, bookmark.index() - 1); refreshList() } })
-                    .append('i', { className: 'fa-fw fas fa-arrow-up', title: 'Move up' })
+        child('div', { className: 'actions' }, () => {
+            if (!bookmark.favourite) {
+                child('button', { onclick: () => { bookmark.setFavourite(true).then(refreshList) } })
+                    .append('i', { className: 'fa-fw far fa-star', title: 'Set favourite' })
+            } else {
+                child('button', { onclick: () => { bookmark.setFavourite(false).then(refreshList) } })
+                    .append('i', { className: 'fa-fw fas fa-star', title: 'Unset favourite' })
             }
-            if (!isLast) {
-                child('button', { onclick: () => { collection.bookmarks.add(bookmark, bookmark.index() + 1); refreshList() } })
-                    .append('i', { className: 'fa-fw fas fa-arrow-down', title: 'Move down' })
+
+            if (collection.sortOrder === 0) {
+                if (!isFirst) {
+                    child('button', { onclick: () => { bookmark.setIndex(bookmark.index - 1).then(refreshList) } })
+                        .append('i', { className: 'fa-fw fas fa-arrow-up', title: 'Move up' })
+                }
+                if (!isLast) {
+                    child('button', { onclick: () => { bookmark.setIndex(bookmark.index + 1).then(refreshList) } })
+                        .append('i', { className: 'fa-fw fas fa-arrow-down', title: 'Move down' })
+                }
             }
-        }
 
-        child('button', { onclick: () => { refreshList() } })
-            .append('i', { className: 'fa-fw fas fa-pen', title: 'Edit bookmark' })
-        child('button', { onclick: () => { collection.bookmarks.remove(bookmark); refreshList() } })
-            .append('i', { className: 'fa-fw fas fa-trash', title: 'Delete bookmark' })
-
-        if (!bookmark.favourite) {
-            child('button', { onclick: () => { bookmark.favourite = true; collection.save(); refreshList() } })
-                .append('i', { className: 'fa-fw far fa-star', title: 'Set favourite' })
-        } else {
-            child('button', { onclick: () => { bookmark.favourite = false; collection.save(); refreshList() } })
-                .append('i', { className: 'fa-fw fas fa-star', title: 'Unset favourite' })
-        }
+            child('button', { onclick: () => { refreshList() } })
+                .append('i', { className: 'fa-fw fas fa-pen', title: 'Edit bookmark' })
+            child('button', { onclick: () => { bookmark.delete().then(refreshList) } })
+                .append('i', { className: 'fa-fw fas fa-trash', title: 'Delete bookmark' })
+        })
     })
 }
 
@@ -121,11 +126,13 @@ function editCollection(collection) {
             var txtTitle = child('input', { autofocus: true, type: 'textbox', value: collection.title })
             child('br')
             child('button', 'Save', {
-                onclick: () => {
-                    collection.title = txtTitle.value
-                    collection.save()
-                    refreshList()
-                    dialog.close()
+                onclick: async () => {
+                    if (txtTitle.value) {
+                        await collection.setTitle(txtTitle.value.trim())
+                        await collection.save()
+                        refreshList()
+                        dialog.close()
+                    }
                 }
             })
             child('button', 'Cancel', { onclick: () => dialog.close() })
