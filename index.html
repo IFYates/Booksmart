@@ -4,43 +4,28 @@
   <title>Booksmart</title>
   <link rel="icon" href="images/icon.png" type="image/png" />
   <script type="module" src="src/app.js"></script>
+  <link rel="stylesheet" type="text/css" href="src/theme.css">
   <link rel="stylesheet" type="text/css" href="src/app.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    crossorigin="anonymous" />
 </head>
 
 <body>
+  <i class="fa-fw fa-2x fas fa-trash" id="trash" title="Drag items here to delete"></i>
   <h1>Booksmart</h1>
-  <button id="btnAddCollection">Add collection</button>
-  <button id="btnExport">Export</button>
 
-  <dialog id="dlgEditCollection">
-    <button autofocus class="close">Close</button>
-  </dialog>
-  
-  <layout>
-    <!-- <column>
-      <div class="collections">
-        <collection>
-          <title>Collection 1</title>
-          <bookmark>
-            Bookmark 1
-          </bookmark>
-          <bookmark>
-            Bookmark 2
-          </bookmark>
-          <bookmark>
-            Bookmark 3
-          </bookmark>
-          <bookmark>
-            Bookmark 4
-          </bookmark>
-        </collection>
-      </div>
-    </column>
-    <column>
-      Column 2
-    </column> -->
-  </layout>
+  <layout></layout>
+
+  <p style="float:right">
+    <bookmark xclass="add" id="btnAddCollection">
+      <a href="javascript:void(0)" title="Add new collection">
+        <i class="fa-fw fas fa-plus"></i>
+        <span style="margin:0 5px">New collection</span>
+      </a>
+    </bookmark>
+  </p>
+
+  <br /><i class="fa-fw fa-2x fas fa-gear" id="options" title="Options"></i>
 </body>
 
 </html>

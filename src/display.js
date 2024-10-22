@@ -3,7 +3,7 @@ HTMLElement.prototype.append = function (type, text, args) {
         [args, text] = [text, null]
     }
 
-    const el = document.createElement(type)
+    const el = type instanceof HTMLElement ? type : document.createElement(type)
     if (text && el.__lookupGetter__('textContent')) el.textContent = text
     this.appendChild(el)
 
@@ -23,24 +23,30 @@ HTMLElement.prototype.clearChildren = function () {
 }
 
 HTMLElement.prototype.display = function (layout) {
-    const previous = globalThis.child
     const self = this
-    globalThis.child = function (type, text, args, layout) {
+    const previous = { add: globalThis.add }
+    
+    globalThis.add = function (type, text, args, layout) {
         if (!layout) {
-            if (typeof(args) === 'function') {
+            if (typeof (args) === 'function') {
                 [layout, args] = [args, null]
-            } else if (typeof(text) === 'function') {
+            } else if (typeof (text) === 'function') {
                 [layout, text] = [text, null]
             }
         }
         var el = self.append(type, text, args)
-        if (layout) {
+        if (typeof (layout) === 'function') {
             el.display(layout)
         }
         return el
     }
+    globalThis.refresh = function () {
+        // TODO: rebuild element and replace
+    }
 
-    layout(self)
+    if (typeof (layout) === 'function') {
+        layout.call(self, self)
+    }
 
-    globalThis.child = previous
+    globalThis.add = previous.add
 }

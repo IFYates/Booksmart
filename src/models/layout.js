@@ -2,31 +2,55 @@
 The collection layout.
 */
 class Layout {
-    #folder = null
-    #collections = [] // Collections
-    columns = 2 // Number of columns to display
+    #root = null
+    #data = null
+    #collections = []
 
-    constructor(folder) {
-        this.#apply(folder)
+    onchange = () => { }
+
+    constructor(root) {
+        this.#apply(root)
     }
     async reload() {
-        const folder = await Layout.folder()
-        this.#apply(folder)
+        const root = await Layout.folder()
+        this.#apply(root)
     }
-    #apply(folder) {
-        // TODO: this.columns = params?.columns ?? 2
-        this.#folder = folder
+    #apply(root) {
+        this.#root = root
 
-        this.#collections.splice(0, this.#collections.length)
-        for (const child of folder.children.filter(c => Array.isArray(c.children))) {
+        const data = tryParse(root.title, { title: root.title })
+        this.#data = {
+            title: data.title || '',
+            columns: num(data.columns, 2),
+            openExistingTab: data.openExistingTab !== false,
+            openNewTab: !!data.openNewTab,
+            showFavicons: data.showFavicons !== false,
+            showTabList: !!data.showTabList
+        }
+        
+        this.#collections = []
+        for (const child of root.children?.filter(c => Array.isArray(c.children)) ?? []) {
             this.#collections.push(new Collection(this, child))
             // TODO: deep?
-        }        
+        }
     }
+
+    get id() { return this.#root.id }
+    get columns() { return this.#data.columns }
+    set columns(value) { this.#data.columns = num(value) }
+    get openExistingTab() { return this.#data.openExistingTab }
+    set openExistingTab(value) { this.#data.openExistingTab = !!value }
+    get openNewTab() { return this.#data.openNewTab }
+    set openNewTab(value) { this.#data.openNewTab = !!value }
+    get showFavicons() { return this.#data.showFavicons }
+    set showFavicons(value) { this.#data.showFavicons = !!value }
+    get showTabList() { return this.#data.showTabList }
+    set showTabList(value) { this.#data.showTabList = !!value }
 
     static async folder() {
         const tree = (await chrome.bookmarks.getTree())[0].children
-        var layoutFolder = tree.find(b => b.title === 'Other bookmarks').children.find(b => b.title === LayoutTitle)
+        var layoutFolder = tree.find(b => b.title === 'Other bookmarks').children
+            .find(b => b.title === LayoutTitle || b.title.indexOf(`"title":"${LayoutTitle}"`) >= 0)
         if (!layoutFolder) {
             layoutFolder = await chrome.bookmarks.create({ title: LayoutTitle })
         }
@@ -34,38 +58,30 @@ class Layout {
     }
     static async load() {
         const layoutFolder = await Layout.folder()
-        return new Layout(layoutFolder)
+        var layout = new Layout(layoutFolder)
+        if (!layout.collections.count()) {
+            await layout.collections.create('First collection')
+        }
+        return layout
     }
     async save() {
-        // TODO
-    }
-
-    nextCollectionId() {
-        return this.#collections.length + 1
-    }
-    nextBookmarkId() {
-        return this.#collections.length > 0 ? Math.max(...this.#collections.flatMap(c => c.bookmarks.length > 0 ? c.bookmarks.map(b => b.id) : 0)) + 1 : 1
+        await chrome.bookmarks.update(this.id, {
+            title: JSON.stringify(this.#data)
+        })
     }
 
     collections = {
+        count: () => this.#collections.length,
+
         create: async (title) => {
             const child = await chrome.bookmarks.create({
-                parentId: this.#folder.id,
+                parentId: this.#root.id,
                 title: JSON.stringify({ title: title })
             })
             const collection = new Collection(this, child)
             this.#collections.push(collection)
             return collection
         },
-
-        list: async () => {
-            const collections = []
-            for (const collection of this.#collections) {
-                collections.push(collection)
-            }
-            return collections
-        },
-
         get: async (collectionId) => {
             var collection = this.#collections.find(c => c.id === collectionId)
             if (!collection) {
@@ -74,7 +90,13 @@ class Layout {
             }
             return collection
         },
-
+        list: async () => {
+            const collections = []
+            for (const collection of this.#collections) {
+                collections.push(collection)
+            }
+            return collections
+        },
         setIndex: async (collection, index) => {
             index = Math.min(Math.max(0, index), this.#collections.length)
             if (collection.index !== index) {
@@ -87,12 +109,12 @@ class Layout {
         }
     }
 
-    async export() {
-        return {
-            _version: 1,
-            columns: this.columns,
-            collections: await this.collections.list()
-        }
+    export() {
+        const data = { ...this.#data }
+        delete data.title
+        data.collections = this.#collections.map(c => c.export())
+        data._version = 1
+        return data
     }
     async import(data) {
         // TODO
