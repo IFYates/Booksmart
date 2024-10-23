@@ -8,10 +8,10 @@ X Reorder
 X Delete
 - Options
   - Colour
-  - Icon
-    - Fontawesome
-    - From bookmark favicon
-    - Custom?
+  X Icon
+    X Fontawesome
+    X From bookmark favicon
+    X Custom
   X Sort order of bookmarks
     X Manual
     X Name
@@ -26,13 +26,13 @@ X Drag/drop
   X Reorder within collection
   X Reorder collection
   X Drop bookmark/collection in trash (confirmation?)
-- Bookmark options
+X Bookmark options
   X Title
   X Favourite (Pin)
-  - Icon
+  X Icon
     X Site favicon default
-    - Fontawesome
-    - Custom?
+    X Fontawesome
+    X Custom
   X Notes
 X Export
   X All

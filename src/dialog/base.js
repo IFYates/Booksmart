@@ -1,11 +1,9 @@
 const Dialog = {
     async show(title, display) {
-        const dialog = document.createElement('dialog')
-        dialog.display(() => {
+        const dialog = document.body.add('dialog', function () {
             add('title', title)
-            add('form', { onsubmit: () => false }, () => display(dialog))
+            add('form', { onsubmit: () => false }, () => display(this))
         })
-        document.body.appendChild(dialog)
 
         const promise = new Promise(resolve => {
             dialog.showModal()

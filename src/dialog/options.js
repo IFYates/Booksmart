@@ -73,8 +73,7 @@ Dialog.showOptions = (layout) => {
                     if (!confirmed) {
                         confirmed = true
                         this.classList = 'danger'
-                        this.children[0].classList.remove('fa-eraser')
-                        this.children[0].classList.add('fa-warning')
+                        this.children[0].classList.replace('fa-eraser', 'fa-warning')
                         this.disabled = true
                         var count = 1
                         this.children[1].textContent = `Wait (${count--})`

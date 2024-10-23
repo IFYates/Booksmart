@@ -46,8 +46,8 @@ var elEditLock = document.getElementById('editLock')
 elEditLock.onclick = () => { _layout.allowEdits = !_layout.allowEdits; _layout.save().then(refreshList) }
 
 await refreshList()
-//await Dialog.editCollection((await _layout.collections.list())[0], _layout)
-await Dialog.editBookmark((await _layout.collections.list().then(l => l[0].bookmarks.list()))[0], (await _layout.collections.list())[0])
+//await Dialog.editCollection((await _layout.collections.list())[0])
+await Dialog.editBookmark((await _layout.collections.list().then(l => l[0].bookmarks.list()))[0])
 
 async function refreshList() {
     elTrash.style.display = _layout.allowEdits ? '' : 'none'
@@ -98,7 +98,6 @@ async function refreshList() {
         oldLayout.replaceWith(elLayout)
     })
 }
-
 function displayCollection(collection, isFirst, isLast) {
     const elCollection = add('collection', {
         className: collection.collapsed ? 'collapsed' : '',
@@ -174,8 +173,23 @@ function displayCollection(collection, isFirst, isLast) {
                 _dragInfo = null
             }
         }, () => {
-            add('i', { className: `showHide fa-fw fas ${collection.collapsed ? 'fa-chevron-down' : 'fa-chevron-up'}`, style: 'padding-right:4px' })
-            add('i', { className: `icon fa-fw fas ${collection.icon ? collection.icon : 'fa-book'}`, style: 'padding-right:4px' })
+            add('i', { classes: ['showHide', 'fa-fw', 'fas', collection.collapsed ? 'fa-chevron-down' : 'fa-chevron-up'] })
+
+            var faIcon = add('i', { className: 'icon fa-fw' })
+            if (collection.icon?.includes('fa-')) {
+                faIcon.classList.add(...collection.icon.split(' '))
+            } else {
+                faIcon.classList.add('fas', 'fa-book')
+
+                if (collection.icon && !collection.icon.startsWith('chrome:')) {
+                    var imgIcon = add('img', { src: collection.icon, className: 'icon', style: 'display:none' })
+                    imgIcon.onload = () => {
+                        faIcon.replaceWith(imgIcon)
+                        imgIcon.style.display = ''
+                    }
+                }
+            }
+
             add('span', collection.title)
 
             // Collection actions
@@ -261,19 +275,18 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
             onclick: (ev) => bookmark.click(ev, _layout.openExistingTab),
             onmouseenter: () => bookmark.hasOpenTab()
         }, () => {
-            var faIcon = add('i', { className: 'icon fa-fw fas' })
-            if (bookmark.icon?.startsWith('fa-')) {
-                faIcon.classList.add(bookmark.icon)
-            } else if (bookmark.altIcon?.startsWith('fa-')) {
-                faIcon.classList.add(bookmark.altIcon)
+            var faIcon = add('i', { className: 'icon fa-fw' })
+            if (bookmark.icon?.includes('fa-')) {
+                faIcon.classList.add(...bookmark.icon.split(' '))
+            } else if (bookmark.altIcon?.includes('fa-')) {
+                faIcon.classList.add('fas', bookmark.altIcon)
             } else {
-                faIcon.classList.add('fa-bookmark')
+                faIcon.classList.add('fas', 'fa-bookmark')
             }
 
             const icon = bookmark.icon ? bookmark.icon : `${bookmark.domain}/favicon.ico`
-            if (!icon.startsWith('fa-') && !icon.startsWith('chrome:') && _layout.showFavicons) {
-                var imgIcon = add('img', { src: icon, className: 'icon' })
-                imgIcon.style.display = 'none'
+            if (!icon.includes('fa-') && !icon.startsWith('chrome:') && _layout.showFavicons) {
+                var imgIcon = add('img', { src: icon, className: 'icon', style: 'display:none' })
                 imgIcon.onload = () => {
                     faIcon.replaceWith(imgIcon)
                     imgIcon.style.display = ''
@@ -321,7 +334,7 @@ function displayAllTabs(tabs) {
     const collection = {
         isTabs: true,
         sortOrder: 0,
-        icon: 'fa-window-restore',
+        icon: 'fas fa-window-restore',
         title: 'Active tabs',
         bookmarks: [],
         collapsed: !_layout.showTabList,

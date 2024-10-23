@@ -53,7 +53,7 @@ class Layout {
     static async folder() {
         const tree = (await chrome.bookmarks.getTree())[0].children
         var layoutFolder = tree.find(b => b.title === 'Other bookmarks').children
-            .find(b => b.title === LayoutTitle || b.title.indexOf(`"title":"${LayoutTitle}"`) >= 0)
+            .find(b => b.title === LayoutTitle || b.title.includes(`"title":"${LayoutTitle}"`))
         if (!layoutFolder) {
             layoutFolder = await chrome.bookmarks.create({ title: LayoutTitle })
         }
