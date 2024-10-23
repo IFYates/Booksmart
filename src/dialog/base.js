@@ -10,7 +10,7 @@ const Dialog = {
             dialog.onclose = resolve
         })
         await promise
-        dialog.parentElement.removeChild(dialog)
+        dialog.remove()
     }
 }
 

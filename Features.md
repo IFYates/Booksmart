@@ -59,4 +59,7 @@ X If link already open, switch to tab
 - List of favourites / last used bookmarks
 
 # Future
+- Sidebar
 - Rebuild page parts - not whole
+- Bookmark colours by domain (across all collections)
+- Background image

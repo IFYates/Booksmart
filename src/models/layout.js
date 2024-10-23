@@ -26,7 +26,8 @@ class Layout {
             openExistingTab: data.openExistingTab !== false,
             openNewTab: !!data.openNewTab,
             showFavicons: data.showFavicons !== false,
-            showTabList: !!data.showTabList
+            showTabList: !!data.showTabList,
+            showTopSites: !!data.showTopSites
         }
         
         this.#collections = []
@@ -49,6 +50,8 @@ class Layout {
     set showFavicons(value) { this.#data.showFavicons = !!value }
     get showTabList() { return this.#data.showTabList }
     set showTabList(value) { this.#data.showTabList = !!value }
+    get showTopSites() { return this.#data.showTopSites }
+    set showTopSites(value) { this.#data.showTopSites = !!value }
 
     static async folder() {
         const tree = (await chrome.bookmarks.getTree())[0].children

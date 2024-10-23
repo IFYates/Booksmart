@@ -129,8 +129,7 @@ collection {
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
     border-radius: 5px;
     overflow: hidden;
-    padding: 0;
-    padding-bottom: 5px;
+    padding: 5px;
 }
 
 collection .icon {
@@ -151,7 +150,7 @@ collection>title {
     border-bottom-width: 1px;
     padding: 5px;
     font-weight: bold;
-    margin: 0;
+    margin: -5px;
     margin-bottom: 5px;
 }
 
@@ -161,12 +160,12 @@ collection>title>.actions {
     visibility: hidden;
 }
 
-collection:not(.tabs):not(.collapsed) title:hover .actions,
-collection:not(.tabs):not(.collapsed) .actions:hover {
+collection:not(.collapsed) title:hover .actions,
+collection:not(.collapsed) .actions:hover {
     visibility: visible;
 }
 
-collection title:hover .icon {
+collection:has(.showHide) title:hover .icon {
     visibility: hidden;
 }
 
@@ -185,7 +184,7 @@ bookmark {
     cursor: pointer;
     break-inside: avoid;
     padding: 5px 10px;
-    margin: 5px 10px;
+    margin: 5px;
     border-radius: 999px;
     flex-grow: 5;
     min-width: 150px;
@@ -228,12 +227,8 @@ bookmark .favourite button {
     padding: 1px 0;
 }
 
-collection:not(.tabs) bookmark:hover .favourite {
+collection bookmark:hover .favourite {
     visibility: visible;
-}
-
-collection.tabs bookmark.add {
-    display: none;
 }
 
 bookmark.add {
@@ -255,7 +250,7 @@ bookmark>a>.actions {
     visibility: hidden;
 }
 
-collection:not(.tabs) bookmark:hover>a>.actions {
+collection bookmark:hover>a>.actions {
     visibility: visible;
 }
 

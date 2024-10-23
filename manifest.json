@@ -7,7 +7,8 @@
     "bookmarks", // View all bookmarks
     "downloads", // Export
     "storage", // Store bookmarks
-    "tabs" // List open tabs
+    "tabs", // List open tabs
+    "topSites" // View top sites
   ],
   "action": {
     "default_popup": "popup.html",

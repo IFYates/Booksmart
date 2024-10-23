@@ -76,7 +76,7 @@ Dialog.editCollection = (collection, layout) => {
                     if (b.icon?.startsWith('data:image/') || b.icon?.includes('://')) {
                         add('option', b.title, { value: b.icon })
                         if (b.icon === collection.icon) {
-                            elCurrent?.parentElement.removeChild(elCurrent)
+                            elCurrent?.remove()
                         }
                     }
                 })

@@ -42,6 +42,16 @@ Dialog.showOptions = (layout) => {
                 }
         })
 
+        // Show topSites
+        add('div', () => {
+            add('label', 'Show most visited sites')
+            add('input', { type: 'checkbox', checked: layout.showTopSites })
+                .onclick = async (ev) => {
+                    layout.showTopSites = ev.target.checked
+                    layout.onchange()
+                }
+        })
+
         // theme / colour
         // set as homepage?
 
