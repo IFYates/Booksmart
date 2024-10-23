@@ -22,6 +22,7 @@ class Layout {
         this.#data = {
             title: data.title || '',
             columns: num(data.columns, 2),
+            allowEdits: data.allowEdits !== false,
             openExistingTab: data.openExistingTab !== false,
             openNewTab: !!data.openNewTab,
             showFavicons: data.showFavicons !== false,
@@ -38,6 +39,8 @@ class Layout {
     get id() { return this.#root.id }
     get columns() { return this.#data.columns }
     set columns(value) { this.#data.columns = num(value) }
+    get allowEdits() { return this.#data.allowEdits }
+    set allowEdits(value) { this.#data.allowEdits = !!value }
     get openExistingTab() { return this.#data.openExistingTab }
     set openExistingTab(value) { this.#data.openExistingTab = !!value }
     get openNewTab() { return this.#data.openNewTab }

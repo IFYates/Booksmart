@@ -1,6 +1,5 @@
 chrome.bookmarks.getTree((tree) => {
     const bookmarkList = document.getElementById('bookmarkList')
-    console.log(tree)
 
     var txt = document.createElement('li')
     txt.textContent = 'now: ' + new Date()

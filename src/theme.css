@@ -27,7 +27,7 @@ collection>title {
     background: #353546;
 }
 
-bookmark {
+bookmark, bookmark>a>.actions {
     background: #353546;
 }
 

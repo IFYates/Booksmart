@@ -4,6 +4,22 @@
     padding: 1px 2px;
 }
 
+.actions>i {
+    cursor: pointer;
+    filter: brightness(0.6);
+}
+
+.actions>i:hover {
+    filter: brightness(1.0);
+}
+
+body>.actions {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    margin: 8px;
+}
+
 title {
     font-size: 140%;
 }
@@ -55,12 +71,9 @@ dialog .actions {
     opacity: 0.1;
 }
 
-#trash[style*="opacity: 1"] {
+#trash.active {
     color: darkred;
-}
-
-#options {
-    cursor: pointer;
+    opacity: 1.0;
 }
 
 layout {
@@ -97,9 +110,9 @@ collection>title {
     margin-bottom: 5px;
 }
 
-collection .actions {
+collection>title>.actions {
     position: absolute;
-    right: 3px;
+    right: 5px;
     visibility: hidden;
 }
 
@@ -126,12 +139,11 @@ bookmark {
     display: inline-block;
     cursor: pointer;
     break-inside: avoid;
-    padding: 5px;
+    padding: 5px 10px;
     margin: 5px 10px;
     border-radius: 999px;
     flex-grow: 5;
-    flex-basis: content;
-    min-width: 25%;
+    min-width: 150px;
     font-size: 130%;
 }
 
@@ -140,12 +152,12 @@ bookmark .icon {
     max-height: 16px;
 }
 
-bookmark:hover .icon {
+layout.editable bookmark:not(.tab):hover .icon {
     visibility: hidden;
 }
 
 bookmark:hover {
-    filter: brightness(1.5);
+    filter: brightness(1.2);
 }
 
 bookmark:active {
@@ -192,13 +204,13 @@ bookmark.add i {
     transform: translateY(-50%);
 }
 
-bookmark>.actions {
+bookmark>a>.actions {
     position: absolute;
     right: 5px;
     visibility: hidden;
 }
 
-collection:not(.tabs) bookmark:hover>.actions {
+collection:not(.tabs) bookmark:hover>a>.actions {
     visibility: visible;
 }
 

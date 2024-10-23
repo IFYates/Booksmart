@@ -18,7 +18,8 @@ class Bookmark {
             icon: data.icon || '',
             clicks: num(data.clicks),
             lastClick: this.#bookmark.dateLastUsed || data.lastClick || 0,
-            favourite: !!data.favourite
+            favourite: !!data.favourite,
+            notes: data.notes || ''
         }
     }
 
@@ -37,6 +38,8 @@ class Bookmark {
     get dateAddedUtc() { return new Date(this.#bookmark.dataAdded) }
     get clicks() { return this.#data.clicks }
     get lastClick() { return new Date(this.#data.lastClick) }
+    get notes() { return this.#data.notes }
+    set notes(value) { this.#data.notes = value?.trim() }
 
     #lastTab = null
     async click(ev, openExistingTab) {

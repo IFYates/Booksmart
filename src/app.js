@@ -1,3 +1,4 @@
+import './html.js'
 import './display.js'
 import './utilities.js'
 
@@ -5,25 +6,25 @@ import Dialog from './dialogs.js'
 import Layout from './models/layout.js'
 import Tabs from './tabs.js'
 
+var _dragInfo = null
+
 var _layout = await Layout.load()
 if (!_layout) {
     _layout = new Layout()
     await _layout.save()
 }
-
-var _dragInfo = null
+_layout.onchange = () => refreshList()
 
 const elTrash = document.getElementById('trash')
-elTrash.ondragover = function (ev) {
-    ev.preventDefault()
-
+elTrash.ondragover = (ev) => {
     const bookmark = _dragInfo.bookmark
     const collection = _dragInfo.collection
     if ((bookmark && !bookmark.isTab) || collection) {
+        ev.preventDefault()
         ev.dataTransfer.dropEffect = 'move'
     }
 }
-elTrash.ondrop = async function () {
+elTrash.ondrop = async () => {
     const bookmark = _dragInfo.bookmark
     if (bookmark && !bookmark.isTab) {
         await bookmark.delete().then(refreshList)
@@ -37,38 +38,40 @@ elTrash.ondrop = async function () {
     }
 }
 
-document.getElementById('options').onclick = async function () {
-    await Dialog.showOptions(_layout)
-    await _layout.save()
-}
+document.getElementById('options').onclick = () => Dialog.showOptions(_layout).then(() => _layout.save())
+const btnAddCollection = document.getElementById('btnAddCollection')
+btnAddCollection.onclick = () => Dialog.editCollection(null, _layout).then(refreshList)
 
-document.getElementById('btnAddCollection').onclick = async function () {
-    await Dialog.editCollection(null, _layout).then(refreshList)
-}
-
-_layout.onchange = async function () {
-    await refreshList()
-}
+var elEditLock = document.getElementById('editLock')
+elEditLock.onclick = () => { _layout.allowEdits = !_layout.allowEdits; _layout.save().then(refreshList) }
 
 await refreshList()
+//await Dialog.editCollection((await _layout.collections.list())[0], _layout)
+await Dialog.editBookmark((await _layout.collections.list().then(l => l[0].bookmarks.list()))[0], (await _layout.collections.list())[0])
 
 async function refreshList() {
+    elTrash.style.display = _layout.allowEdits ? '' : 'none'
+    btnAddCollection.style.display = _layout.allowEdits ? '' : 'none'
+    elEditLock.classList.toggle('fa-lock', !_layout.allowEdits)
+    elEditLock.classList.toggle('fa-unlock', _layout.allowEdits)
+    elEditLock.title = _layout.allowEdits ? 'Lock for edits' : 'Allow edits'
+
     const collections = await _layout.collections.list()
     const tabs = await Tabs.list()
 
     const oldLayout = document.getElementsByTagName('layout')[0]
 
-    document.body.display(function () {
+    document.body.display(() => {
         const elLayout = add('layout', {
             style: { gridTemplateColumns: `repeat(${_layout.columns}, 1fr)` },
-            ondragover: function (ev) {
+            ondragover: (ev) => {
                 const collection = _dragInfo.collection
                 if (collection) {
                     ev.preventDefault() // Can drop here
                     ev.dataTransfer.dropEffect = 'move'
                 }
             },
-            ondrop: async function () {
+            ondrop: async () => {
                 _dragInfo.dropped = true
                 const element = _dragInfo.element
 
@@ -84,12 +87,13 @@ async function refreshList() {
                     await collection.setIndex(index).then(refreshList)
                 }
             }
-        }, function () {
+        }, () => {
             for (const [i, collection] of collections.entries()) {
                 displayCollection(collection, i === 0, i === collections.length - 1)
             }
             displayAllTabs(tabs)
         })
+        elLayout.classList.toggle('editable', _layout.allowEdits)
 
         oldLayout.replaceWith(elLayout)
     })
@@ -98,19 +102,19 @@ async function refreshList() {
 function displayCollection(collection, isFirst, isLast) {
     const elCollection = add('collection', {
         className: collection.collapsed ? 'collapsed' : '',
-        ondragenter: function () {
+        ondragenter: () => {
             if (_dragInfo.collection && elCollection !== _dragInfo.element) {
                 elCollection.parentElement.insertBefore(_dragInfo.element, elCollection)
             }
         },
-        ondragover: function (ev) {
+        ondragover: (ev) => {
             const bookmark = _dragInfo.bookmark
             if (bookmark) {
                 ev.preventDefault() // Can drop here
                 ev.dataTransfer.dropEffect = bookmark.collection.id !== collection.id && (bookmark.isTab || ev.ctrlKey) ? 'copy' : 'move'
             }
         },
-        ondrop: async function (ev) {
+        ondrop: async (ev) => {
             _dragInfo.dropped = true
             const element = _dragInfo.element
 
@@ -126,15 +130,13 @@ function displayCollection(collection, isFirst, isLast) {
                 await bookmark.save()
             }
             else if (bookmark.collection.id !== collection.id) {
-                // Copy bookmark here
+                // Copy bookmark
                 if (ev.ctrlKey) {
                     bookmark = await bookmark.duplicate()
-                    await bookmark.moveTo(collection)
                 }
+
                 // Move bookmark here
-                else {
-                    await bookmark.moveTo(collection)
-                }
+                await bookmark.moveTo(collection)
             }
 
             // Position
@@ -144,21 +146,26 @@ function displayCollection(collection, isFirst, isLast) {
                 await bookmark.setIndex(index).then(refreshList)
             }
         }
-    }, function () {
+    }, () => {
         add('title', {
-            draggable: !collection.isTabs,
-            onclick: function () {
+            draggable: _layout.allowEdits && !collection.isTabs,
+            onclick: () => {
                 collection.collapsed = !collection.collapsed
                 collection.save().then(refreshList)
             },
-            ondragstart: function (ev) {
+            ondragstart: (ev) => {
+                if (!_layout.allowEdits) {
+                    ev.preventDefault()
+                    return
+                }
+
                 ev.stopPropagation()
                 ev.dataTransfer.effectAllowed = 'move'
                 _dragInfo = { collection: collection, element: elCollection, origin: elCollection.nextSibling }
                 elCollection.style.opacity = 0.5
                 elTrash.style.opacity = 1
             },
-            ondragend: function () {
+            ondragend: () => {
                 if (!_dragInfo.dropped) {
                     _dragInfo.origin.parentElement.insertBefore(elCollection, _dragInfo.origin)
                 }
@@ -166,25 +173,23 @@ function displayCollection(collection, isFirst, isLast) {
                 elTrash.style.opacity = null
                 _dragInfo = null
             }
-        }, function () {
+        }, () => {
             add('i', { className: `showHide fa-fw fas ${collection.collapsed ? 'fa-chevron-down' : 'fa-chevron-up'}`, style: 'padding-right:4px' })
             add('i', { className: `icon fa-fw fas ${collection.icon ? collection.icon : 'fa-book'}`, style: 'padding-right:4px' })
             add('span', collection.title)
 
             // Collection actions
-            add('div', { className: 'actions' }, function () {
-                if (!isFirst) {
-                    add('button', { onclick: () => collection.setIndex(collection.index - 1).then(refreshList) })
-                        .append('i', { className: 'fa-fw fas fa-arrow-up', title: 'Move up' })
-                }
-                if (!isLast) {
-                    add('button', { onclick: () => collection.setIndex(collection.index + 1).then(refreshList) })
-                        .append('i', { className: 'fa-fw fas fa-arrow-down', title: 'Move down' })
-                }
-    
-                add('button', { onclick: () => Dialog.editCollection(collection).then(refreshList) })
-                    .append('i', { className: 'fa-fw fas fa-pen', title: 'Edit collection' })
-            })
+            if (_layout.allowEdits) {
+                add('div', { className: 'actions' }, () => {
+                    if (!isFirst) {
+                        iconButton('fas fa-arrow-up', 'Move up', () => collection.setIndex(collection.index - 1).then(refreshList))
+                    }
+                    if (!isLast) {
+                        iconButton('fas fa-arrow-down', 'Move down', () => collection.setIndex(collection.index + 1).then(refreshList))
+                    }
+                    iconButton('fas fa-pen', 'Edit collection', () => Dialog.editCollection(collection).then(refreshList))
+                })
+            }
         })
 
         // Bookmarks
@@ -194,17 +199,18 @@ function displayCollection(collection, isFirst, isLast) {
                 displayBookmark(collection, bookmarks[i], i == 0, i == bookmarks.length - 1)
             }
 
-            const btnAddBookmark = add('bookmark', {
-                className: 'add',
-                title: 'Add bookmark',
-                onclick: async () => await Dialog.editBookmark(null, collection).then(refreshList),
-                ondragenter: function () {
-                    if (_dragInfo.bookmark) {
-                        btnAddBookmark.parentElement.insertBefore(_dragInfo.element, btnAddBookmark)
+            if (_layout.allowEdits) {
+                add('bookmark', {
+                    className: 'add',
+                    title: 'Add bookmark',
+                    onclick: () => Dialog.editBookmark(null, collection).then(refreshList),
+                    ondragenter: function () {
+                        if (_dragInfo.bookmark) {
+                            this.parentElement.insertBefore(_dragInfo.element, this)
+                        }
                     }
-                }
-            })
-            btnAddBookmark.append('i', { className: 'fa-fw fas fa-plus', title: 'Add bookmark' })
+                }, () => add('i', { className: 'fa-fw fas fa-plus', title: 'Add bookmark' }))
+            }
         }
     })
     return elCollection
@@ -212,19 +218,23 @@ function displayCollection(collection, isFirst, isLast) {
 function displayBookmark(collection, bookmark, isFirst, isLast) {
     return add('bookmark', {
         className: bookmark.favourite ? 'favourite' : '',
-        draggable: true,
+        draggable: _layout.allowEdits,
         ondragstart: function (ev) {
+            if (!_layout.allowEdits) {
+                ev.preventDefault()
+                return
+            }
+
             ev.stopPropagation()
             ev.dataTransfer.effectAllowed = bookmark.isTab ? 'copy' : 'copyMove'
-            console.log(this)
             _dragInfo = { bookmark: bookmark, element: this, origin: this.nextSibling }
             this.style.opacity = 0.5
             if (!bookmark.isTab) {
-                elTrash.style.opacity = 1
+                elTrash.classList.add('active')
             }
         },
         ondragenter: function (ev) {
-            if (_dragInfo.bookmark && !bookmark.isTab) {
+            if (_dragInfo.bookmark && !bookmark.isTab && _dragInfo.bookmark.collection.sortOrder === 0) {
                 var target = !_dragInfo.bookmark.favourite ? this : this.parentElement.querySelectorAll('bookmark:first-of-type')[0]
                 if (target !== _dragInfo.element) {
                     target.parentElement.insertBefore(_dragInfo.element, target)
@@ -236,25 +246,13 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
                 _dragInfo.origin.parentElement.insertBefore(this, _dragInfo.origin)
             }
             this.style.opacity = null
-            elTrash.style.opacity = null
+            elTrash.classList.remove('active')
             _dragInfo = null
         }
     }, function () {
-        add('div', { className: 'actions' }, function () {
-            if (collection.sortOrder === 0) {
-                if (!isFirst) {
-                    add('button', { onclick: () => bookmark.setIndex(bookmark.index - 1).then(refreshList) })
-                        .append('i', { className: 'fa-fw fas fa-arrow-up', title: 'Move up' })
-                }
-                if (!isLast) {
-                    add('button', { onclick: () => bookmark.setIndex(bookmark.index + 2).then(refreshList) })
-                        .append('i', { className: 'fa-fw fas fa-arrow-down', title: 'Move down' })
-                }
-            }
-
-            add('button', { onclick: () => Dialog.editBookmark(bookmark).then(refreshList) })
-                .append('i', { className: 'fa-fw fas fa-pen', title: 'Edit bookmark' })
-        })
+        if (bookmark.isTab) {
+            this.classList.add('tab')
+        }
 
         add('a', {
             title: bookmark.url,
@@ -262,7 +260,7 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
             target: _layout.openNewTab ? '_blank' : '',
             onclick: (ev) => bookmark.click(ev, _layout.openExistingTab),
             onmouseenter: () => bookmark.hasOpenTab()
-        }, function () {
+        }, () => {
             var faIcon = add('i', { className: 'icon fa-fw fas' })
             if (bookmark.icon?.startsWith('fa-')) {
                 faIcon.classList.add(bookmark.icon)
@@ -276,42 +274,58 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
             if (!icon.startsWith('fa-') && !icon.startsWith('chrome:') && _layout.showFavicons) {
                 var imgIcon = add('img', { src: icon, className: 'icon' })
                 imgIcon.style.display = 'none'
-                imgIcon.onload = function () {
+                imgIcon.onload = () => {
                     faIcon.replaceWith(imgIcon)
                     imgIcon.style.display = ''
                 }
             }
 
-            add('div', { className: 'favourite' }, function () {
-                const btnFavourite = add('i', {
-                    className: 'fa-fw',
-                    title: bookmark.favourite ? 'Unpin' : 'Pin',
-                    onclick: function (ev) {
-                        ev.stopPropagation()
-                        bookmark.favourite = !bookmark.favourite
-                        bookmark.save().then(refreshList)
-                        return false
-                    }
+            if (_layout.allowEdits) {
+                add('div', { className: 'favourite' }, () => {
+                    const btnFavourite = add('i', {
+                        className: 'fa-fw',
+                        title: bookmark.favourite ? 'Unpin' : 'Pin',
+                        onclick: (ev) => {
+                            ev.stopPropagation()
+                            bookmark.favourite = !bookmark.favourite
+                            bookmark.save().then(refreshList)
+                            return false
+                        }
+                    })
+                    btnFavourite.classList.toggle('far', !bookmark.favourite)
+                    btnFavourite.classList.toggle('fa-square', !bookmark.favourite)
+                    btnFavourite.classList.toggle('fas', bookmark.favourite)
+                    btnFavourite.classList.toggle('fa-thumbtack', bookmark.favourite)
                 })
-                btnFavourite.classList.toggle('far', !bookmark.favourite)
-                btnFavourite.classList.toggle('fa-square', !bookmark.favourite)
-                btnFavourite.classList.toggle('fas', bookmark.favourite)
-                btnFavourite.classList.toggle('fa-thumbtack', bookmark.favourite)
-            })
+            }
 
             add('span', bookmark.title, { className: 'title' })
+
+            if (_layout.allowEdits) {
+                add('div', { className: 'actions' }, () => {
+                    if (collection.sortOrder === 0) {
+                        if (!isFirst) {
+                            iconButton('fas fa-arrow-up', 'Move up', () => bookmark.setIndex(bookmark.index - 1).then(refreshList))
+                        }
+                        if (!isLast) {
+                            iconButton('fas fa-arrow-down', 'Move down', () => bookmark.setIndex(bookmark.index + 1).then(refreshList))
+                        }
+                    }
+                    iconButton('fas fa-pen', 'Edit bookmark', () => Dialog.editBookmark(bookmark).then(refreshList))
+                })
+            }
         })
     })
 }
 function displayAllTabs(tabs) {
     const collection = {
         isTabs: true,
-        sortOrder: -1,
+        sortOrder: 0,
         icon: 'fa-window-restore',
         title: 'Active tabs',
         bookmarks: [],
         collapsed: !_layout.showTabList,
-        save: async function () {
+        save: async () => {
             _layout.showTabList = !collection.collapsed
             await _layout.save()
         }
@@ -321,6 +335,7 @@ function displayAllTabs(tabs) {
     for (const tab of tabs) {
         const self = tab
         collection.bookmarks.push({
+            collection: collection,
             isTab: true,
             favourite: false,
             icon: tab.favIconUrl,
@@ -329,7 +344,7 @@ function displayAllTabs(tabs) {
             url: tab.url,
             title: tab.title,
             hasOpenTab: () => true,
-            click: async function (ev) {
+            click: async (ev) => {
                 ev.preventDefault()
                 await Tabs.focus(self)
             }

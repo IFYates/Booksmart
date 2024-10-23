@@ -35,12 +35,13 @@ class Collection {
     get title() { return this.#data.title }
     set title(value) { this.#data.title = value?.trim() }
     get icon() { return this.#data.icon }
+    set icon(value) { this.#data.icon = value?.trim() }
     get collapsed() { return this.#data.collapsed }
     set collapsed(value) { this.#data.collapsed = !!value }
     get favourite() { return this.#data.favourite }
     set favourite(value) { this.#data.favourite = !!value }
     get sortOrder() { return this.#data.sortOrder } // 0: Manual, 1: Alphabetic, 2: Creation date, 3: Clicks (then alphabetic), 4 Last click, -ve = opposite
-    set sortOrder(value) { this.#data.sortOrder = value | 0 }
+    set sortOrder(value) { this.#data.sortOrder = num(value) }
 
     bookmarks = {
         count: () => this.#bookmarks.length,

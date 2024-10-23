@@ -12,8 +12,7 @@ X Delete
     - Fontawesome
     - From bookmark favicon
     - Custom?
-  - Description?
-  - Sort order of bookmarks
+  X Sort order of bookmarks
     X Manual
     X Name
     X Used date
@@ -31,10 +30,10 @@ X Drag/drop
   X Title
   X Favourite (Pin)
   - Icon
-    - Fontawesome
     X Site favicon default
+    - Fontawesome
     - Custom?
-  - Description / Notes?
+  X Notes
 X Export
   X All
   - Collection
@@ -59,7 +58,5 @@ X If link already open, switch to tab
 ## Popup
 - List of favourites / last used bookmarks
 
-## Alt
-- See list of bookmark folders
-  - Hide / show as collections
-- Will need to store metadata somwhere
+# Future
+- Rebuild page parts - not whole

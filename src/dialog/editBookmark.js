@@ -3,13 +3,33 @@ import Dialog from './base.js'
 Dialog.editBookmark = (bookmark, collection) => {
     return Dialog.show(bookmark ? 'Edit bookmark' : 'Add bookmark',
         (dialog) => {
-            add('div', 'Title')
-            const txtTitle = add('input', { autofocus: true, type: 'textbox', value: bookmark?.title ?? 'New bookmark' })
-            add('div', 'URL')
-            const txtURL = add('input', { type: 'textbox', value: bookmark?.url ?? '' })
-
+            const txtTitle = document.createElement('input')
+            const txtURL = document.createElement('input')
+            const txtNotes = document.createElement('textarea')
             const elError = document.createElement('div')
-            elError.className = 'error'
+
+            add('div', { style: 'display: grid; grid-row-gap: 1em; grid-template-columns: 1fr 2fr 2fr' }, () => {
+                add('label', 'Title')
+                add(txtTitle, {
+                    autofocus: true,
+                    type: 'textbox',
+                    value: bookmark?.title || 'New collection',
+                    style: 'grid-column: span 2'
+                })
+
+                add('label', 'URL')
+                add(txtURL, {
+                    type: 'textbox',
+                    value: bookmark?.url || '',
+                    style: 'grid-column: span 2'
+                })
+
+                add('label', 'Notes', { style: 'grid-row: span 2'})
+                add(txtNotes, {
+                    value: bookmark?.notes || '',
+                    style: 'grid-column: span 2; grid-row: span 2'
+                })
+            })
 
             add('p')
 
@@ -43,6 +63,7 @@ Dialog.editBookmark = (bookmark, collection) => {
                         } else {
                             bookmark.title = txtTitle.value
                             bookmark.url = txtURL.value
+                            bookmark.notes = txtNotes.value
                         }
                         await bookmark.save()
 
@@ -52,6 +73,7 @@ Dialog.editBookmark = (bookmark, collection) => {
                 add('button', 'Cancel', { type: 'button', onclick: () => dialog.close() })
             })
 
+            elError.classList.add('error')
             add(elError)
         })
 }
