@@ -18,41 +18,40 @@ Dialog.showOptions = (layout) => {
             // Show favicons
             add('label', 'Show favicons', { style: 'text-align:right' })
             add('input', { type: 'checkbox', checked: layout.showFavicons })
-                .onclick = (ev) => {
-                    layout.showFavicons = ev.target.checked
+                .onclick = function () {
+                    layout.showFavicons = this.checked
                     layout.onchange()
                 }
 
             // Use existing tabs
             add('label', 'Switch to tab, if open', { style: 'text-align:right' })
             add('input', { type: 'checkbox', checked: layout.openExistingTab })
-                .onclick = (ev) => {
-                    layout.openExistingTab = ev.target.checked
+                .onclick = function () {
+                    layout.openExistingTab = this.checked
                     layout.onchange()
                 }
 
             // Open in new tab
             add('label', 'Open in new tab', { style: 'text-align:right' })
             add('input', { type: 'checkbox', checked: layout.openNewTab })
-                .onclick = (ev) => {
-                    layout.openNewTab = ev.target.checked
+                .onclick = function () {
+                    layout.openNewTab = this.checked
                     layout.onchange()
                 }
 
             // Show topSites
             add('label', 'Show most visited sites', { style: 'text-align:right' })
             add('input', { type: 'checkbox', checked: layout.showTopSites })
-                .onclick = (ev) => {
-                    layout.showTopSites = ev.target.checked
+                .onclick = function () {
+                    layout.showTopSites = this.checked
                     layout.onchange()
                 }
 
             // Wrap bookmark titles
             add('label', 'Wrap long bookmark titles', { style: 'text-align:right' })
             add('input', { type: 'checkbox', checked: layout.wrapTitles })
-                .onclick = (ev) => {
-                    console.log(this, this === ev.target)
-                    layout.wrapTitles = ev.target.checked
+                .onclick = function () {
+                    layout.wrapTitles = this.checked
                     layout.onchange()
                 }
 
@@ -138,9 +137,9 @@ Dialog.showOptions = (layout) => {
                     const file = uploader.files[0]
                     if (!file) return
                     const reader = new FileReader()
-                    reader.onload = async (ev) => {
-                        const data = JSON.parse(ev.target.result)
-                        layout.import(data)
+                    reader.onload = async function () {
+                        const data = JSON.parse(this.result)
+                        await layout.import(data)
                     }
                     reader.readAsText(file)
                 })

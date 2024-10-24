@@ -1,7 +1,7 @@
 /*
 The collection layout.
 */
-class Layout {
+export default class Layout {
     #root = null
     #data = null
     #collections = []
@@ -9,22 +9,43 @@ class Layout {
     onchange = () => { }
 
     constructor(root) {
-        this.#apply(root)
+        this.#root = root
+    }
+    static async folder() {
+        const tree = (await chrome.bookmarks.getTree())[0].children
+        const layoutFolder = tree.find(b => b.title === 'Other bookmarks').children
+            .find(b => b.title === LayoutTitle || b.title.includes(`"title":"${LayoutTitle}"`))
+        if (!layoutFolder) {
+            layoutFolder = await chrome.bookmarks.create({ title: LayoutTitle })
+        }
+        return layoutFolder
+    }
+    static async load() {
+        const root = await Layout.folder()
+        const layout = new Layout(root)
+        await layout.#apply()
+        if (!layout.collections.count()) {
+            await layout.collections.create('First collection')
+        }
+        return layout
     }
     async reload() {
         const root = await Layout.folder()
-        this.#apply(root)
-    }
-    #apply(root) {
         this.#root = root
-
-        const data = tryParse(root.title, { title: root.title })
+        await this.#apply()
+    }
+    async #apply() {
+        const data = tryParse(this.#root.title, { title: this.#root.title })
         this.#applyData(data)
 
         this.#collections = []
-        for (const child of root.children?.filter(c => Array.isArray(c.children)) ?? []) {
+        for (const child of this.#root.children?.filter(c => Array.isArray(c.children)) ?? []) {
             this.#collections.push(new Collection(this, child))
             // TODO: deep?
+        }
+        for (const folderId of this.#data.folders) {
+            const folder = await Folder.get(folderId, this)
+            this.#collections.push(folder)
         }
     }
     #applyData(data) {
@@ -39,8 +60,10 @@ class Layout {
             showTabList: !!data.showTabList,
             showTopSites: !!data.showTopSites,
             themeAccent: data.themeAccent ?? [240, 14],
-            wrapTitles: data.wrapTitles !== false
+            wrapTitles: data.wrapTitles !== false,
+            folders: data.folders ?? []
         }
+        this.#data.folders.push('30') // TEMP
     }
 
     get id() { return this.#root.id }
@@ -69,23 +92,6 @@ class Layout {
     get wrapTitles() { return this.#data.wrapTitles }
     set wrapTitles(value) { this.#data.wrapTitles = !!value }
 
-    static async folder() {
-        const tree = (await chrome.bookmarks.getTree())[0].children
-        var layoutFolder = tree.find(b => b.title === 'Other bookmarks').children
-            .find(b => b.title === LayoutTitle || b.title.includes(`"title":"${LayoutTitle}"`))
-        if (!layoutFolder) {
-            layoutFolder = await chrome.bookmarks.create({ title: LayoutTitle })
-        }
-        return layoutFolder
-    }
-    static async load() {
-        const layoutFolder = await Layout.folder()
-        var layout = new Layout(layoutFolder)
-        if (!layout.collections.count()) {
-            await layout.collections.create('First collection')
-        }
-        return layout
-    }
     async save() {
         await chrome.bookmarks.update(this.id, {
             title: JSON.stringify(this.#data)
@@ -94,6 +100,7 @@ class Layout {
 
     collections = {
         count: () => this.#collections.length,
+        list: () => [...this.#collections],
 
         create: async (title) => {
             const child = await chrome.bookmarks.create({
@@ -104,21 +111,14 @@ class Layout {
             this.#collections.push(collection)
             return collection
         },
-        get: async (collectionId) => {
-            var collection = this.#collections.find(c => c.id === collectionId)
-            if (!collection) {
-                collection = await Collection.load(this, collectionId)
-                this.#collections.push(collection)
-            }
-            return collection
-        },
-        list: () => {
-            const collections = []
-            for (const collection of this.#collections) {
-                collections.push(collection)
-            }
-            return collections
-        },
+        // get: async (collectionId) => {
+        //     var collection = this.#collections.find(c => c.id === collectionId)
+        //     if (!collection) {
+        //         collection = await Collection.load(this, collectionId)
+        //         this.#collections.push(collection)
+        //     }
+        //     return collection
+        // },
         setIndex: async (collection, index) => {
             index = Math.min(Math.max(0, index), this.#collections.length)
             if (collection.index !== index) {
@@ -217,4 +217,4 @@ class Layout {
 
 const LayoutTitle = '(Booksmart)'
 import Collection from './collection.js'
-export default Layout
+import Folder from './folder.js'

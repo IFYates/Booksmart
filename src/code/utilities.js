@@ -34,7 +34,7 @@ globalThis.num = function (value, otherwise = 0) {
  */
 globalThis.tryParse = function (json, alt) {
     try {
-        return JSON.parse(json)
+        return json instanceof Object ? json : JSON.parse(json)
     } catch {
         return typeof (alt) === 'function' ? alt() : alt
     }

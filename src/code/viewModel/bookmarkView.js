@@ -8,4 +8,6 @@ export default class BookmarkView {
     constructor(bookmark) {
         this.#bookmark = bookmark
     }
+
+    // TODO
 }

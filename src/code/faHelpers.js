@@ -25,7 +25,6 @@ export default class FontAwesome {
             for (const style of styles) {
                 const el = document.body.add('i', { classes: [style, icon], style: 'visibility: hidden' })
                 if (el.offsetHeight < 10) {
-                    console.log('Removing facon', style, icon)
                     if (this.#icons[icon].length === 1) {
                         delete this.#icons[icon]
                     } else {
@@ -71,9 +70,6 @@ export default class FontAwesome {
             }, function () {
                 this.onkeyup = (ev) => {
                     for (const [_, el] of Object.entries(icons)) {
-                        if (el.title === 'flushed') {
-                            console.log('showing', el.title, this.value, !this.value, el.title.includes(this.value))
-                        }
                         el.style.display = !this.value || el.title.includes(this.value) ? '' : 'none'
                     }
                 }
