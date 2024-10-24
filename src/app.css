@@ -25,11 +25,21 @@
     grid-column: span 3;
 }
 
+.spanCols4 {
+    grid-column: span 4;
+}
+
 body>.actions {
     position: fixed;
+    display: flex;
+    align-items: center;
     bottom: 0;
     width: 100%;
-    margin: 8px;
+}
+
+#btnAddCollection {
+    margin-right: -20px;
+    flex-grow: unset;
 }
 
 title {
@@ -120,6 +130,7 @@ layout {
     align-items: start;
     grid-gap: 20px;
     margin-top: 10px;
+    margin-bottom: 3.5em;
 }
 
 collection {
@@ -179,10 +190,7 @@ collection title:hover .showHide {
 }
 
 bookmark {
-    position: relative;
-    display: inline-block;
     cursor: pointer;
-    break-inside: avoid;
     padding: 5px 10px;
     margin: 5px;
     border-radius: 999px;

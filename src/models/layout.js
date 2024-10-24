@@ -19,8 +19,17 @@ class Layout {
         this.#root = root
 
         const data = tryParse(root.title, { title: root.title })
+        this.#applyData(data)
+        
+        this.#collections = []
+        for (const child of root.children?.filter(c => Array.isArray(c.children)) ?? []) {
+            this.#collections.push(new Collection(this, child))
+            // TODO: deep?
+        }
+    }
+    #applyData(data) {
         this.#data = {
-            title: data.title || '',
+            title: LayoutTitle, // To find it later
             columns: num(data.columns, 2),
             allowEdits: data.allowEdits !== false,
             openExistingTab: data.openExistingTab !== false,
@@ -28,12 +37,6 @@ class Layout {
             showFavicons: data.showFavicons !== false,
             showTabList: !!data.showTabList,
             showTopSites: !!data.showTopSites
-        }
-        
-        this.#collections = []
-        for (const child of root.children?.filter(c => Array.isArray(c.children)) ?? []) {
-            this.#collections.push(new Collection(this, child))
-            // TODO: deep?
         }
     }
 
@@ -55,6 +58,7 @@ class Layout {
 
     static async folder() {
         const tree = (await chrome.bookmarks.getTree())[0].children
+        console.log(tree)
         var layoutFolder = tree.find(b => b.title === 'Other bookmarks').children
             .find(b => b.title === LayoutTitle || b.title.includes(`"title":"${LayoutTitle}"`))
         if (!layoutFolder) {
@@ -117,13 +121,75 @@ class Layout {
 
     export() {
         const data = { ...this.#data }
+        data['.booksmart.version'] = 1
         delete data.title
         data.collections = this.#collections.map(c => c.export())
-        data._version = 1
         return data
     }
     async import(data) {
-        // TODO
+        if (!data || data['.booksmart.version'] !== 1) {
+            console.error('Unsupported import version', data)
+            return false
+        }
+
+        this.#applyData(data)
+        this.save()
+
+        const bookmarks = this.#collections.flatMap(c => c.bookmarks.list())
+        const collections = [...this.#collections]
+        async function applyCollectionImport(collection, data) {
+            collections.splice(collections.indexOf(collection), 1)
+            collection.import(data)
+            await collection.save()
+
+            // Update bookmarks by id
+            const unimportedBookmarks = []
+            for (const importBookmark of data.bookmarks) {
+                var bookmark = bookmarks.find(b => b.id == importBookmark.id)
+                if (bookmark) {
+                    bookmarks.splice(bookmarks.indexOf(bookmark), 1)
+                    bookmark.import(importBookmark)
+                    await bookmark.moveTo(collection)
+                    await bookmark.save()
+                } else {
+                    unimportedBookmarks.push(importBookmark)
+                }
+            }
+            // Update bookmarks by url, otherwise create
+            for (const importBookmark of unimportedBookmarks) {
+                var bookmark = bookmarks.find(b => b.url == importBookmark.url)
+                if (bookmark) {
+                    bookmarks.splice(bookmarks.indexOf(bookmark), 1)
+                    await bookmark.moveTo(collection)
+                } else {
+                    bookmark = await collection.bookmarks.create(importBookmark.title, importBookmark.url)
+                }
+                bookmark.import(importBookmark)
+                await bookmark.save()
+            }
+        }
+
+        // Update collection by id
+        const unimportedCollections = []
+        for (const importCollection of data.collections) {
+            var collection = collections.find(c => c.id == importCollection.id)
+            if (collection) {
+                await applyCollectionImport(collection, importCollection)
+            } else {
+                unimportedCollections.push(importCollection)
+            }
+        }
+        // Update collection by title, otherwise create
+        for (const importCollection of unimportedCollections) {
+            var collection = collections.find(c => c.title == importCollection.title)
+            if (!collection) {
+                collection = await this.collections.create(importCollection.title)
+            }
+            await applyCollectionImport(collection, importCollection)
+        }
+
+        document.location.reload()
+        return true
     }
 }
 

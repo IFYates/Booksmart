@@ -56,7 +56,7 @@ Dialog.editCollection = (collection, layout) => {
                 }
             })
 
-            const lstFontAwesomeIcons = FontAwesome.getSelectionList(collection.icon)
+            const lstFontAwesomeIcons = FontAwesome.getSelectionList(collection?.icon)
             lstFontAwesomeIcons.classList.add('faIconList')
             const iconPreviewFA = create('i', { className: 'fa-fw fa-3x fas fa-book centred' }, function () {
                 var _lastValue = 'fas fa-book'
@@ -70,12 +70,12 @@ Dialog.editCollection = (collection, layout) => {
             })
 
             const lstBookmarkIcons = create('select', function () {
-                const elCurrent = collection.icon?.startsWith('data:image/') || collection.icon?.includes('://')
-                    ? add('option', collection.icon, { value: collection.icon }) : null
-                collection.bookmarks.list().forEach(b => {
+                const elCurrent = collection?.icon?.startsWith('data:image/') || collection?.icon?.includes('://')
+                    ? add('option', collection?.icon, { value: collection?.icon }) : null
+                collection?.bookmarks.list().forEach(b => {
                     if (b.icon?.startsWith('data:image/') || b.icon?.includes('://')) {
                         add('option', b.title, { value: b.icon })
-                        if (b.icon === collection.icon) {
+                        if (b.icon === collection?.icon) {
                             elCurrent?.remove()
                         }
                     }
@@ -83,7 +83,7 @@ Dialog.editCollection = (collection, layout) => {
                 this.onchange = () => {
                     iconPreviewCustom.show(this.value)
                 }
-                this.value = collection.icon
+                this.value = collection?.icon
                 this.onchange()
             })
             const txtCustomIcon = create('input', {
@@ -93,14 +93,16 @@ Dialog.editCollection = (collection, layout) => {
                 this.onkeyup = () => {
                     iconPreviewCustom.show(this.value)
                 }
-                this.value = collection.icon && !collection?.icon.includes('fa-') ? collection.icon : ''
+                this.value = collection?.icon && !collection?.icon.includes('fa-') ? collection?.icon : ''
                 this.onkeyup()
             })
 
             const lstIconType = create('select', function () {
                 add('option', 'Default', { value: 0 })
                 add('option', 'Font Awesome', { value: 1 })
-                add('option', 'From bookmark', { value: 2 })
+                if (collection?.bookmarks?.count() > 0) {
+                    add('option', 'From bookmark', { value: 2 })
+                }
                 add('option', 'Custom', { value: 3 })
                 this.onchange = () => {
                     iconPreviewDefault.style.display = 'none'
@@ -182,6 +184,7 @@ Dialog.editCollection = (collection, layout) => {
             add('div', { className: 'actions' }, () => {
                 add('button', 'Save', {
                     onclick: async () => {
+                        elError.textContent = ''
                         if (!txtTitle.value.trim()) {
                             elError.textContent = 'Title is required'
                             return
@@ -208,11 +211,11 @@ Dialog.editCollection = (collection, layout) => {
                             newIcon = txtCustomIcon.value
                         }
 
-                        elError.textContent = ''
-                        if (collection) {
-                            collection.title = txtTitle.value
-                        } else {
+                        // Create / update collection
+                        if (!collection) {
                             collection = await layout.collections.create(txtTitle.value)
+                        } else {
+                            collection.title = txtTitle.value
                         }
 
                         collection.sortOrder = num(lstSort.value) * (chkSortAsc.checked ? 1 : -1)

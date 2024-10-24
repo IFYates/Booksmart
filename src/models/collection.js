@@ -20,6 +20,9 @@ class Collection {
 
         this.#folder = folder
         const data = tryParse(folder.title, {})
+        this.#applyData(data)
+    }
+    #applyData(data) {
         this.#data = {
             title: data.title || '',
             icon: data.icon || '',
@@ -103,6 +106,10 @@ class Collection {
         data.index = this.index
         data.bookmarks = this.#bookmarks.map(b => b.export())
         return data
+    }
+    import(data) {
+        this.url = data.url
+        this.#applyData(data)
     }
 
     async save() {

@@ -124,10 +124,11 @@ if (_layout.showTabList) {
 await refreshList()
 //await Dialog.editCollection((await _layout.collections.list())[0])
 //await Dialog.editBookmark((await _layout.collections.list().then(l => l[0].bookmarks.list()))[0])
+await Dialog.showOptions(_layout)
 
 async function refreshList() {
-    elTrash.style.display = _layout.allowEdits ? '' : 'none'
-    btnAddCollection.style.display = _layout.allowEdits ? '' : 'none'
+    elTrash.style.visibility = _layout.allowEdits ? 'visible' : 'hidden'
+    btnAddCollection.style.visibility = _layout.allowEdits ? 'visible' : 'hidden'
     elEditLock.classList.toggle('fa-lock', !_layout.allowEdits)
     elEditLock.classList.toggle('fa-unlock', _layout.allowEdits)
     elEditLock.title = _layout.allowEdits ? 'Lock for edits' : 'Allow edits'

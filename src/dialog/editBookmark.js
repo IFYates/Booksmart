@@ -38,7 +38,7 @@ Dialog.editBookmark = (bookmark, collection) => {
                 }
             })
 
-            const lstFontAwesomeIcons = FontAwesome.getSelectionList(bookmark.icon || 'fas fa-bookmark')
+            const lstFontAwesomeIcons = FontAwesome.getSelectionList(bookmark?.icon || 'fas fa-bookmark')
             lstFontAwesomeIcons.classList.add('faIconList')
             const iconPreviewFA = create('i', { className: 'fa-fw fa-3x fas fa-bookmark centred' }, function () {
                 var _lastValue = 'fas fa-bookmark'
@@ -58,7 +58,7 @@ Dialog.editBookmark = (bookmark, collection) => {
                 this.onkeyup = () => {
                     iconPreviewCustom.show(this.value)
                 }
-                this.value = bookmark.icon && !bookmark?.icon.includes('fa-') ? bookmark.icon : ''
+                this.value = bookmark?.icon && !bookmark?.icon.includes('fa-') ? bookmark?.icon : ''
                 this.onkeyup()
             })
 
@@ -84,7 +84,7 @@ Dialog.editBookmark = (bookmark, collection) => {
                             txtCustomIcon.onkeyup()
                             break;
                         default:
-                            iconPreviewCustom.show(bookmark.domain ? `${bookmark.domain}/favicon.ico` : null)
+                            iconPreviewCustom.show(bookmark?.domain ? `${bookmark?.domain}/favicon.ico` : null)
                             break;
                     }
                 }
@@ -132,6 +132,7 @@ Dialog.editBookmark = (bookmark, collection) => {
             add('div', { className: 'actions' }, () => {
                 add('button', 'Save', {
                     onclick: async () => {
+                        elError.textContent = ''
                         if (!txtTitle.value.trim()) {
                             elError.textContent = 'Title is required'
                             return
@@ -156,19 +157,18 @@ Dialog.editBookmark = (bookmark, collection) => {
                             newIcon = txtCustomIcon.value
                         }
 
-                        elError.textContent = ''
-
                         // Create / update bookmark
                         if (!bookmark) {
                             bookmark = await collection.bookmarks.create(txtTitle.value.trim(), txtURL.value.trim())
                         } else {
                             bookmark.title = txtTitle.value
                             bookmark.url = txtURL.value
-                            bookmark.notes = txtNotes.value
-                            bookmark.icon = newIcon
                         }
-                        await bookmark.save()
+                        
+                        bookmark.notes = txtNotes.value
+                        bookmark.icon = newIcon
 
+                        await bookmark.save()
                         dialog.close()
                     }
                 })

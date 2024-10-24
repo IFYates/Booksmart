@@ -13,6 +13,9 @@ class Bookmark {
     #apply(bookmark) {
         this.#bookmark = bookmark
         const data = tryParse(this.#bookmark.title, { title: this.#bookmark.title })
+        this.#applyData(data)
+    }
+    #applyData(data) {
         this.#data = {
             title: data.title || '',
             icon: data.icon || '',
@@ -79,6 +82,9 @@ class Bookmark {
         data.url = this.#bookmark.url
         data.dateAdded = this.#bookmark.dataAdded
         return data
+    }
+    import(data) {
+        this.#applyData(data)
     }
 
     async hasOpenTab() {
