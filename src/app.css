@@ -132,7 +132,7 @@ dialog input {
 
 dialog form {
     padding: 5px;
-    margin: 10px 20px 30px 20px;
+    margin: 10px 20px;
 }
 
 dialog button {
@@ -141,7 +141,7 @@ dialog button {
 
 dialog .actions {
     float: right;
-    margin-bottom: 5px;
+    margin-bottom: 2em;
 }
 
 dialog .centred {

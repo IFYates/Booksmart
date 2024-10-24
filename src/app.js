@@ -44,6 +44,9 @@ elTrash.ondrop = async () => {
     }
 }
 
+const elInfo = document.getElementById('info')
+elInfo.onclick = () => Dialog.showInfo()
+
 document.getElementById('options').onclick = () => Dialog.showOptions(_layout).then(() => _layout.reload().then(refreshList))
 const btnAddCollection = document.getElementById('btnAddCollection')
 btnAddCollection.onclick = () => Dialog.editCollection(null, _layout).then(refreshList)

@@ -1,4 +1,9 @@
 HTMLElement.prototype.add = addToElement
+HTMLElement.prototype.then = function (type, text, args, layout) { // Scoped
+    const el = createElement(type, text, args, layout)
+    this.insertAdjacentElement('afterend', el)
+    return el
+}
 
 HTMLElement.prototype.clearChildren = function () {
     while (this.firstChild) {
