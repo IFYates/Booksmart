@@ -20,7 +20,8 @@ globalThis.isURL = function (url) {
  * @returns {number} The converted number, or the default value.
  */
 globalThis.num = function (value, otherwise = 0) {
-    return Number(value) || otherwise
+    const result = Number(value)
+    return !isNaN(result) ? result : otherwise
 }
 
 /**

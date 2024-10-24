@@ -30,6 +30,8 @@ class Layout {
     #applyData(data) {
         this.#data = {
             title: LayoutTitle, // To find it later
+            backgroundImage: data.backgroundImage,
+            themeAccent: data.themeAccent ?? [240, 14],
             columns: num(data.columns, 2),
             allowEdits: data.allowEdits !== false,
             openExistingTab: data.openExistingTab !== false,
@@ -41,10 +43,12 @@ class Layout {
     }
 
     get id() { return this.#root.id }
-    get columns() { return this.#data.columns }
-    set columns(value) { this.#data.columns = num(value) }
     get allowEdits() { return this.#data.allowEdits }
     set allowEdits(value) { this.#data.allowEdits = !!value }
+    get columns() { return this.#data.columns }
+    set columns(value) { this.#data.columns = num(value) }
+    get backgroundImage() { return this.#data.backgroundImage }
+    set backgroundImage(value) { this.#data.backgroundImage = value }
     get openExistingTab() { return this.#data.openExistingTab }
     set openExistingTab(value) { this.#data.openExistingTab = !!value }
     get openNewTab() { return this.#data.openNewTab }
@@ -55,10 +59,15 @@ class Layout {
     set showTabList(value) { this.#data.showTabList = !!value }
     get showTopSites() { return this.#data.showTopSites }
     set showTopSites(value) { this.#data.showTopSites = !!value }
+    get themeAccent() { return [...this.#data.themeAccent] }
+    set themeAccent(value) {
+        if (value instanceof Array && value.length == 2 && num(value[0], -1) > -1 && num(value[1], -1) > -1) {
+            this.#data.themeAccent = value
+        }
+    }
 
     static async folder() {
         const tree = (await chrome.bookmarks.getTree())[0].children
-        console.log(tree)
         var layoutFolder = tree.find(b => b.title === 'Other bookmarks').children
             .find(b => b.title === LayoutTitle || b.title.includes(`"title":"${LayoutTitle}"`))
         if (!layoutFolder) {
@@ -100,7 +109,7 @@ class Layout {
             }
             return collection
         },
-        list: async () => {
+        list: () => {
             const collections = []
             for (const collection of this.#collections) {
                 collections.push(collection)

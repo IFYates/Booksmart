@@ -36,7 +36,6 @@ globalThis.createElement = (type, text, args, layout) => {
     }
     if (text && el.__lookupGetter__('textContent')) {
         el.textContent = text
-        console.log(text)
     }
     if (typeof (layout) === 'function') {
         el.display(layout)

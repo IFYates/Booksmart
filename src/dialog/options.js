@@ -5,53 +5,103 @@ Dialog.showOptions = (layout) => {
         add('div', { style: 'display: grid; grid-row-gap: 1em; grid-template-columns: 1fr 1fr 1fr 1fr' }, () => {
             // Column count
             add('div', { classes: 'spanCols4' }, () => {
-                add('label', 'Columns')
-                add('input', { type: 'range', min: 1, max: 6, value: layout.columns })
-                    .onclick = async (ev) => {
-                        layout.columns = parseInt(ev.target.value)
+                const columnCount = add('label', 'Columns ').add('span', `(${layout.columns})`)
+                add('input', { type: 'range', min: 1, max: 6, value: layout.columns }, function () {
+                    this.oninput = () => {
+                        layout.columns = parseInt(this.value)
                         layout.onchange()
+                        columnCount.innerText = `(${layout.columns})`
                     }
+                })
             })
 
             // Show favicons
-            add('div')
             add('label', 'Show favicons', { style: 'text-align:right' })
             add('input', { type: 'checkbox', checked: layout.showFavicons })
-                .onclick = async (ev) => {
+                .onclick = (ev) => {
                     layout.showFavicons = ev.target.checked
                     layout.onchange()
                 }
-            add('div')
 
             // Use existing tabs
-            add('div')
             add('label', 'Switch to tab, if open', { style: 'text-align:right' })
             add('input', { type: 'checkbox', checked: layout.openExistingTab })
-                .onclick = async (ev) => {
+                .onclick = (ev) => {
                     layout.openExistingTab = ev.target.checked
                     layout.onchange()
                 }
-            add('div')
 
             // Open in new tab
-            add('div')
             add('label', 'Open in new tab', { style: 'text-align:right' })
             add('input', { type: 'checkbox', checked: layout.openNewTab })
-                .onclick = async (ev) => {
+                .onclick = (ev) => {
                     layout.openNewTab = ev.target.checked
                     layout.onchange()
                 }
-            add('div')
 
             // Show topSites
-            add('div')
             add('label', 'Show most visited sites', { style: 'text-align:right' })
             add('input', { type: 'checkbox', checked: layout.showTopSites })
-                .onclick = async (ev) => {
+                .onclick = (ev) => {
                     layout.showTopSites = ev.target.checked
                     layout.onchange()
                 }
-            add('div')
+
+            // Theme
+            add('div', { classes: 'spanCols4', style: 'display: grid; grid-column-gap: 1em; grid-template-columns: 1fr 1fr 1fr 1fr' }, () => {
+                add('label', 'Theme', { classes: 'spanCols4' })
+                const accent = layout.themeAccent
+                const rangeInputs = []
+                function updateRangeInputs() {
+                    for (const input of rangeInputs) {
+                        input.style.accentColor = `hsl(${accent[0]}, ${accent[1]}%, 50%)`
+                    }
+                }
+
+                add('label', 'Colour', { style: 'text-align:right' })
+                add('input', { classes: 'spanCols3', type: 'range', min: 0, max: 360, value: accent[0] }, function () {
+                    rangeInputs.push(this)
+                    this.oninput = () => {
+                        accent[0] = this.value
+                        updateRangeInputs()
+                    }
+                    this.onchange = () => {
+                        layout.themeAccent = accent
+                        layout.onchange()
+                    }
+                    this.oninput()
+                })
+                add('label', 'Saturation', { style: 'text-align:right' })
+                add('input', { classes: 'spanCols3', type: 'range', min: 0, max: 100, value: accent[1] }, function () {
+                    rangeInputs.push(this)
+                    this.oninput = () => {
+                        accent[1] = this.value
+                        updateRangeInputs()
+                    }
+                    this.onchange = () => {
+                        layout.themeAccent = accent
+                        layout.onchange()
+                    }
+                    this.oninput()
+                })
+
+                add('label', 'Background image', { style: 'text-align:right' })
+                const bgImage = create('img', { style: 'max-width:100%;max-height:100%', src: layout.backgroundImage || '' }, function () {
+                    this.onload = () => {
+                        layout.onchange()
+                    }
+                })
+                add('textarea', { classes: 'spanCols2', style: 'width:100%;height:100%;resize:none', value: layout.backgroundImage || '' }, function () {
+                    this.onkeyup = () => {
+                        bgImage.src = this.value
+                        layout.backgroundImage = this.value
+                        if (!this.value) {
+                            layout.onchange()
+                        }
+                    }
+                })
+                add(bgImage)
+            })
         })
 
         // theme / colour

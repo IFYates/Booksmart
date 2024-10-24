@@ -51,7 +51,8 @@ X Clear all
 ## Options
 X Layout (default 2 columns)
 X Open links in new tab by default
-- Themes and colours
+X Themes and colours
+X Background image
 X If link already open, switch to tab
   - ? Show if bookmark is open (& switch to)
 - ? Set as default homepage

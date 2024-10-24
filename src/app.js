@@ -22,9 +22,15 @@ elTrash.ondragover = (ev) => {
     if ((bookmark && !bookmark.isTab) || collection) {
         ev.preventDefault()
         ev.dataTransfer.dropEffect = 'move'
+        elTrash.classList.replace('fa-dumpster', 'fa-dumpster-fire')
     }
 }
+elTrash.ondragleave = () => {
+    elTrash.classList.replace('fa-dumpster-fire', 'fa-dumpster')
+}
 elTrash.ondrop = async () => {
+    elTrash.ondragleave()
+
     const bookmark = _dragInfo?.bookmark
     if (bookmark && !bookmark.isTab) {
         await bookmark.delete().then(refreshList)
@@ -38,7 +44,7 @@ elTrash.ondrop = async () => {
     }
 }
 
-document.getElementById('options').onclick = () => Dialog.showOptions(_layout).then(() => _layout.save())
+document.getElementById('options').onclick = () => Dialog.showOptions(_layout).then(() => _layout.reload().then(refreshList))
 const btnAddCollection = document.getElementById('btnAddCollection')
 btnAddCollection.onclick = () => Dialog.editCollection(null, _layout).then(refreshList)
 
@@ -124,19 +130,30 @@ if (_layout.showTabList) {
 await refreshList()
 //await Dialog.editCollection((await _layout.collections.list())[0])
 //await Dialog.editBookmark((await _layout.collections.list().then(l => l[0].bookmarks.list()))[0])
-await Dialog.showOptions(_layout)
+//await Dialog.showOptions(_layout)
 
+function setTheme(layout) {
+    document.documentElement.style.setProperty('--accent-colour-hue', layout.themeAccent[0])
+    document.documentElement.style.setProperty('--accent-colour-saturation', `${layout.themeAccent[1]}%`)
+    document.documentElement.style.setProperty('--accent-colour-lightness', '24%')
+    document.documentElement.style.setProperty('--text-colour', '#eee')
+    document.body.style.backgroundImage = layout.backgroundImage ? `url(${layout.backgroundImage})` : null
+}
 async function refreshList() {
-    elTrash.style.visibility = _layout.allowEdits ? 'visible' : 'hidden'
-    btnAddCollection.style.visibility = _layout.allowEdits ? 'visible' : 'hidden'
+    const tabsPromise = Tabs.list()
+    
+    setTheme(_layout)
+
+    elTrash.style.visibility = _layout.allowEdits ? null : 'hidden'
+    btnAddCollection.style.visibility = _layout.allowEdits ? null : 'hidden'
     elEditLock.classList.toggle('fa-lock', !_layout.allowEdits)
     elEditLock.classList.toggle('fa-unlock', _layout.allowEdits)
     elEditLock.title = _layout.allowEdits ? 'Lock for edits' : 'Allow edits'
-
-    const collections = await _layout.collections.list()
-    const tabs = await Tabs.list()
-
+    
     const oldLayout = document.getElementsByTagName('layout')[0]
+    
+    const collections = _layout.collections.list()
+    const tabs = await tabsPromise
 
     document.body.display(() => {
         const elLayout = add('layout', {
@@ -151,7 +168,7 @@ async function refreshList() {
             ondrop: async () => {
                 if (!_dragInfo) return
                 _dragInfo.dropped = true
-                
+
                 var collection = _dragInfo?.collection
                 if (!collection) {
                     return
@@ -209,7 +226,7 @@ function displayCollection(collection, isFirst, isLast) {
                     return
                 }
                 const element = _dragInfo.element
-                
+
                 // Copy tab here
                 if (bookmark.isTab) {
                     bookmark = await collection.bookmarks.create(bookmark.title, bookmark.url)
@@ -249,7 +266,7 @@ function displayCollection(collection, isFirst, isLast) {
                         ev.preventDefault()
                         return
                     }
-    
+
                     ev.stopPropagation()
                     ev.dataTransfer.effectAllowed = 'move'
                     _dragInfo = { collection: collection, element: elCollection, origin: elCollection.nextSibling }
