@@ -100,8 +100,12 @@ class Collection {
         await this.#layout.reload()
     }
 
-    export() {
+    export(standalone) {
         const data = { ...this.#data }
+        if (standalone) {
+            data['.booksmart.version'] = 1
+            data['.booksmart.content'] = 'collection'
+        }
         data.id = this.id
         data.index = this.index
         data.bookmarks = this.#bookmarks.map(b => b.export())

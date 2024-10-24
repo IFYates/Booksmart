@@ -20,7 +20,7 @@ class Layout {
 
         const data = tryParse(root.title, { title: root.title })
         this.#applyData(data)
-        
+
         this.#collections = []
         for (const child of root.children?.filter(c => Array.isArray(c.children)) ?? []) {
             this.#collections.push(new Collection(this, child))
@@ -122,6 +122,7 @@ class Layout {
     export() {
         const data = { ...this.#data }
         data['.booksmart.version'] = 1
+        data['.booksmart.content'] = 'layout'
         delete data.title
         data.collections = this.#collections.map(c => c.export())
         return data
@@ -132,8 +133,17 @@ class Layout {
             return false
         }
 
-        this.#applyData(data)
-        this.save()
+        if (data['.booksmart.content'] === 'collection') {
+            data = {
+                collections: [data]
+            }
+        } else if (data['.booksmart.content'] === 'layout') {
+            this.#applyData(data)
+            this.save()
+        } else {
+            console.error('Unsupported import content', data)
+            return false
+        }
 
         const bookmarks = this.#collections.flatMap(c => c.bookmarks.list())
         const collections = [...this.#collections]

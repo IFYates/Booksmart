@@ -59,15 +59,15 @@ Dialog.showOptions = (layout) => {
         // set as homepage?
 
         add('div', { style: 'margin-top:1em; text-align:center' }, () => {
-            add('button', {
-                onclick: async function () {
+            add('button', function () {
+                add('i', { className: 'fa-fw fas fa-upload' })
+                add('span', ' Export')
+
+                this.onclick = async function () {
                     const data = JSON.stringify(layout.export(), null, '  ')
                     const dataUrl = URL.createObjectURL(new Blob([data], { type: 'application/octet-binary' }));
                     chrome.downloads.download({ url: dataUrl, filename: 'booksmart_export.json', conflictAction: 'overwrite', saveAs: true });
                 }
-            }, function () {
-                add('i', { className: 'fa-fw fas fa-upload' })
-                add('span', ' Export')
             })
 
             add('button', function () {

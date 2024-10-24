@@ -36,9 +36,10 @@ X Bookmark options
   X Notes
 X Export
   X All
-  - Collection
-- Import
-  - Merge or replace
+  X Collection
+X Import
+  X All
+  X Collection
 X Clear all
 - ? Show preview image
 - ? Side panel add-on (https://developer.chrome.com/docs/extensions/develop/ui#side-panels)

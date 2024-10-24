@@ -176,9 +176,21 @@ Dialog.editCollection = (collection, layout) => {
                         await collection.delete()
                         dialog.close()
                     }
+                    add('span', '\u00A0')
                     add('i', { className: 'fa-fw fas fa-trash', title: 'Delete collection' })
+                    add('span', '\u00A0')
                 })
             }
+            add('button', function () {
+                add('i', { className: 'fa-fw fas fa-upload' })
+                add('span', ' Export')
+
+                this.onclick = async function () {
+                    const data = JSON.stringify(collection.export(true), null, '  ')
+                    const dataUrl = URL.createObjectURL(new Blob([data], { type: 'application/octet-binary' }));
+                    chrome.downloads.download({ url: dataUrl, filename: 'booksmart_export.json', conflictAction: 'overwrite', saveAs: true });
+                }
+            })
 
             const elError = create('div', { className: 'error' })
             add('div', { className: 'actions' }, () => {
