@@ -1,17 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Booksmart",
-  "description": "Smart bookmark organisation",
-  "version": "0.0.1",
+  "description": "Customisable bookmark manager and homepage",
+  "version": "0.0.2",
   "permissions": [
-    "bookmarks", // View all bookmarks
-    "downloads", // Export
-    "storage", // Store bookmarks
-    "tabs", // List open tabs
-    "topSites" // View top sites
+    "bookmarks",
+    "downloads",
+    "tabs",
+    "topSites"
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_icon": "images/icon.png"
+    "default_icon": "assets/icon.png"
   }
 }

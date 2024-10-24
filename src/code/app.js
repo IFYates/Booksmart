@@ -86,7 +86,7 @@ const tabCollection = {
     readonly: true,
     sortOrder: 0,
     icon: 'fas fa-window-restore',
-    title: 'Active tabs',
+    title: 'Open tabs',
     bookmarks: [],
     collapsed: !_layout.showTabList,
     save: async () => {
@@ -452,4 +452,9 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
             }
         })
     })
+}
+
+// Blur sensitive content
+globalThis.obfuscate = (on = true) => {
+    [...document.querySelectorAll('bookmark span, collection title span')].forEach(n => n.classList.toggle('obfuscated', on))
 }
