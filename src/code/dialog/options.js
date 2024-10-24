@@ -47,6 +47,15 @@ Dialog.showOptions = (layout) => {
                     layout.onchange()
                 }
 
+            // Wrap bookmark titles
+            add('label', 'Wrap long bookmark titles', { style: 'text-align:right' })
+            add('input', { type: 'checkbox', checked: layout.wrapTitles })
+                .onclick = (ev) => {
+                    console.log(this, this === ev.target)
+                    layout.wrapTitles = ev.target.checked
+                    layout.onchange()
+                }
+
             // Theme
             add('div', { classes: 'spanCols4', style: 'display: grid; grid-column-gap: 1em; grid-template-columns: 1fr 1fr 1fr 1fr' }, () => {
                 add('label', 'Theme', { classes: 'spanCols4' })

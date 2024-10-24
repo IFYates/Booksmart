@@ -30,25 +30,26 @@ class Layout {
     #applyData(data) {
         this.#data = {
             title: LayoutTitle, // To find it later
-            backgroundImage: data.backgroundImage,
-            themeAccent: data.themeAccent ?? [240, 14],
-            columns: num(data.columns, 2),
             allowEdits: data.allowEdits !== false,
+            backgroundImage: data.backgroundImage,
+            columns: num(data.columns, 2),
             openExistingTab: data.openExistingTab !== false,
             openNewTab: !!data.openNewTab,
             showFavicons: data.showFavicons !== false,
             showTabList: !!data.showTabList,
-            showTopSites: !!data.showTopSites
+            showTopSites: !!data.showTopSites,
+            themeAccent: data.themeAccent ?? [240, 14],
+            wrapTitles: data.wrapTitles !== false
         }
     }
 
     get id() { return this.#root.id }
     get allowEdits() { return this.#data.allowEdits }
     set allowEdits(value) { this.#data.allowEdits = !!value }
-    get columns() { return this.#data.columns }
-    set columns(value) { this.#data.columns = num(value) }
     get backgroundImage() { return this.#data.backgroundImage }
     set backgroundImage(value) { this.#data.backgroundImage = value }
+    get columns() { return this.#data.columns }
+    set columns(value) { this.#data.columns = num(value) }
     get openExistingTab() { return this.#data.openExistingTab }
     set openExistingTab(value) { this.#data.openExistingTab = !!value }
     get openNewTab() { return this.#data.openNewTab }
@@ -65,6 +66,8 @@ class Layout {
             this.#data.themeAccent = value
         }
     }
+    get wrapTitles() { return this.#data.wrapTitles }
+    set wrapTitles(value) { this.#data.wrapTitles = !!value }
 
     static async folder() {
         const tree = (await chrome.bookmarks.getTree())[0].children

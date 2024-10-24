@@ -435,7 +435,7 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
                 })
             }
 
-            add('span', bookmark.title, { className: 'title' })
+            add('span', bookmark.title, { classes: ['title', _layout.wrapTitles ? '' : 'nowrap'] })
 
             if (_layout.allowEdits && !collection.readonly) {
                 add('div', { className: 'actions' }, () => {

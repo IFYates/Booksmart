@@ -30,11 +30,10 @@ globalThis.createElement = (type, text, args, layout) => {
 
     const el = type instanceof HTMLElement ? type : document.createElement(type)
     if (args && typeof (args) === 'object') {
-        if (args.classes instanceof Array) {
+        if (args.classes) {
+            args.classes = Array.isArray(args.classes) ? args.classes : [args.classes]
+            args.classes = [...args.classes].filter(c => !!c)
             el.classList.add(...args.classes)
-            delete args.classes
-        } else if (args.classes)  {
-            el.classList.add(args.classes)
             delete args.classes
         }
         Object.assign(el, args)

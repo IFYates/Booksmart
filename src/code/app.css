@@ -289,6 +289,10 @@ bookmark a {
 bookmark a .title {
     margin-left: 5px;
 }
+bookmark a .title.nowrap {
+    white-space: nowrap;
+    overflow-x: hidden;
+}
 
 bookmark .favourite {
     position: absolute;
