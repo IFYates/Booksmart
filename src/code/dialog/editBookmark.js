@@ -102,21 +102,23 @@ export default class EditBookmarkDialog extends BaseDialog {
         add('label', 'URL')
         add(txtURL, { classes: 'spanCols3' })
 
-        add('label', 'Notes')
-        add(txtNotes, {
-            value: bookmark?.notes || '',
-            classes: 'spanCols3'
-        })
+        if (!(bookmark?.collection ?? collection).isFolder) {
+            add('label', 'Notes')
+            add(txtNotes, {
+                value: bookmark?.notes || '',
+                classes: 'spanCols3'
+            })
 
-        add('label', 'Icon')
-        add(iconPreviewDefault, { classes: 'spanRows2' })
-        add(iconPreviewFA, { classes: 'spanRows2' })
-        add(iconPreviewCustom, { classes: 'spanRows2' })
-        add(lstIconType, { classes: 'spanCols2' })
-        add('div')
-        add(lstFontAwesomeIcons, { classes: 'spanCols2' })
-        add(txtCustomIcon, { classes: 'spanCols2' })
-        lstIconType.onchange()
+            add('label', 'Icon')
+            add(iconPreviewDefault, { classes: 'spanRows2' })
+            add(iconPreviewFA, { classes: 'spanRows2' })
+            add(iconPreviewCustom, { classes: 'spanRows2' })
+            add(lstIconType, { classes: 'spanCols2' })
+            add('div')
+            add(lstFontAwesomeIcons, { classes: 'spanCols2' })
+            add(txtCustomIcon, { classes: 'spanCols2' })
+            lstIconType.onchange()
+        }
 
         const elError = add('div', { classes: ['error', 'spanCols4'] })
 

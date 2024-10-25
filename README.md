@@ -39,11 +39,10 @@ A bookmark management tool and customisable homepage.
 - List of favourites / last used bookmarks
 
 # Future possible features
+- Options for folder bookmarks
+- Tidier data-structure, so trashed items are less ugly
 - Performance improvement with partial page rebuilds
 - Bookmark colours by domain (across all collections)
-- Manage bookmark in folder view
-  - Options
-  - Move to/from collection
 - ? Show preview image
 - ? Side panel add-on (https://developer.chrome.com/docs/extensions/develop/ui#side-panels)
 - ? Non-bookmark items (e.g., notes)

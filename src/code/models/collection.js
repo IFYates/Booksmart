@@ -8,8 +8,8 @@ export default class Collection extends Folder {
         super(layout, folder)
         this.#_ = this._share()
 
-        if (this.#_.isExternal) {
-            console.log('Provided folder is not part of the Booksmart hierarchy', folder)
+        if (this.#_.isExternal || this.#_.isFolder) {
+            console.error('Provided folder is not part of the Booksmart hierarchy', folder)
             throw Error('Invalid collection')
         }
 

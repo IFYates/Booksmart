@@ -170,7 +170,7 @@ export default class EditCollectionDialog extends BaseDialog {
                     add('i', { className: 'fa-fw fas fa-trash', title: 'Delete collection' })
                     add('span', '\u00A0')
                 }).onclick = async function () {
-                    if (collection.isExternal) {
+                    if (collection.isFolder) {
                         await collection.layout.folders.remove(collection.id)
                         await collection.layout.reload()
                     } else {

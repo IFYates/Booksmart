@@ -47,7 +47,7 @@ export default class Folder {
     get index() { return this.#_.data.index }
     get title() { return this.#_.folder.title }
     set title(value) { this.#_.data.title = value?.trim() }
-    
+
     get collapsed() { return this.#_.data.collapsed }
     set collapsed(value) { this.#_.data.collapsed = !!value }
     get favourite() { return this.#_.data.favourite }
@@ -60,13 +60,16 @@ export default class Folder {
     static async get(id, layout, data) {
         const folder = (await chrome.bookmarks.get(id))[0]
         if (folder) {
-            folder.children = await chrome.bookmarks.getChildren(id)
+            if (!data.hidden) {
+                folder.children = await chrome.bookmarks.getChildren(id)
+            }
             folder.data = data
             return new Folder(layout, folder)
         }
         return null
     }
 
+    // TODO: change structure (like collections in layout)
     bookmarks = {
         count: () => this.#_.bookmarks.length,
         list: () => {
@@ -90,11 +93,29 @@ export default class Folder {
                     break;
             }
             return this.sortOrder < 0 ? result.reverse() : result
+        },
+        add: async (bookmark) => {
+            if (bookmark.collection.id !== this.id) {
+                await bookmark.moveTo(this)
+            } else if (this.#_.bookmarks.indexOf(bookmark) < 0) {
+                this.#_.bookmarks.push(bookmark)
+            }
+            return bookmark
+        },
+        create: async (title, url) => {
+            const bookmark = new Bookmark(this, {
+                title: title,
+                url: url
+            })
+            this.#_.bookmarks.push(bookmark)
+            return bookmark
+        },
+        remove: (bookmark) => {
+            const index = this.#_.bookmarks.indexOf(bookmark)
+            if (index >= 0) {
+                this.#_.bookmarks.splice(index, 1)
+            }
         }
-
-        // TODO: add?
-        // TODO: create?
-        // TODO: remove?
     }
 
     export(standalone) {

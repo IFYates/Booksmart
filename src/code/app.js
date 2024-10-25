@@ -185,8 +185,8 @@ async function refreshList() {
                 const element = _dragInfo.element
 
                 // Position
-                const siblings = element.parentElement.querySelectorAll('collection')
-                const index = Array.prototype.indexOf.call(siblings, element)
+                const siblings = [...element.parentElement.querySelectorAll('collection')]
+                const index = siblings.indexOf(element)
                 if (index >= 0) {
                     await collection.setIndex(index).then(refreshList)
                 }
@@ -253,11 +253,15 @@ function displayCollection(collection, isFirst, isLast) {
                 }
 
                 // Position
-                const siblings = element.parentElement.querySelectorAll('bookmark')
-                const index = Array.prototype.indexOf.call(siblings, element)
-                if (index >= 0) {
-                    await bookmark.setIndex(index).then(refreshList)
+                const siblings = [...element.parentElement.querySelectorAll('bookmark')]
+                const position = siblings.indexOf(element)
+                if (position === 0) {
+                    await bookmark.setIndex(0)
+                } else if (position > 0) {
+                    const index = num(siblings[position - 1].getAttribute('data-index'))
+                    await bookmark.setIndex(index + 1)
                 }
+                await refreshList()
             }
         }
 
@@ -327,7 +331,7 @@ function displayCollection(collection, isFirst, isLast) {
                     }
                 })
             }
-            
+
             if (collection.isFolder) {
                 add('a', () => {
                     add('i', { className: 'action fa-fw fas fa-folder', title: 'This is a folder from your browser bookmarks' })
@@ -345,11 +349,11 @@ function displayCollection(collection, isFirst, isLast) {
                 displayBookmark(collection, bookmarks[i], i == 0, i == bookmarks.length - 1)
             }
 
-            if (_layout.allowEdits && !collection.readonly && !collection.isExternal) {
+            if (_layout.allowEdits && !collection.readonly && (!collection.isExternal || collection.isFolder)) {
                 add('bookmark', {
                     className: 'add',
                     title: 'Add bookmark',
-                    onclick: () => Dialogs.editBookmark(null, collection).then(refreshList),
+                    onclick: () => Dialogs.newBookmark(collection).then(refreshList),
                     ondragenter: function () {
                         if (_dragInfo?.bookmark) {
                             this.parentElement.insertBefore(_dragInfo.element, this)
@@ -383,7 +387,7 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
         ondragenter: function () {
             if (_dragInfo?.bookmark && !bookmark.isTab && _dragInfo.bookmark.collection.sortOrder === 0) {
                 var target = !_dragInfo.bookmark.favourite ? this : this.parentElement.querySelectorAll('bookmark:first-of-type')[0]
-                if (target !== _dragInfo.element && target !== _dragInfo.lastTarget) {
+                if (target !== _dragInfo.element) {
                     const startIndex = Array.prototype.indexOf.call(target.parentElement.children, _dragInfo.element)
                     const targetIndex = Array.prototype.indexOf.call(target.parentElement.children, target)
                     if (startIndex < 0 || startIndex > targetIndex) {
@@ -391,7 +395,6 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
                     } else {
                         target.insertAdjacentElement('afterend', _dragInfo.element)
                     }
-                    _dragInfo.lastTarget = target
                 }
             }
         },
@@ -407,6 +410,7 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
         if (bookmark.isTab) {
             this.classList.add('tab')
         }
+        this.setAttribute('data-index', bookmark.index)
 
         add('a', {
             title: bookmark.url,
@@ -456,7 +460,7 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
 
             if (_layout.allowEdits && !bookmark.readonly) {
                 add('div', { className: 'actions' }, () => {
-                    if (collection.sortOrder === 0) {
+                    if (collection.sortOrder === 0 && !bookmark.readonly) {
                         if (!isFirst) {
                             iconButton('fas fa-arrow-up', 'Move up', () => bookmark.setIndex(bookmark.index - 1).then(refreshList))
                         }

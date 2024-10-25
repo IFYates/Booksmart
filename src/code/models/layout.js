@@ -41,7 +41,6 @@ export default class Layout {
         this.#collections = []
         for (const child of this.#root.children?.filter(c => Array.isArray(c.children)) ?? []) {
             this.#collections.push(new Collection(this, child))
-            // TODO: deep?
         }
         for (const [folderId, fdata] of Object.entries(this.#data.folders)) {
             const folder = await Folder.get(folderId, this, fdata)
@@ -49,7 +48,9 @@ export default class Layout {
             // Remove missing folders
             if (!folder) {
                 delete this.#data.folders[folderId]
-            } else if (!fdata.hidden) {
+            }
+
+            if (!fdata.hidden) {
                 this.#collections.push(folder)
             }
         }

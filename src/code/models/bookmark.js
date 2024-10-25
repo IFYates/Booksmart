@@ -1,7 +1,7 @@
 /*
 A single bookmark.
 */
-class Bookmark {
+export default class Bookmark {
     #collection
     #bookmark
     #data
@@ -26,7 +26,8 @@ class Bookmark {
         }
     }
 
-    get readonly() { return this.#collection.readonly || this.#collection.isExternal }
+    get readonly() { return this.#collection.readonly || (this.#collection.isExternal && !this.#collection.isFolder) }
+    get isExternal() { return this.#collection.isExternal }
 
     get collection() { return this.#collection }
     get id() { return this.#bookmark.id }
@@ -73,6 +74,7 @@ class Bookmark {
     }
 
     async delete() {
+        if (this.readonly) return
         await chrome.bookmarks.remove(this.id)
         await this.#collection.reload()
     }
@@ -86,6 +88,7 @@ class Bookmark {
         return data
     }
     import(data) {
+        if (this.readonly) return
         this.#applyData(data)
     }
 
@@ -98,6 +101,7 @@ class Bookmark {
     }
 
     async moveTo(collection) {
+        if (this.readonly) return
         if (this.#collection?.id !== collection.id) {
             this.#collection?.bookmarks.remove(this)
             this.#collection = collection
@@ -107,17 +111,28 @@ class Bookmark {
     }
 
     async save() {
+        if (this.readonly) return
+
+        var titleData
+        if (!this.#collection.isFolder) {
+            titleData = JSON.stringify(this.#data)
+        } else {
+            titleData = this.title
+            // TODO: other data for isFolder
+        }
+
         if (this.id) {
             // Update existing
             await chrome.bookmarks.update(this.id, {
-                title: JSON.stringify(this.#data),
+                title: titleData,
                 url: this.#bookmark.url
             })
+            return
         } else {
             // Create new
             this.#bookmark = await chrome.bookmarks.create({
                 parentId: this.#collection.id,
-                title: JSON.stringify(this.#data),
+                title: titleData,
                 url: this.#bookmark.url
             })
             this.#apply(this.#bookmark)
@@ -125,15 +140,13 @@ class Bookmark {
     }
 
     async setIndex(index) {
-        debugger
-        index = Math.min(Math.max(0, index), this.#collection.bookmarks.count())
-        const updated = await chrome.bookmarks.move(this.id, { index: index })
-        if (updated.index !== index) {
-            await chrome.bookmarks.move(this.id, { index: index + 1 })
+        index = Math.max(0, index)
+        if (this.index < index) {
+            index += 1
         }
-        await this.#collection.reload()
+        await chrome.bookmarks.move(this.id, { index: index })
+        await this.#collection.layout.reload()
     }
 }
 
 import Tabs from '../tabs.js'
-export default Bookmark
