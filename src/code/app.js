@@ -45,9 +45,9 @@ elTrash.ondrop = async () => {
 }
 
 const elInfo = document.getElementById('info')
-elInfo.onclick = () => Dialogs.showInfo()
+elInfo.onclick = () => Dialogs.info()
 
-document.getElementById('options').onclick = () => Dialogs.showOptions(_layout).then(() => _layout.reload().then(refreshList))
+document.getElementById('options').onclick = () => Dialogs.options(_layout).then(() => _layout.reload().then(refreshList))
 const btnAddCollection = document.getElementById('btnAddCollection')
 btnAddCollection.onclick = () => Dialogs.newCollection(_layout).then(refreshList)
 
@@ -133,10 +133,12 @@ if (_layout.showTabList) {
 }
 
 await refreshList()
-//await Dialogs.newCollection(_layout)
-await Dialogs.editCollection(_layout.collections[0])
-//await Dialogs.editBookmark(_layout.collections[0].bookmarks.list()[0])
-//await Dialogs.showOptions(_layout)
+//(await Dialogs.newBookmark(_layout.collections[0])).then(refreshList)
+//(await Dialogs.editBookmark(_layout.collections[0].bookmarks.list()[0])).then(refreshList)
+//(await Dialogs.newCollection(_layout)).then(refreshList)
+//(await Dialogs.editCollection(_layout.collections[0])).then(refreshList)
+//(await Dialogs.options(_layout)).then(refreshList)
+(await Dialogs.info(_layout)).then(refreshList)
 
 function setTheme(layout) {
     document.documentElement.style.setProperty('--accent-colour-hue', layout.themeAccent[0])

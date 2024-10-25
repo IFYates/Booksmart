@@ -2,13 +2,15 @@
 Base logic for all dialogs
 */
 export default class BaseDialog {
+    #icon
     #id
     #title
     #formClass
 
-    constructor(title, formClass) {
+    constructor(icon, title, formClass) {
         this.#id = new.target.name
-        this.#title = title
+        this.#icon = icon instanceof Array ? icon : icon.split(' ')
+        this.#title = ' ' + title
         this.#formClass = formClass
     }
 
@@ -24,7 +26,10 @@ export default class BaseDialog {
         const self = this
         const dialog = document.body.add('dialog', function () {
             this.id = self.id
-            add('title', self.title)
+            add('title', () => {
+                add('i', { classes: ['fa-fw', ...self.#icon] })
+                add('span', self.title)
+            })
         })
         dialog.add('form', { className: this.formClass, onsubmit: () => false }, () => self._display(dialog, ...args))
 

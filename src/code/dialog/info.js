@@ -1,7 +1,11 @@
-import Dialog from './base.js'
+import BaseDialog from './base.js'
 
-Dialog.showInfo = () => {
-    return Dialog.show('About Booksmart', (dialog) => {
+export default class InfoDialog extends BaseDialog {
+    constructor() {
+        super('fas fa-info-circle', 'About Booksmart')
+    }
+
+    _display(dialog) {
         dialog.style.width = '33%'
         
         add('p', 'Thanks for using Booksmart!')
@@ -25,5 +29,5 @@ Dialog.showInfo = () => {
         add('div', { style: 'margin-top:2em; text-align:center' }, () => {
             add('button', 'Close').onclick = () => dialog.close()
         })
-    })
+    }
 }

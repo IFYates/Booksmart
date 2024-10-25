@@ -3,7 +3,7 @@ import FontAwesome from '../faHelpers.js'
 
 export default class EditCollectionDialog extends BaseDialog {
     constructor(title) {
-        super(title)
+        super('fas fa-book', title)
     }
 
     async _display(dialog, collection, layout) {
@@ -59,7 +59,7 @@ export default class EditCollectionDialog extends BaseDialog {
             }
         })
 
-        const lstFontAwesomeIcons = FontAwesome.getSelectionList(collection?.icon)
+        const lstFontAwesomeIcons = FontAwesome.getSelectionList(collection?.icon || 'fas fa-book')
         lstFontAwesomeIcons.classList.add('faIconList')
         const iconPreviewFA = create('i', { className: 'fa-fw fa-3x fas fa-book centred' }, function () {
             var _lastValue = 'fas fa-book'
@@ -236,19 +236,21 @@ export default class EditCollectionDialog extends BaseDialog {
                 dialog.close()
             }
             add('button', { type: 'button' }, () => {
-                add('i', { className: 'fa-fw fas fa-xmark' })
+                add('i', { className: 'fa-fw far fa-circle-xmark' })
                 add('span', ' Cancel')
             }).onclick = () => dialog.close()
         })
 
-        add('p', { className: 'spanCols4 centred' }, () => {
-            add('button', { type: 'button' }, () => {
-                add('span', { className: 'fa-stack fa-xs' }, () => {
-                    add('i', { className: 'fas fa-bookmark fa-stack-2x' })
-                    add('i', { className: 'fas fa-plus fa-stack-1x fa-inverse' })
+        if (!collection) {
+            add('p', { className: 'spanCols4 centred' }, () => {
+                add('button', { type: 'button' }, () => {
+                    add('span', { className: 'fa-stack fa-xs' }, () => {
+                        add('i', { className: 'fas fa-bookmark fa-stack-2x' })
+                        add('i', { className: 'fas fa-arrow-right fa-stack-1x fa-inverse' })
+                    })
+                    add('span', ' Add from browser bookmarks')
                 })
-                add('span', ' Add from browser bookmarks')
             })
-        })
+        }
     }
 }

@@ -10,9 +10,12 @@
     transform: rotate(180deg) scaleX(-1);
 }
 
+button {
+    cursor: pointer;
+}
+
 .actions>button,
 .favourite>button {
-    cursor: pointer;
     padding: 1px 2px;
 }
 
@@ -56,6 +59,7 @@ textarea {
     border: revert !important;
 }
 
+.danger,
 .danger * {
     color: darkred !important;
 }
@@ -143,14 +147,29 @@ dialog form label {
     margin-right: 1em;
 }
 
-dialog#EditCollectionDialog form {
+dialog#EditCollectionDialog form,
+dialog#EditBookmarkDialog form {
     display: grid;
     grid-row-gap: 1em;
     grid-template-columns: 1fr 1fr 2fr 2fr;
 }
 
+dialog#OptionsDialog form {
+    display: grid;
+    grid-column-gap: 1em;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
 dialog button {
     margin: 0 5px;
+}
+
+dialog .actions-left-3 {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    width: fit-content;
+    white-space: nowrap;
 }
 
 dialog .actions {
