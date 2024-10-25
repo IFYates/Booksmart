@@ -27,6 +27,7 @@ A bookmark management tool and customisable homepage.
 - Reorder bookmarks
 - Choose bookmark sort order
 - Export collection
+- Display existing bookmarks folder
 
 ## Bookmarks
 - Change title
@@ -40,9 +41,9 @@ A bookmark management tool and customisable homepage.
 # Future possible features
 - Performance improvement with partial page rebuilds
 - Bookmark colours by domain (across all collections)
-- Display to add from existing bookmarks
-  - Create collection from existing bookmark folder
-  - Add bookmark to collection from manager
+- Manage bookmark in folder view
+  - Options
+  - Move to/from collection
 - ? Show preview image
 - ? Side panel add-on (https://developer.chrome.com/docs/extensions/develop/ui#side-panels)
 - ? Non-bookmark items (e.g., notes)

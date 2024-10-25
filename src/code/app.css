@@ -10,6 +10,7 @@
     transform: rotate(180deg) scaleX(-1);
 }
 
+a,
 button {
     cursor: pointer;
 }
@@ -19,11 +20,13 @@ button {
     padding: 1px 2px;
 }
 
+i.action,
 .actions>i {
     cursor: pointer;
     opacity: 0.3;
 }
 
+i.action:hover,
 .actions>i:hover {
     opacity: 1;
 }
@@ -120,6 +123,7 @@ dialog {
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
     padding: 0;
     width: 50%;
+    max-height: 75%;
     border-radius: 5px;
     overflow: hidden;
 }
@@ -152,6 +156,18 @@ dialog#EditBookmarkDialog form {
     display: grid;
     grid-row-gap: 1em;
     grid-template-columns: 1fr 1fr 2fr 2fr;
+}
+
+dialog#ImportBookmarkDialog form input[type="checkbox"] {
+    width: fit-content;
+}
+
+dialog#ImportBookmarkDialog .folderList {
+    column-count: 3;
+}
+
+dialog#ImportBookmarkDialog .folder:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 dialog#OptionsDialog form {
@@ -257,9 +273,11 @@ collection>title {
     margin-bottom: 5px;
 }
 
+collection>title>span {
+    flex-grow: 1;
+}
+
 collection>title>.actions {
-    position: absolute;
-    right: 5px;
     visibility: hidden;
 }
 

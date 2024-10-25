@@ -24,23 +24,18 @@ export default class Collection extends Folder {
             }
         }
 
+        folder.data = tryParse(folder.title, { title: folder.title })
         this.#_.apply(folder)
     }
 
     get readonly() { return false }
     get immobile() { return false }
     get fixed() { return false }
+    get isFolder() { return false }
 
+    get index() { return this.#_.folder.index }
     get title() { return this.#_.data.title }
     set title(value) { this.#_.data.title = value?.trim() }
-    get icon() { return this.#_.data.icon }
-    set icon(value) { this.#_.data.icon = value?.trim() }
-    get collapsed() { return this.#_.data.collapsed }
-    set collapsed(value) { this.#_.data.collapsed = !!value }
-    get favourite() { return this.#_.data.favourite }
-    set favourite(value) { this.#_.data.favourite = !!value }
-    get sortOrder() { return this.#_.data.sortOrder } // 0: Manual, 1: Alphabetic, 2: Creation date, 3: Clicks (then alphabetic), 4 Last click, -ve = opposite
-    set sortOrder(value) { this.#_.data.sortOrder = num(value) }
 
     bookmarks = {
         count: () => this.#_.bookmarks.length,
@@ -92,24 +87,15 @@ export default class Collection extends Folder {
     }
 
     async delete() {
-        if (this.isExternal) {
-            console.error('TODO')
-            return
-        }
-
         await chrome.bookmarks.removeTree(this.id)
         await this.#_.layout.reload()
     }
 
     export(standalone) {
-        const data = { ...this.#_.data }
+        const data = super.export(standalone)
         if (standalone) {
-            data['.booksmart.version'] = 1
             data['.booksmart.content'] = 'collection'
         }
-        data.id = this.id
-        data.index = this.index
-        data.bookmarks = this.#_.bookmarks.map(b => b.export())
         return data
     }
     import(data) {
@@ -119,11 +105,6 @@ export default class Collection extends Folder {
     }
 
     async save() {
-        if (this.isExternal) {
-            console.error('TODO')
-            return
-        }
-
         if (this.id) {
             // Update existing
             await chrome.bookmarks.update(this.id, {
@@ -133,25 +114,28 @@ export default class Collection extends Folder {
             // Create new
             this.#_.folder = await chrome.bookmarks.create({
                 parentId: this.#_.layout.id,
-                title: JSON.stringify(this.#_.data)
+                title: JSON.stringify(this.#_.data),
+                data: this.#_.data
             })
             this.#_.apply(this.#_.folder)
         }
     }
 
     async setIndex(index) {
-        if (this.isExternal) {
-            console.error('TODO')
-            return
+        index = Math.min(Math.max(0, index), this.#_.layout.collections.length - 1)
+        if (this.index !== index) {
+            if (this.index < index) {
+                index += 1
+            }
+            await chrome.bookmarks.move(this.id, { index: index })
+            await this.reload()
         }
-
-        index = Math.min(Math.max(0, index), this.#_.layout.collections.count() - 1)
-        await this.#_.layout.collections.setIndex(this, index)
     }
 
     async reload() {
         this.#_.folder = (await chrome.bookmarks.get(this.id))[0]
         this.#_.folder.children = await chrome.bookmarks.getChildren(this.id)
+        this.#_.folder.data = tryParse(this.#_.folder.title, { title: this.#_.folder.title })
         this.#_.apply(this.#_.folder)
     }
 }

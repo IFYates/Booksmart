@@ -24,7 +24,7 @@ export default class Layout {
         const root = await Layout.folder()
         const layout = new Layout(root)
         await layout.#apply()
-        if (!layout.collections.count()) {
+        if (!layout.collections.length) {
             await layout.collections.create('First collection')
         }
         return layout
@@ -43,9 +43,15 @@ export default class Layout {
             this.#collections.push(new Collection(this, child))
             // TODO: deep?
         }
-        for (const folderId of this.#data.folders) {
-            const folder = await Folder.get(folderId, this)
-            this.#collections.push(folder)
+        for (const [folderId, fdata] of Object.entries(this.#data.folders)) {
+            const folder = await Folder.get(folderId, this, fdata)
+
+            // Remove missing folders
+            if (!folder) {
+                delete this.#data.folders[folderId]
+            } else if (!fdata.hidden) {
+                this.#collections.push(folder)
+            }
         }
     }
     #applyData(data) {
@@ -61,9 +67,8 @@ export default class Layout {
             showTopSites: !!data.showTopSites,
             themeAccent: data.themeAccent ?? [240, 14],
             wrapTitles: data.wrapTitles !== false,
-            folders: data.folders ?? []
+            folders: data.folders ?? {}
         }
-        this.#data.folders.push('30') // TEMP
     }
 
     get id() { return this.#root.id }
@@ -98,35 +103,48 @@ export default class Layout {
         })
     }
 
-    collections = {
-        count: () => this.#collections.length,
-        list: () => [...this.#collections],
+    #collectionProto
+    get collections() {
+        if (!this.#collectionProto) {
+            this.#collectionProto = Object.create(Array.prototype);
+            this.#collectionProto.create = async (title) => {
+                const child = await chrome.bookmarks.create({
+                    parentId: this.#root.id,
+                    title: JSON.stringify({ title: title })
+                })
+                const collection = new Collection(this, child)
+                this.#collections.push(collection)
+                return collection
+            }
+        }
+        const arr = [...this.#collections].sort((a, b) => a.index - b.index)
+        Object.setPrototypeOf(arr, this.#collectionProto);
+        return arr
+    }
 
-        create: async (title) => {
-            const child = await chrome.bookmarks.create({
-                parentId: this.#root.id,
-                title: JSON.stringify({ title: title })
-            })
-            const collection = new Collection(this, child)
-            this.#collections.push(collection)
-            return collection
-        },
-        // get: async (collectionId) => {
-        //     var collection = this.#collections.find(c => c.id === collectionId)
-        //     if (!collection) {
-        //         collection = await Collection.load(this, collectionId)
-        //         this.#collections.push(collection)
-        //     }
-        //     return collection
-        // },
-        setIndex: async (collection, index) => {
-            index = Math.min(Math.max(0, index), this.#collections.length)
-            if (collection.index !== index) {
-                if (collection.index < index) {
-                    index += 1
+    get folders() {
+        return {
+            remove: async (folder) => {
+                const id = num(folder, folder?.id)
+                if (id && this.#data.folders.hasOwnProperty(id)) {
+                    if (!Object.keys(this.#data.folders[id])) {
+                        delete this.#data.folders[id]
+                    } else {
+                        this.#data.folders[id].hidden = true
+                    }
+                    await this.save()
                 }
-                await chrome.bookmarks.move(collection.id, { index: index })
-                await this.reload()
+            },
+            show: async (folder) => {
+                const id = num(folder, folder?.id)
+                if (id) {
+                    if (!this.#data.folders.hasOwnProperty(id)) {
+                        this.#data.folders[id] = {}
+                    } else if (this.#data.folders[id].hidden) {
+                        delete this.#data.folders[id].hidden
+                    }
+                    await this.save()
+                }
             }
         }
     }

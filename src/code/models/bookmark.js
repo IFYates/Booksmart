@@ -26,6 +26,8 @@ class Bookmark {
         }
     }
 
+    get readonly() { return this.#collection.readonly || this.#collection.isExternal }
+
     get collection() { return this.#collection }
     get id() { return this.#bookmark.id }
     get index() { return this.#bookmark.index }
@@ -123,6 +125,7 @@ class Bookmark {
     }
 
     async setIndex(index) {
+        debugger
         index = Math.min(Math.max(0, index), this.#collection.bookmarks.count())
         const updated = await chrome.bookmarks.move(this.id, { index: index })
         if (updated.index !== index) {

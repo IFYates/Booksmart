@@ -18,11 +18,14 @@ export default class BaseDialog {
     get title() { return this.#title }
     get formClass() { return this.#formClass }
 
-    async _display(self) {
+    async _prepare() { }
+    _display(dialog) {
         throw new Error('Must be implemented by a subclass');
     }
 
-    async show(...args) {
+    async show(...args) {        
+        await this._prepare(...args)
+        
         const self = this
         const dialog = document.body.add('dialog', function () {
             this.id = self.id

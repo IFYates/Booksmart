@@ -1,5 +1,6 @@
 import BaseDialog from './base.js'
 import FontAwesome from '../faHelpers.js'
+import Dialogs from '../dialogs.js'
 
 export default class EditCollectionDialog extends BaseDialog {
     constructor(title) {
@@ -169,14 +170,20 @@ export default class EditCollectionDialog extends BaseDialog {
                     add('i', { className: 'fa-fw fas fa-trash', title: 'Delete collection' })
                     add('span', '\u00A0')
                 }).onclick = async function () {
-                    if (!confirmedDelete) {
-                        confirmedDelete = true
-                        this.add('span', 'Press again to confirm')
-                        this.classList.add('danger')
-                        return
+                    if (collection.isExternal) {
+                        await collection.layout.folders.remove(collection.id)
+                        await collection.layout.reload()
+                    } else {
+                        if (!confirmedDelete) {
+                            confirmedDelete = true
+                            this.add('span', 'Press again to confirm')
+                            this.classList.add('danger')
+                            return
+                        }
+
+                        await collection.delete()
                     }
 
-                    await collection.delete()
                     dialog.close()
                 }
             }
@@ -249,7 +256,10 @@ export default class EditCollectionDialog extends BaseDialog {
                         add('i', { className: 'fas fa-arrow-right fa-stack-1x fa-inverse' })
                     })
                     add('span', ' Add from browser bookmarks')
-                })
+                }).onclick = async () => {
+                    await Dialogs.importBookmarks(layout)
+                    dialog.close()
+                }
             })
         }
     }

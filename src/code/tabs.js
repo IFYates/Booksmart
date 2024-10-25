@@ -26,6 +26,7 @@ export default class Tabs {
         return {
             id: tab.id,
             collection: collection,
+            readonly: true,
             isTab: true,
             favourite: false,
             icon: tab.favIconUrl,

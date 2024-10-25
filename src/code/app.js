@@ -133,12 +133,13 @@ if (_layout.showTabList) {
 }
 
 await refreshList()
-//(await Dialogs.newBookmark(_layout.collections[0])).then(refreshList)
-//(await Dialogs.editBookmark(_layout.collections[0].bookmarks.list()[0])).then(refreshList)
-//(await Dialogs.newCollection(_layout)).then(refreshList)
-//(await Dialogs.editCollection(_layout.collections[0])).then(refreshList)
-//(await Dialogs.options(_layout)).then(refreshList)
-(await Dialogs.info(_layout)).then(refreshList)
+// await Dialogs.newBookmark(_layout.collections[0]); await refreshList()
+// await Dialogs.editBookmark(_layout.collections[0].bookmarks.list()[0]); await refreshList()
+// await Dialogs.newCollection(_layout); await refreshList()
+// await Dialogs.editCollection(_layout.collections[0]); await refreshList()
+// await Dialogs.options(_layout); await refreshList()
+// await Dialogs.info(_layout); await refreshList()
+// await Dialogs.importBookmarks(_layout); await refreshList()
 
 function setTheme(layout) {
     document.documentElement.style.setProperty('--accent-colour-hue', layout.themeAccent[0])
@@ -325,6 +326,15 @@ function displayCollection(collection, isFirst, isLast) {
                         iconButton('fas fa-pen', 'Edit collection', () => Dialogs.editCollection(collection).then(refreshList))
                     }
                 })
+            }
+            
+            if (collection.isFolder) {
+                add('a', () => {
+                    add('i', { className: 'action fa-fw fas fa-folder', title: 'This is a folder from your browser bookmarks' })
+                }).onclick = (ev) => {
+                    ev.stopPropagation()
+                    Dialogs.importBookmarks(_layout).then(refreshList)
+                }
             }
         })
 

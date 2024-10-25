@@ -14,7 +14,7 @@ export default class Folder {
         this.#_.apply = (folder) => {
             this.#_.folder = folder
             this.#_.rebuild(folder)
-            this.#_.applyData(folder.title)
+            this.#_.applyData(folder.data)
         }
         this.#_.rebuild = (folder) => {
             this.#_.bookmarks = []
@@ -23,38 +23,45 @@ export default class Folder {
             }
         }
         this.#_.applyData = (data) => {
-            this.#_.data = {
-                title: data || '',
-                // TODO: how to store and retrieve these
-                //icon: data.icon || '',
-                //collapsed: !!data.collapsed,
-                //favourite: !!data.favourite,
-                //sortOrder: num(data.sortOrder)
-            }
+            data.favourite = !!data.favourite
+            data.icon = data.icon || ''
+            data.index = num(data.index, 999)
+            data.collapsed = !!data.collapsed
+            data.sortOrder = num(data.sortOrder)
+            data.title = data.title?.trim()
+            this.#_.data = data
         }
 
         if (new.target === Folder) {
             this.#registered = 1
             this.#_.folder = folder
             this.#_.rebuild(folder)
-            this.#_.applyData(folder)
+            this.#_.applyData(folder.data)
         }
     }
-    
-    get readonly() { return true } // TODO: what can we edit?
-    get immobile() { return true } // TODO: how can we store index?
-    get fixed() { return true } // TODO: how can we store?
 
     get isExternal() { return this.#_.isExternal }
+    get isFolder() { return true }
     get layout() { return this.#_.layout }
     get id() { return this.#_.folder.id }
-    get index() { return this.#_.folder.index }
+    get index() { return this.#_.data.index }
     get title() { return this.#_.folder.title }
+    set title(value) { this.#_.data.title = value?.trim() }
+    
+    get collapsed() { return this.#_.data.collapsed }
+    set collapsed(value) { this.#_.data.collapsed = !!value }
+    get favourite() { return this.#_.data.favourite }
+    set favourite(value) { this.#_.data.favourite = !!value }
+    get icon() { return this.#_.data.icon }
+    set icon(value) { this.#_.data.icon = value?.trim() }
+    get sortOrder() { return this.#_.data.sortOrder } // 0: Manual, 1: Alphabetic, 2: Creation date, 3: Clicks (then alphabetic), 4 Last click, -ve = opposite
+    set sortOrder(value) { this.#_.data.sortOrder = num(value) }
 
-    static async get(id, layout) {
+    static async get(id, layout, data) {
         const folder = (await chrome.bookmarks.get(id))[0]
         if (folder) {
             folder.children = await chrome.bookmarks.getChildren(id)
+            folder.data = data
             return new Folder(layout, folder)
         }
         return null
@@ -62,7 +69,28 @@ export default class Folder {
 
     bookmarks = {
         count: () => this.#_.bookmarks.length,
-        list: () => [...this.#_.bookmarks]
+        list: () => {
+            var result = [...this.#_.bookmarks]
+            function compareFavourite(a, b) { return (a.favourite ? 0 : 1) - (b.favourite ? 0 : 1) }
+            switch (Math.abs(this.sortOrder)) {
+                default: // Manual
+                    result.sort(compareFavourite)
+                    break;
+                case 1: // Alphabetic
+                    result.sort((a, b) => compareFavourite(a, b) || a.title.localeCompare(b.title))
+                    break;
+                case 2: // Creation date
+                    result.sort((a, b) => compareFavourite(a, b) || a.dateAddedUtc - b.dateAddedUtc)
+                    break;
+                case 3: // Clicks
+                    result.sort((a, b) => compareFavourite(a, b) || b.clicks - a.clicks || a.title.localeCompare(b.title))
+                    break;
+                case 4: // Last click
+                    result.sort((a, b) => compareFavourite(a, b) || b.lastClick - a.lastClick)
+                    break;
+            }
+            return this.sortOrder < 0 ? result.reverse() : result
+        }
 
         // TODO: add?
         // TODO: create?
@@ -79,6 +107,21 @@ export default class Folder {
         data.index = this.index
         data.bookmarks = this.#_.bookmarks.map(b => b.export())
         return data
+    }
+
+    async setIndex(index) {
+        this.#_.data.index = (index - 1) + 0.5
+        await this.#_.layout.save()
+    }
+
+    async save() {
+        if (this.#_.data.title && this.#_.data.title !== this.#_.folder.title) {
+            await chrome.bookmarks.update(this.#_.folder.id, { title: this.#_.data.title })
+            this.#_.folder.title = this.#_.data.title
+        }
+        delete this.#_.data.title
+
+        await this.#_.layout.save()
     }
 }
 
