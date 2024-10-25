@@ -36,7 +36,13 @@ globalThis.createElement = (type, text, args, layout) => {
             el.classList.add(...args.classes)
             delete args.classes
         }
-        Object.assign(el, args)
+        Object.entries(args).forEach(v => {
+            if (v[1] === null || v[1] === undefined) {
+                delete el[v[0]]
+            } else {
+                el[v[0]] = v[1]
+            }
+        })
     }
     if (text && el.__lookupGetter__('textContent')) {
         el.textContent = text

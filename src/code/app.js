@@ -2,7 +2,7 @@ import './html.js'
 import './display.js'
 import './utilities.js'
 
-import Dialog from './dialogs.js'
+import Dialogs from './dialogs.js'
 import Layout from './models/layout.js'
 import Tabs from './tabs.js'
 
@@ -45,16 +45,17 @@ elTrash.ondrop = async () => {
 }
 
 const elInfo = document.getElementById('info')
-elInfo.onclick = () => Dialog.showInfo()
+elInfo.onclick = () => Dialogs.showInfo()
 
-document.getElementById('options').onclick = () => Dialog.showOptions(_layout).then(() => _layout.reload().then(refreshList))
+document.getElementById('options').onclick = () => Dialogs.showOptions(_layout).then(() => _layout.reload().then(refreshList))
 const btnAddCollection = document.getElementById('btnAddCollection')
-btnAddCollection.onclick = () => Dialog.editCollection(null, _layout).then(refreshList)
+btnAddCollection.onclick = () => Dialogs.newCollection(_layout).then(refreshList)
 
 var elEditLock = document.getElementById('editLock')
 elEditLock.onclick = () => { _layout.allowEdits = !_layout.allowEdits; _layout.save().then(refreshList) }
 
 const sitesCollection = {
+    isExternal: true,
     fixed: true,
     immobile: true,
     readonly: true,
@@ -82,6 +83,7 @@ function displayTopSites() {
 }
 
 const tabCollection = {
+    isExternal: true,
     immobile: true,
     readonly: true,
     sortOrder: 0,
@@ -131,9 +133,10 @@ if (_layout.showTabList) {
 }
 
 await refreshList()
-//await Dialog.editCollection((await _layout.collections.list())[0])
-//await Dialog.editBookmark((await _layout.collections.list().then(l => l[0].bookmarks.list()))[0])
-//await Dialog.showOptions(_layout)
+//await Dialogs.newCollection(_layout)
+await Dialogs.editCollection(_layout.collections[0])
+//await Dialogs.editBookmark(_layout.collections[0].bookmarks.list()[0])
+//await Dialogs.showOptions(_layout)
 
 function setTheme(layout) {
     document.documentElement.style.setProperty('--accent-colour-hue', layout.themeAccent[0])
@@ -144,7 +147,7 @@ function setTheme(layout) {
 }
 async function refreshList() {
     const tabsPromise = Tabs.list()
-    
+
     setTheme(_layout)
 
     elTrash.style.visibility = _layout.allowEdits ? null : 'hidden'
@@ -152,10 +155,10 @@ async function refreshList() {
     elEditLock.classList.toggle('fa-lock', !_layout.allowEdits)
     elEditLock.classList.toggle('fa-unlock', _layout.allowEdits)
     elEditLock.title = _layout.allowEdits ? 'Lock for edits' : 'Allow edits'
-    
+
     const oldLayout = document.getElementsByTagName('layout')[0]
-    
-    const collections = _layout.collections.list()
+
+    const collections = _layout.collections
     const tabs = await tabsPromise
 
     document.body.display(() => {
@@ -308,15 +311,17 @@ function displayCollection(collection, isFirst, isLast) {
             add('span', collection.title)
 
             // Collection actions
-            if (_layout.allowEdits && !collection.readonly) {
+            if (_layout.allowEdits) {
                 add('div', { className: 'actions' }, () => {
-                    if (!isFirst) {
+                    if (!isFirst && !collection.immobile) {
                         iconButton('fas fa-arrow-up', 'Move up', () => collection.setIndex(collection.index - 1).then(refreshList))
                     }
-                    if (!isLast) {
+                    if (!isLast && !collection.immobile) {
                         iconButton('fas fa-arrow-down', 'Move down', () => collection.setIndex(collection.index + 1).then(refreshList))
                     }
-                    iconButton('fas fa-pen', 'Edit collection', () => Dialog.editCollection(collection).then(refreshList))
+                    if (!collection.readonly) {
+                        iconButton('fas fa-pen', 'Edit collection', () => Dialogs.editCollection(collection).then(refreshList))
+                    }
                 })
             }
         })
@@ -328,11 +333,11 @@ function displayCollection(collection, isFirst, isLast) {
                 displayBookmark(collection, bookmarks[i], i == 0, i == bookmarks.length - 1)
             }
 
-            if (_layout.allowEdits && !collection.readonly) {
+            if (_layout.allowEdits && !collection.readonly && !collection.isExternal) {
                 add('bookmark', {
                     className: 'add',
                     title: 'Add bookmark',
-                    onclick: () => Dialog.editBookmark(null, collection).then(refreshList),
+                    onclick: () => Dialogs.editBookmark(null, collection).then(refreshList),
                     ondragenter: function () {
                         if (_dragInfo?.bookmark) {
                             this.parentElement.insertBefore(_dragInfo.element, this)
@@ -346,8 +351,8 @@ function displayCollection(collection, isFirst, isLast) {
 }
 function displayBookmark(collection, bookmark, isFirst, isLast) {
     return add('bookmark', {
-        id: (bookmark.isTab ? 'tab-' : 'bookmark-') + bookmark.id,
-        className: bookmark.favourite ? 'favourite' : '',
+        id: bookmark.id ? ((bookmark.isTab ? 'tab-' : 'bookmark-') + bookmark.id) : null,
+        classes: [bookmark.favourite ? 'favourite' : '', bookmark.readonly ? 'tab' : ''],
         draggable: _layout.allowEdits,
         ondragstart: function (ev) {
             if (!_layout.allowEdits) {
@@ -416,7 +421,7 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
                 }
             }
 
-            if (_layout.allowEdits && !collection.readonly) {
+            if (_layout.allowEdits && !bookmark.readonly) {
                 add('div', { className: 'favourite' }, () => {
                     const btnFavourite = add('i', {
                         className: 'fa-fw',
@@ -437,7 +442,7 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
 
             add('span', bookmark.title, { classes: ['title', _layout.wrapTitles ? '' : 'nowrap'] })
 
-            if (_layout.allowEdits && !collection.readonly) {
+            if (_layout.allowEdits && !bookmark.readonly) {
                 add('div', { className: 'actions' }, () => {
                     if (collection.sortOrder === 0) {
                         if (!isFirst) {
@@ -447,7 +452,7 @@ function displayBookmark(collection, bookmark, isFirst, isLast) {
                             iconButton('fas fa-arrow-down', 'Move down', () => bookmark.setIndex(bookmark.index + 1).then(refreshList))
                         }
                     }
-                    iconButton('fas fa-pen', 'Edit bookmark', () => Dialog.editBookmark(bookmark).then(refreshList))
+                    iconButton('fas fa-pen', 'Edit bookmark', () => Dialogs.editBookmark(bookmark).then(refreshList))
                 })
             }
         })
