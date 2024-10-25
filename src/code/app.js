@@ -166,7 +166,7 @@ async function refreshList() {
 
     document.body.display(() => {
         const elLayout = add('layout', {
-            style: { gridTemplateColumns: `repeat(${_layout.columns}, 1fr)` },
+            style: `grid-template-columns:repeat(${_layout.columns}, 1fr)`,
             ondragover: (ev) => {
                 const collection = _dragInfo?.collection
                 if (collection) {

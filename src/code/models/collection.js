@@ -131,13 +131,6 @@ export default class Collection extends Folder {
             await this.reload()
         }
     }
-
-    async reload() {
-        this.#_.folder = (await chrome.bookmarks.get(this.id))[0]
-        this.#_.folder.children = await chrome.bookmarks.getChildren(this.id)
-        this.#_.folder.data = tryParse(this.#_.folder.title, { title: this.#_.folder.title })
-        this.#_.apply(this.#_.folder)
-    }
 }
 
 import Bookmark from './bookmark.js'

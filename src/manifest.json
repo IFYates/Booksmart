@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Booksmart",
   "description": "Customisable bookmark manager and homepage",
-  "version": "0.0.2",
+  "version": "0.2",
   "permissions": [
     "bookmarks",
     "downloads",
@@ -10,7 +10,10 @@
     "topSites"
   ],
   "action": {
-    "default_popup": "popup.html",
     "default_icon": "assets/icon.png"
+  },
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
   }
 }

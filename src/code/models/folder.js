@@ -69,6 +69,18 @@ export default class Folder {
         return null
     }
 
+    async delete() {
+        await this.#_.layout.folders.remove(this)
+        await this.#_.layout.reload()
+    }
+
+    async reload() {
+        this.#_.folder = (await chrome.bookmarks.get(this.id))[0]
+        this.#_.folder.children = await chrome.bookmarks.getChildren(this.id)
+        this.#_.folder.data = tryParse(this.#_.folder.title, { title: this.#_.folder.title })
+        this.#_.apply(this.#_.folder)
+    }
+
     // TODO: change structure (like collections in layout)
     bookmarks = {
         count: () => this.#_.bookmarks.length,
