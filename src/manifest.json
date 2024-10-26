@@ -3,12 +3,19 @@
   "name": "Booksmart",
   "description": "Customisable bookmark manager and homepage",
   "version": "0.2",
+  "author": "IFYates",
+  "icons": {
+    "128": "assets/icon.png"
+  },
   "permissions": [
     "bookmarks",
     "downloads",
     "tabs",
     "topSites"
   ],
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
   "action": {
     "default_icon": "assets/icon.png"
   },

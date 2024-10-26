@@ -58,13 +58,16 @@ export default class Folder {
     set sortOrder(value) { this.#_.data.sortOrder = num(value) }
 
     static async get(id, layout, data) {
-        const folder = (await chrome.bookmarks.get(id))[0]
-        if (folder) {
-            if (!data.hidden) {
-                folder.children = await chrome.bookmarks.getChildren(id)
+        try {
+            const folder = (await chrome.bookmarks.get(id))[0]
+            if (folder) {
+                if (!data.hidden) {
+                    folder.children = await chrome.bookmarks.getChildren(id)
+                }
+                folder.data = data
+                return new Folder(layout, folder)
             }
-            folder.data = data
-            return new Folder(layout, folder)
+        } catch {
         }
         return null
     }

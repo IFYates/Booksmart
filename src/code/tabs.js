@@ -7,7 +7,9 @@ export default class Tabs {
     }
 
     static async list() {
-        return (await chrome.tabs.query({})).filter(tab => tab.id !== ownTabId)
+        const tabs = await chrome.tabs.query({})
+        return tabs.filter(tab => tab.url !== document.location.href)
+            .sort((a, b) => (a.windowId - b.windowId) || a.title.localeCompare(b.title))
     }
 
     static async find(url) {
@@ -43,21 +45,18 @@ export default class Tabs {
     }
 }
 
-const ownTabId = (await chrome.tabs.getCurrent()).id
-
 const subscribers = []
 function emit(event, tabOrId) {
     for (const subscriber of subscribers) {
         subscriber(event, tabOrId)
     }
 }
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-    if (tabId === ownTabId) return
-    if (changeInfo.status === 'loading' || changeInfo.status === 'complete') {
+chrome.tabs.onUpdated.addListener(async (_, changeInfo, tab) => {
+    if (tab.url === document.location.href) return
+    if (changeInfo.hasOwnProperty('title')) {
         emit('updated', tab)
     }
 })
-chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
-    if (tabId === ownTabId) return
+chrome.tabs.onRemoved.addListener(async (tabId, _) => {
     emit('closed', tabId)
 })

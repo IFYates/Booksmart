@@ -71,6 +71,15 @@ textarea {
     color: red;
 }
 
+bookmark.separator {
+    align-self: center;
+    min-width: 0;
+    flex-grow: 0;
+    pointer-events: none;
+    height: 0.7em;
+    opacity: 0.5;
+}
+
 bookmark.favourite,
 bookmark.favourite .actions {
     background: #ff8;
@@ -96,8 +105,13 @@ body>.actions {
     position: fixed;
     display: flex;
     align-items: center;
+    pointer-events: none;
     bottom: 0;
     width: 100%;
+}
+
+body>.actions * {
+    pointer-events: auto;
 }
 
 h1 {

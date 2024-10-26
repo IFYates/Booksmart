@@ -73,16 +73,14 @@ export default class EditCollectionDialog extends BaseDialog {
             }
         })
 
+        const isFontAwesomeIcon = !collection?.icon || (collection?.icon?.includes('fa-') && !collection.icon.startsWith('data:image/') && !collection.icon.includes('://'))
+        const bookmarkIcon = !isFontAwesomeIcon ? collection?.bookmarks?.list().find(b => b.icon === collection?.icon) : null
         const lstBookmarkIcons = create('select', function () {
-            const elCurrent = collection?.icon?.startsWith('data:image/') || collection?.icon?.includes('://')
-                ? add('option', collection?.icon, { value: collection?.icon }) : null
             collection?.bookmarks.list().forEach(b => {
-                if (b.icon?.startsWith('data:image/') || b.icon?.includes('://')) {
-                    add('option', b.title, { value: b.icon })
-                    if (b.icon === collection?.icon) {
-                        elCurrent?.remove()
-                    }
-                }
+                add('option', b.title, { value: b.icon }, function () {
+                    this.selected = bookmarkIcon === b
+                    this.disabled = !b.icon?.startsWith('data:image/') && !b.icon?.includes('://')
+                })
             })
             this.onchange = () => {
                 iconPreviewCustom.show(this.value)
@@ -102,7 +100,6 @@ export default class EditCollectionDialog extends BaseDialog {
         })
 
         const lstIconType = create('select', function () {
-            add('option', 'Default', { value: 0 })
             add('option', 'Font Awesome', { value: 1 })
             if (collection?.bookmarks?.count() > 0) {
                 add('option', 'From bookmark', { value: 2 })
@@ -117,11 +114,6 @@ export default class EditCollectionDialog extends BaseDialog {
                 txtCustomIcon.style.display = 'none'
 
                 switch (this.value) {
-                    case '1':
-                        lstFontAwesomeIcons.style.display = ''
-                        iconPreviewFA.style.display = ''
-                        iconPreviewFA.update(lstFontAwesomeIcons.value())
-                        break;
                     case '2':
                         lstBookmarkIcons.style.display = ''
                         iconPreviewCustom.style.display = ''
@@ -133,11 +125,18 @@ export default class EditCollectionDialog extends BaseDialog {
                         txtCustomIcon.onkeyup()
                         break;
                     default:
-                        iconPreviewDefault.style.display = ''
+                        lstFontAwesomeIcons.style.display = ''
+                        iconPreviewFA.style.display = ''
+                        iconPreviewFA.update(lstFontAwesomeIcons.value())
                         break;
                 }
             }
-            this.value = !collection?.icon ? '0' : collection?.icon.includes('fa-') ? '1' : '2'
+
+            this.value = '1'
+            if (!isFontAwesomeIcon) {
+                txtCustomIcon.value = collection.icon
+                this.value = bookmarkIcon ? '2' : '3'
+            }
         })
         lstFontAwesomeIcons.subscribe(iconPreviewFA.update)
 
