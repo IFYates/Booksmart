@@ -6,7 +6,7 @@ export default class EditBookmarkDialog extends BaseDialog {
         super('fas fa-bookmark', title)
     }
 
-    async _display(dialog, bookmark, collection) {
+    async _display(dialog, bookmark, folder) {
         const txtTitle = create('input', {
             autofocus: true,
             type: 'textbox',
@@ -164,7 +164,7 @@ export default class EditBookmarkDialog extends BaseDialog {
 
                 // Create / update bookmark
                 if (!bookmark) {
-                    bookmark = await collection.bookmarks.create(txtTitle.value.trim(), txtURL.value.trim())
+                    bookmark = await folder.bookmarks.create(txtTitle.value.trim(), txtURL.value.trim())
                 } else {
                     bookmark.title = txtTitle.value
                     bookmark.url = txtURL.value

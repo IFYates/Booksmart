@@ -31,7 +31,7 @@ export default class Bookmark {
         }
     }
 
-    get readonly() { return false } // TODO: return this.#collection.readonly || (this.#collection.isExternal && !this.#collection.isFolder) }
+    get readonly() { return false } // TODO: return this.#folder.readonly || (this.#folder.isExternal && !this.#folder.isFolder) }
 
     get folderId() { return this.#parentId }
     get id() { return this.#id }
@@ -107,9 +107,9 @@ export default class Bookmark {
         return !!this.#lastTab
     }
 
-    async moveTo(collection) {
+    async moveTo(folder) {
         if (this.readonly) return
-        this.#parentId = collection.id
+        this.#parentId = folder.id
         await this.save()
     }
 
@@ -123,7 +123,7 @@ export default class Bookmark {
         if (this.index < index) {
             index += 1
         }
-        this.index = index
+        this.#index = index
         await this.save()
     }
 }

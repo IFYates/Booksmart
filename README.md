@@ -5,8 +5,8 @@ A bookmark management tool and customisable homepage.
 - Stored in browser bookmark system, for automatic synchronisation
 
 ## Main screen
-- Create, edit, delete bookmark collections
-- Reorder collections
+- Create, edit, delete bookmark folders
+- Reorder folders
 - Change number of columns
 - Display bookmark favicons, if possible
 - Choose to switch to existing tab, if open
@@ -17,28 +17,28 @@ A bookmark management tool and customisable homepage.
 ???- Export and reimport all settings
 - Lock for edits
 
-## Collections (Group of bookmarks)
+## Folders (Group of bookmarks)
 - Change title
 - Change icon
 - Create bookmarks
-- Drag bookmarks, tabs, sites to the collection
+- Drag bookmarks, tabs, sites to the folder
 - Remove bookmarks
 - Collapse
 - Reorder bookmarks
 - Choose bookmark sort order
-- Export collection
+- Export folder
 - Display existing bookmarks folder
 
 ## Bookmarks
 - Change title
 - Change icon
-- Pin within collection
+- Pin within folder
 - Add notes
 
 # Future possible features
 - Improve drag accuracy
 - Performance improvement with partial page rebuilds
-- Style bookmarks by domain (across all collections)
+- Style bookmarks by domain (across all folders)
 - ? Show preview image
 - ? Side panel add-on (https://developer.chrome.com/docs/extensions/develop/ui#side-panels)
 - ? Non-bookmark items (e.g., notes)

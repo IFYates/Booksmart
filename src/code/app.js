@@ -7,7 +7,7 @@ import Layout from './models/layout.js'
 import Tabs from './tabs.js'
 import MainView from "./viewModels/main.js"
 import BookmarkView from './viewModels/bookmarkView.js'
-import CollectionView from './viewModels/collectionView.js'
+import FolderView from './viewModels/folderView.js'
 
 var _layout = await Layout.load()
 _layout.onchange = () => refreshList()
@@ -15,8 +15,8 @@ _layout.onchange = () => refreshList()
 const elTrash = document.getElementById('trash')
 elTrash.ondragover = (ev) => {
     const bookmark = MainView.dragInfo?.bookmark
-    const collection = MainView.dragInfo?.collection
-    if ((bookmark && !bookmark.isTab) || collection) {
+    const folder = MainView.dragInfo?.folder
+    if ((bookmark && !bookmark.isTab) || folder) {
         ev.preventDefault()
         ev.dataTransfer.dropEffect = 'move'
         elTrash.classList.replace('fa-dumpster', 'fa-dumpster-fire')
@@ -34,9 +34,9 @@ elTrash.ondrop = async () => {
         return
     }
 
-    const collection = MainView.dragInfo?.collection
-    if (collection) {
-        await collection.delete().then(refreshList)
+    const folder = MainView.dragInfo?.folder
+    if (folder) {
+        await folder.delete().then(refreshList)
         return
     }
 }
@@ -45,13 +45,13 @@ const elInfo = document.getElementById('info')
 elInfo.onclick = () => Dialogs.info()
 
 document.getElementById('options').onclick = () => Dialogs.options(_layout).then(() => _layout.reload().then(refreshList))
-const btnAddCollection = document.getElementById('btnAddCollection')
-btnAddCollection.onclick = () => Dialogs.newCollection(_layout).then(refreshList)
+const btnAddFolder = document.getElementById('btnAddFolder')
+btnAddFolder.onclick = () => Dialogs.newFolder(_layout).then(refreshList)
 
 var elEditLock = document.getElementById('editLock')
 elEditLock.onclick = () => { _layout.allowEdits = !_layout.allowEdits; _layout.save().then(refreshList) }
 
-const sitesCollection = {
+const sitesFolder = {
     isExternal: true,
     fixed: true,
     immobile: true,
@@ -62,25 +62,25 @@ const sitesCollection = {
     layout: _layout,
     bookmarks: []
 }
-sitesCollection.bookmarks.list = () => sitesCollection.bookmarks
+sitesFolder.bookmarks.list = () => sitesFolder.bookmarks
 if (_layout.showTopSites) {
     chrome.topSites.get((sites) => {
         for (const site of sites.filter(s => s.url !== document.location.href)) {
-            sitesCollection.bookmarks.push(Tabs.asBookmark({
+            sitesFolder.bookmarks.push(Tabs.asBookmark({
                 id: site.id,
                 title: site.title,
                 url: site.url
-            }, sitesCollection))
+            }, sitesFolder))
         }
     })
 }
 function displayTopSites() {
-    const tabList = CollectionView.display(_layout, sitesCollection, true, true, refreshList)
+    const tabList = FolderView.display(_layout, sitesFolder, true, true, refreshList)
     tabList.id = 'topSites'
     tabList.style.gridColumn = `span ${_layout.columns}`
 }
 
-const tabCollection = {
+const tabFolder = {
     isExternal: true,
     immobile: true,
     readonly: true,
@@ -91,23 +91,23 @@ const tabCollection = {
     bookmarks: [],
     collapsed: !_layout.showTabList,
     save: async () => {
-        _layout.showTabList = !tabCollection.collapsed
+        _layout.showTabList = !tabFolder.collapsed
         await _layout.save()
     }
 }
-tabCollection.bookmarks.list = () => tabCollection.bookmarks
+tabFolder.bookmarks.list = () => tabFolder.bookmarks
 function displayAllTabs(tabs) {
-    tabCollection.bookmarks.splice(0, tabCollection.bookmarks.length)
+    tabFolder.bookmarks.splice(0, tabFolder.bookmarks.length)
     var lastWindowId = 0
     for (const tab of tabs) {
         if (lastWindowId && lastWindowId !== tab.windowId) {
-            tabCollection.bookmarks.push({ type: 'separator' })
+            tabFolder.bookmarks.push({ type: 'separator' })
         }
         lastWindowId = tab.windowId
-        tabCollection.bookmarks.push(Tabs.asBookmark(tab, tabCollection))
+        tabFolder.bookmarks.push(Tabs.asBookmark(tab, tabFolder))
     }
 
-    const tabList = CollectionView.display(_layout, tabCollection, true, true, refreshList)
+    const tabList = FolderView.display(_layout, tabFolder, true, true, refreshList)
     tabList.id = 'tabs'
     tabList.style.gridColumn = `span ${_layout.columns}`
 }
@@ -115,7 +115,7 @@ if (_layout.showTabList) {
     Tabs.subscribe((event, tabOrId) => {
         switch (event) {
             case 'updated':
-                const bookmark = Tabs.asBookmark(tabOrId, tabCollection)
+                const bookmark = Tabs.asBookmark(tabOrId, tabFolder)
                 const tabList = document.getElementById('tabs')
                 
                 const existingEl = document.getElementById('tab-' + bookmark.id)
@@ -138,10 +138,10 @@ if (_layout.showTabList) {
 }
 
 await refreshList()
-// await Dialogs.newBookmark(_layout.collections[0]); await refreshList()
-// await Dialogs.editBookmark(_layout.collections[0].bookmarks.list()[0]); await refreshList()
-// await Dialogs.newCollection(_layout); await refreshList()
-// await Dialogs.editCollection(_layout.collections[0]); await refreshList()
+// await Dialogs.newBookmark(_layout.folders[0]); await refreshList()
+// await Dialogs.editBookmark(_layout.folders[0].bookmarks.list()[0]); await refreshList()
+// await Dialogs.newFolder(_layout); await refreshList()
+// await Dialogs.editFolder(_layout.folders[0]); await refreshList()
 // await Dialogs.options(_layout); await refreshList()
 // await Dialogs.info(_layout); await refreshList()
 // await Dialogs.importBookmarks(_layout); await refreshList()
@@ -159,22 +159,22 @@ async function refreshList() {
     setTheme(_layout)
 
     elTrash.style.visibility = _layout.allowEdits ? null : 'hidden'
-    btnAddCollection.style.visibility = _layout.allowEdits ? null : 'hidden'
+    btnAddFolder.style.visibility = _layout.allowEdits ? null : 'hidden'
     elEditLock.classList.toggle('fa-lock', !_layout.allowEdits)
     elEditLock.classList.toggle('fa-unlock', _layout.allowEdits)
     elEditLock.title = _layout.allowEdits ? 'Lock for edits' : 'Allow edits'
 
     const oldLayout = document.getElementsByTagName('layout')[0]
 
-    const collections = await _layout.collections.entries()
+    const folders = await _layout.folders.entries()
     const tabs = await tabsPromise
 
     document.body.display(() => {
         const elLayout = add('layout', {
             style: `grid-template-columns:repeat(${_layout.columns}, 1fr)`,
             ondragover: (ev) => {
-                const collection = MainView.dragInfo?.collection
-                if (collection) {
+                const folder = MainView.dragInfo?.folder
+                if (folder) {
                     ev.preventDefault() // Can drop here
                     ev.dataTransfer.dropEffect = 'move'
                 }
@@ -183,22 +183,22 @@ async function refreshList() {
                 if (!MainView.dragInfo) return
                 MainView.dragInfo.dropped = true
 
-                var collection = MainView.dragInfo?.collection
-                if (!collection) {
+                var folder = MainView.dragInfo?.folder
+                if (!folder) {
                     return
                 }
                 const element = MainView.dragInfo.element
 
                 // Position
-                const siblings = [...element.parentElement.querySelectorAll('collection')]
+                const siblings = [...element.parentElement.querySelectorAll('folder')]
                 const index = siblings.indexOf(element)
                 if (index >= 0) {
-                    await collection.setIndex(index).then(refreshList)
+                    await folder.setIndex(index).then(refreshList)
                 }
             }
         }, () => {
-            for (const [i, collection] of collections.entries()) {
-                CollectionView.display(_layout, collection, i === 0, i === collections.length - 1, refreshList)
+            for (const [i, folder] of folders.entries()) {
+                FolderView.display(_layout, folder, i === 0, i === folders.length - 1, refreshList)
             }
             if (_layout.showTopSites) {
                 displayTopSites()
@@ -213,5 +213,5 @@ async function refreshList() {
 
 // Blur sensitive content
 globalThis.obfuscate = (on = true) => {
-    [...document.querySelectorAll('bookmark span, collection title span')].forEach(n => n.classList.toggle('obfuscated', on))
+    [...document.querySelectorAll('bookmark span, folder title span')].forEach(n => n.classList.toggle('obfuscated', on))
 }

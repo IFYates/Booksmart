@@ -118,7 +118,7 @@ h1 {
     margin: 0;
 }
 
-#btnAddCollection {
+#btnAddFolder {
     margin-right: -20px;
     flex-grow: unset;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
@@ -165,7 +165,7 @@ dialog form label {
     margin-right: 1em;
 }
 
-dialog#EditCollectionDialog form,
+dialog#EditFolderDialog form,
 dialog#EditBookmarkDialog form {
     display: grid;
     grid-row-gap: 1em;
@@ -254,7 +254,7 @@ layout {
     margin-bottom: 3.5em;
 }
 
-collection {
+folder {
     position: relative;
     display: flex;
     flex-wrap: wrap;
@@ -265,17 +265,17 @@ collection {
     padding: 5px;
 }
 
-collection .icon {
+folder .icon {
     width: 22px;
     max-height: 22px;
     padding-right: 4px;
 }
 
-collection.collapsed {
+folder.collapsed {
     filter: brightness(0.6);
 }
 
-collection>title {
+folder>title {
     background: var(--accent-colour);
     display: flex;
     align-items: center;
@@ -287,29 +287,29 @@ collection>title {
     margin-bottom: 5px;
 }
 
-collection>title>span {
+folder>title>span {
     flex-grow: 1;
 }
 
-collection>title>.actions {
+folder>title>.actions {
     visibility: hidden;
 }
 
-collection:not(.collapsed) title:hover .actions,
-collection:not(.collapsed) .actions:hover {
+folder:not(.collapsed) title:hover .actions,
+folder:not(.collapsed) .actions:hover {
     visibility: visible;
 }
 
-collection:has(.showHide) title:hover .icon {
+folder:has(.showHide) title:hover .icon {
     visibility: hidden;
 }
 
-collection .showHide {
+folder .showHide {
     position: absolute;
     visibility: hidden;
 }
 
-collection title:hover .showHide {
+folder title:hover .showHide {
     visibility: visible;
 }
 
@@ -365,7 +365,7 @@ bookmark .favourite button {
     padding: 1px 0;
 }
 
-collection bookmark:hover .favourite {
+folder bookmark:hover .favourite {
     visibility: visible;
 }
 
@@ -391,7 +391,7 @@ bookmark>a>.actions {
     visibility: hidden;
 }
 
-collection bookmark:hover>a>.actions {
+folder bookmark:hover>a>.actions {
     visibility: visible;
 }
 

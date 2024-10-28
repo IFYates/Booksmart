@@ -24,10 +24,11 @@ export default class Tabs {
         await chrome.tabs.update(tab.id, { active: true })
     }
 
-    static asBookmark(tab, collection) {
+    static asBookmark(tab, folder) {
         return {
+            // TODO
             id: tab.id,
-            collection: collection,
+            folderId: folder.id,
             readonly: true,
             isTab: true,
             favourite: false,

@@ -2,20 +2,20 @@ import BaseDialog from './base.js'
 import FontAwesome from '../faHelpers.js'
 import Dialogs from '../dialogs.js'
 
-export default class EditCollectionDialog extends BaseDialog {
+export default class EditFolderDialog extends BaseDialog {
     constructor(title) {
         super('fas fa-book', title)
     }
 
-    async _display(dialog, collection, layout) {
+    async _display(dialog, folder, layout) {
         const txtTitle = create('input', {
             autofocus: true,
             type: 'textbox',
-            value: collection?.title || 'New collection'
+            value: folder?.title || 'New folder'
         })
 
         const chkSortAsc = create('button', { type: 'button' }, function () {
-            this.value = collection?.sortOrder >= 0 ? '1' : '0'
+            this.value = folder?.sortOrder >= 0 ? '1' : '0'
             this.onclick = (ev) => {
                 if (ev) {
                     this.value = this.value === '1' ? '0' : '1'
@@ -33,7 +33,7 @@ export default class EditCollectionDialog extends BaseDialog {
             this.onchange = () => {
                 chkSortAsc.disabled = this.value === '0'
             }
-            this.value = Math.abs(num(collection?.sortOrder))
+            this.value = Math.abs(num(folder?.sortOrder))
             this.onchange()
         })
 
@@ -60,7 +60,7 @@ export default class EditCollectionDialog extends BaseDialog {
             }
         })
 
-        const lstFontAwesomeIcons = FontAwesome.getSelectionList(collection?.icon || 'fas fa-book')
+        const lstFontAwesomeIcons = FontAwesome.getSelectionList(folder?.icon || 'fas fa-book')
         lstFontAwesomeIcons.classList.add('faIconList')
         const iconPreviewFA = create('i', { className: 'fa-fw fa-3x fas fa-book centred' }, function () {
             var _lastValue = 'fas fa-book'
@@ -73,10 +73,10 @@ export default class EditCollectionDialog extends BaseDialog {
             }
         })
 
-        const isFontAwesomeIcon = !collection?.icon || (collection?.icon?.includes('fa-') && !collection.icon.startsWith('data:image/') && !collection.icon.includes('://'))
-        const bookmarkIcon = !isFontAwesomeIcon ? collection?.bookmarks?.list().find(b => b.icon === collection?.icon) : null
+        const isFontAwesomeIcon = !folder?.icon || (folder?.icon?.includes('fa-') && !folder.icon.startsWith('data:image/') && !folder.icon.includes('://'))
+        const bookmarkIcon = !isFontAwesomeIcon ? folder?.bookmarks?.list().find(b => b.icon === folder?.icon) : null
         const lstBookmarkIcons = create('select', function () {
-            collection?.bookmarks.list().forEach(b => {
+            folder?.bookmarks.list().forEach(b => {
                 add('option', b.title, { value: b.icon }, function () {
                     this.selected = bookmarkIcon === b
                     this.disabled = !b.icon?.startsWith('data:image/') && !b.icon?.includes('://')
@@ -85,23 +85,23 @@ export default class EditCollectionDialog extends BaseDialog {
             this.onchange = () => {
                 iconPreviewCustom.show(this.value)
             }
-            this.value = collection?.icon
+            this.value = folder?.icon
             this.onchange()
         })
         const txtCustomIcon = create('input', {
             type: 'textbox',
-            value: !collection?.icon?.includes('fa-') ? collection?.icon || '' : ''
+            value: !folder?.icon?.includes('fa-') ? folder?.icon || '' : ''
         }, function () {
             this.onkeyup = () => {
                 iconPreviewCustom.show(this.value)
             }
-            this.value = collection?.icon && !collection?.icon.includes('fa-') ? collection?.icon : ''
+            this.value = folder?.icon && !folder?.icon.includes('fa-') ? folder?.icon : ''
             this.onkeyup()
         })
 
         const lstIconType = create('select', function () {
             add('option', 'Font Awesome', { value: 1 })
-            if (collection?.bookmarks?.count() > 0) {
+            if (folder?.bookmarks?.count() > 0) {
                 add('option', 'From bookmark', { value: 2 })
             }
             add('option', 'Custom', { value: 3 })
@@ -134,7 +134,7 @@ export default class EditCollectionDialog extends BaseDialog {
 
             this.value = '1'
             if (!isFontAwesomeIcon) {
-                txtCustomIcon.value = collection.icon
+                txtCustomIcon.value = folder.icon
                 this.value = bookmarkIcon ? '2' : '3'
             }
         })
@@ -162,10 +162,10 @@ export default class EditCollectionDialog extends BaseDialog {
         const elError = add('div', { classes: ['error', 'spanCols4'] })
 
         add('div', { classes: 'spanCols2', style: 'white-space:nowrap' }, () => {
-            if (collection) {
+            if (folder) {
                 var confirmedDelete = false
                 add('button', { type: 'button' }, () => {
-                    add('i', { className: 'fa-fw fas fa-trash-can', title: 'Delete collection' })
+                    add('i', { className: 'fa-fw fas fa-trash-can', title: 'Delete folder' })
                     add('span', ' Delete')
                 }).onclick = async function () {
                     if (!confirmedDelete) {
@@ -175,16 +175,16 @@ export default class EditCollectionDialog extends BaseDialog {
                         return
                     }
 
-                    await collection.delete()
+                    await folder.delete()
                     dialog.close()
                 }
 
-                if (collection.isFolder) {
+                if (folder.isFolder) {
                     add('button', { type: 'button' }, () => {
                         add('i', { className: 'fa-fw fas fa-folder-minus', title: 'Remove folder' })
                         add('span', ' Remove')
                     }).onclick = async function () {
-                        await collection.remove()
+                        await folder.remove()
                         dialog.close()
                     }
                 }
@@ -193,7 +193,7 @@ export default class EditCollectionDialog extends BaseDialog {
                 add('i', { className: 'fa-fw fas fa-upload' })
                 add('span', ' Export')
             }).onclick = async () => {
-                const data = JSON.stringify(collection.export(true, true), null, '  ')
+                const data = JSON.stringify(folder.export(true, true), null, '  ')
                 const dataUrl = URL.createObjectURL(new Blob([data], { type: 'application/octet-binary' }));
                 chrome.downloads.download({ url: dataUrl, filename: 'booksmart_export.json', conflictAction: 'overwrite', saveAs: true });
             }
@@ -231,17 +231,17 @@ export default class EditCollectionDialog extends BaseDialog {
                     newIcon = txtCustomIcon.value
                 }
 
-                // Create / update collection
-                if (!collection) {
-                    collection = await layout.collections.create(txtTitle.value)
+                // Create / update folder
+                if (!folder) {
+                    folder = await layout.folders.create(txtTitle.value)
                 } else {
-                    collection.title = txtTitle.value
+                    folder.title = txtTitle.value
                 }
 
-                collection.sortOrder = num(lstSort.value) * (chkSortAsc.checked ? 1 : -1)
-                collection.icon = newIcon
+                folder.sortOrder = num(lstSort.value) * (chkSortAsc.checked ? 1 : -1)
+                folder.icon = newIcon
 
-                await collection.save()
+                await folder.save()
                 dialog.close()
             }
             add('button', { type: 'button' }, () => {
@@ -250,7 +250,7 @@ export default class EditCollectionDialog extends BaseDialog {
             }).onclick = () => dialog.close()
         })
 
-        if (!collection) {
+        if (!folder) {
             add('p', { className: 'spanCols4 centred' }, () => {
                 add('button', { type: 'button' }, () => {
                     add('span', { className: 'fa-stack fa-xs' }, () => {

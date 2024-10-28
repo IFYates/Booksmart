@@ -6,10 +6,10 @@ export default class ImportBookmarkDialog extends BaseDialog {
     }
 
     #tree
-    #collections
+    #folders
     async _prepare(layout) {
         this.#tree = (await chrome.bookmarks.getTree())[0].children[0]
-        this.#collections = await layout.collections.entries()
+        this.#folders = await layout.folders.entries()
     }
 
     _display(dialog, layout) {
@@ -31,9 +31,9 @@ export default class ImportBookmarkDialog extends BaseDialog {
             var el = add('div', { className: 'folder', style: `margin-left: ${depth}px` }, () => {
                 add(showHide)
                 const id = 'folder-' + folder.id
-                folder.showCollection = this.#collections.some(c => c.id === folder.id)
-                add('input', { type: 'checkbox', id: id, checked: folder.showCollection }).onchange = function () {
-                    folder.showCollection = this.checked
+                folder.showFolder = this.#folders.some(c => c.id === folder.id)
+                add('input', { type: 'checkbox', id: id, checked: folder.showFolder }).onchange = function () {
+                    folder.showFolder = this.checked
                 }
                 add('label', `${folder.title} (${folder.children.filter(c => c.url).length})`, { htmlFor: id })
             })
@@ -76,12 +76,12 @@ export default class ImportBookmarkDialog extends BaseDialog {
                 add('span', ' Save')
             }).onclick = async () => {
                 for (const folder of folders) {
-                    const collection = this.#collections.find(c => c.id === folder.id)
-                    if (folder.showCollection) {
-                        if (!collection) {
-                            await layout.collections.add(folder)
+                    const folder = this.#folders.find(c => c.id === folder.id)
+                    if (folder.showFolder) {
+                        if (!folder) {
+                            await layout.folders.add(folder)
                         }
-                    } else if (collection) {
+                    } else if (folder) {
                         await layout.folders.remove(folder)
                     }
                 }

@@ -2,7 +2,7 @@
 View model for Bookmark.
 */
 export default class BookmarkView {
-    static display(layout, collection, bookmark, isFirst, isLast, refreshList) {
+    static display(layout, folder, bookmark, isFirst, isLast, refreshList) {
         if (bookmark.type === 'separator') {
             return add('bookmark', { className: 'separator' })
         }
@@ -28,8 +28,8 @@ export default class BookmarkView {
             ondragenter: function () {
                 const dragging = MainView.dragInfo?.bookmark
                 if (dragging && !bookmark.isTab) {
-                    if (dragging.folderId === collection.id && collection.sortOrder !== 0) {
-                        return // Cannot reorder non-manual collection
+                    if (dragging.folderId === folder.id && folder.sortOrder !== 0) {
+                        return // Cannot reorder non-manual folder
                     }
 
                     var target = !dragging.favourite ? this : this.parentElement.querySelectorAll('bookmark:first-of-type')[0]
@@ -106,7 +106,7 @@ export default class BookmarkView {
 
                 if (layout.allowEdits && !bookmark.readonly) {
                     add('div', { className: 'actions' }, () => {
-                        if (collection.sortOrder === 0 && !bookmark.readonly) {
+                        if (folder.sortOrder === 0 && !bookmark.readonly) {
                             if (!isFirst) {
                                 iconButton('fas fa-arrow-up', 'Move up', () => bookmark.setIndex(bookmark.index - 1).then(refreshList))
                             }
@@ -114,7 +114,7 @@ export default class BookmarkView {
                                 iconButton('fas fa-arrow-down', 'Move down', () => bookmark.setIndex(bookmark.index + 1).then(refreshList))
                             }
                         }
-                        iconButton('fas fa-pen', 'Edit bookmark', () => Dialogs.editBookmark(bookmark, collection).then(refreshList))
+                        iconButton('fas fa-pen', 'Edit bookmark', () => Dialogs.editBookmark(bookmark, folder).then(refreshList))
                     })
                 }
             })

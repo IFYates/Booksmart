@@ -1,5 +1,5 @@
 /*
-The collection layout.
+The Booksmart layout.
 */
 export default class Layout {
     #storage
@@ -10,15 +10,18 @@ export default class Layout {
     static async load() {
         const layout = new Layout()
         await layout.reload()
-        if (!layout.collections.count()) {
-            await layout.collections.create('My Bookmarks')
+        if (!layout.folders.count()) {
+            await layout.folders.create('My Bookmarks')
         }
         return layout
     }
 
     async reload() {
         this.#storage = await Storage.load()
-        const data = this.#storage.data
+        this.#applyData(this.#storage.data)
+    }
+    #applyData(data)
+    {
         this.#data = {
             allowEdits: data.allowEdits !== false,
             backgroundImage: data.backgroundImage,
@@ -33,7 +36,7 @@ export default class Layout {
         }
     }
 
-    get collections() { return this.#storage.folders }
+    get folders() { return this.#storage.folders }
 
     get id() { return this.#storage.rootId }
     get dataId() { return this.#storage.dataId }
@@ -66,7 +69,7 @@ export default class Layout {
         const data = { ...this.#data }
         data['.booksmart'] = { version: 1, content: 'layout' }
         delete data.title
-        data.folders = (await this.collections.entries()).map(c => c.export())
+        data.folders = (await this.folders.entries()).map(c => c.export())
         return data
     }
     async import(data) {
@@ -75,7 +78,7 @@ export default class Layout {
             return false
         }
 
-        if (data['.booksmart'].content === 'collection') {
+        if (data['.booksmart'].content === 'folder') {
             data = {
                 folders: [data]
             }
@@ -87,12 +90,12 @@ export default class Layout {
             return false
         }
 
-        const collections = await this.collections.entries()
-        const bookmarks = collections.flatMap(c => c.bookmarks.list())
-        async function applyCollectionImport(collection, data) {
-            collections.splice(collections.indexOf(collection), 1)
-            collection.import(data)
-            await collection.save()
+        const folders = await this.folders.entries()
+        const bookmarks = folders.flatMap(c => c.bookmarks.list())
+        async function applyFolderImport(folder, data) {
+            folders.splice(folders.indexOf(folder), 1)
+            folder.import(data)
+            await folder.save()
 
             // Update bookmarks by ID and URL
             const unimportedBookmarks = []
@@ -112,30 +115,30 @@ export default class Layout {
                 if (bookmark) {
                     bookmarks.splice(bookmarks.indexOf(bookmark), 1)
                 } else {
-                    bookmark = await collection.bookmarks.create(importBookmark.title, importBookmark.url)
+                    bookmark = await folder.bookmarks.create(importBookmark.title, importBookmark.url)
                 }
                 bookmark.import(importBookmark)
                 await bookmark.save()
             }
         }
 
-        // Update collection by ID and title
-        const unimportedCollections = []
-        for (const importCollection of data.folders) {
-            var collection = collections.find(c => c.id == importCollection.id && c.title == importCollection.title)
-            if (collection) {
-                await applyCollectionImport(collection, importCollection)
+        // Update folder by ID and title
+        const unimportedFolders = []
+        for (const importFolder of data.folders) {
+            var folder = folders.find(c => c.id == importFolder.id && c.title == importFolder.title)
+            if (folder) {
+                await applyFolderImport(folder, importFolder)
             } else {
-                unimportedCollections.push(importCollection)
+                unimportedFolders.push(importFolder)
             }
         }
-        // Update collection by title, otherwise create
-        for (const importCollection of unimportedCollections) {
-            var collection = collections.find(c => c.title === importCollection.title)
-            if (!collection) {
-                collection = await this.collections.create(importCollection.title)
+        // Update folder by title, otherwise create
+        for (const importFolder of unimportedFolders) {
+            var folder = folders.find(c => c.title === importFolder.title)
+            if (!folder) {
+                folder = await this.folders.create(importFolder.title)
             }
-            await applyCollectionImport(collection, importCollection)
+            await applyFolderImport(folder, importFolder)
         }
 
         document.location.reload()
@@ -164,6 +167,7 @@ export default class Layout {
             return false
         })
         this.#storage.save(this.#data)
+        this.#applyData(this.#data)
     }
 
     // TODO: subscribe to tab events to keep bookmarks up-to-date
