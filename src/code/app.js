@@ -10,10 +10,6 @@ import BookmarkView from './viewModels/bookmarkView.js'
 import CollectionView from './viewModels/collectionView.js'
 
 var _layout = await Layout.load()
-if (!_layout) {
-    _layout = new Layout()
-    await _layout.save()
-}
 _layout.onchange = () => refreshList()
 
 const elTrash = document.getElementById('trash')
@@ -79,7 +75,7 @@ if (_layout.showTopSites) {
     })
 }
 function displayTopSites() {
-    const tabList = CollectionView.display(sitesCollection, true, true, refreshList)
+    const tabList = CollectionView.display(_layout, sitesCollection, true, true, refreshList)
     tabList.id = 'topSites'
     tabList.style.gridColumn = `span ${_layout.columns}`
 }
@@ -111,7 +107,7 @@ function displayAllTabs(tabs) {
         tabCollection.bookmarks.push(Tabs.asBookmark(tab, tabCollection))
     }
 
-    const tabList = CollectionView.display(tabCollection, true, true, refreshList)
+    const tabList = CollectionView.display(_layout, tabCollection, true, true, refreshList)
     tabList.id = 'tabs'
     tabList.style.gridColumn = `span ${_layout.columns}`
 }
@@ -125,9 +121,8 @@ if (_layout.showTabList) {
                 const existingEl = document.getElementById('tab-' + bookmark.id)
                 var newEl
                 tabList?.display(() => {
-                    newEl = BookmarkView.display(bookmark, true, true, refreshList)
+                    newEl = BookmarkView.display(_layout, bookmark, true, true, refreshList)
                 })
-                console.log(event, tabOrId, bookmark.title, newEl, existingEl)
                 if (existingEl) {
                     existingEl.parentElement.replaceChild(newEl, existingEl)
                 }
@@ -171,7 +166,7 @@ async function refreshList() {
 
     const oldLayout = document.getElementsByTagName('layout')[0]
 
-    const collections = _layout.collections
+    const collections = await _layout.collections.entries()
     const tabs = await tabsPromise
 
     document.body.display(() => {
@@ -203,7 +198,7 @@ async function refreshList() {
             }
         }, () => {
             for (const [i, collection] of collections.entries()) {
-                CollectionView.display(collection, i === 0, i === collections.length - 1, refreshList)
+                CollectionView.display(_layout, collection, i === 0, i === collections.length - 1, refreshList)
             }
             if (_layout.showTopSites) {
                 displayTopSites()

@@ -13,7 +13,7 @@ export default class Dialogs {
     static #newCollection = new EditCollectionDialog('New collection')
     static #options = new OptionsDialog()
 
-    static async editBookmark(bookmark) { return await this.#editBookmark.show(bookmark, null) }
+    static async editBookmark(bookmark, collection) { return await this.#editBookmark.show(bookmark, collection) }
     static async editCollection(collection) { return await this.#editCollection.show(collection, null) }
     static async importBookmarks(layout) { return await this.#importBookmarks.show(layout) }
     static async info() { return await this.#info.show() }

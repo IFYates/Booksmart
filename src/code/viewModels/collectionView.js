@@ -2,33 +2,37 @@
 View model for Collection.
 */
 export default class CollectionView {
-    static display(collection, isFirst, isLast, refreshList) {
-        const layout = collection.layout
-        const elCollection = add('collection', { className: collection.collapsed ? 'collapsed' : '' }, function () {
+    static display(layout, collection, isFirst, isLast, refreshList) {
+        return add('collection', { className: collection.collapsed ? 'collapsed' : '' }, function () {
+            const elCollection = this
             if (layout.allowEdits && !collection.immobile) {
                 this.ondragenter = () => {
-                    if (MainView.dragInfo?.collection && elCollection !== MainView.dragInfo.element) {
-                        const startIndex = Array.prototype.indexOf.call(elCollection.parentElement.children, MainView.dragInfo.element)
-                        const targetIndex = Array.prototype.indexOf.call(elCollection.parentElement.children, elCollection)
+                    if (MainView.dragInfo?.collection && this !== MainView.dragInfo.element) {
+                        const startIndex = Array.prototype.indexOf.call(this.parentElement.children, MainView.dragInfo.element)
+                        const targetIndex = Array.prototype.indexOf.call(this.parentElement.children, this)
                         if (startIndex < 0 || startIndex > targetIndex) {
-                            elCollection.parentElement.insertBefore(MainView.dragInfo.element, elCollection)
+                            this.parentElement.insertBefore(MainView.dragInfo.element, this)
                         } else {
-                            elCollection.insertAdjacentElement('afterend', MainView.dragInfo.element)
+                            this.insertAdjacentElement('afterend', MainView.dragInfo.element)
                         }
                     }
                 }
                 this.ondragover = (ev) => {
                     const bookmark = MainView.dragInfo?.bookmark
                     if (bookmark) {
+                        if (bookmark.folderId === collection.id && collection.sortOrder !== 0) {
+                            return // Cannot reorder non-manual collection
+                        }
+                        
                         ev.preventDefault() // Can drop here
-                        ev.dataTransfer.dropEffect = bookmark.collection.id !== collection.id && (bookmark.isTab || ev.ctrlKey) ? 'copy' : 'move'
+                        ev.dataTransfer.dropEffect = bookmark.folderId !== collection.id && (bookmark.isTab || ev.ctrlKey) ? 'copy' : 'move'
                     }
                 }
                 this.ondrop = async (ev) => {
                     if (!MainView.dragInfo) return
                     MainView.dragInfo.dropped = true
 
-                    var bookmark = MainView.dragInfo?.bookmark
+                    var bookmark = MainView.dragInfo.bookmark
                     if (!bookmark) {
                         return
                     }
@@ -36,11 +40,12 @@ export default class CollectionView {
 
                     // Copy tab here
                     if (bookmark.isTab) {
+                        const originalIcon = MainView.dragInfo.bookmark.icon
                         bookmark = await collection.bookmarks.create(bookmark.title, bookmark.url)
-                        bookmark.icon = MainView.dragInfo.bookmark.icon
+                        bookmark.icon = originalIcon
                         await bookmark.save()
                     }
-                    else if (bookmark.collection.id !== collection.id) {
+                    else if (bookmark.folderId !== collection.id) {
                         // Copy bookmark
                         if (ev.ctrlKey) {
                             bookmark = await bookmark.duplicate()
@@ -81,14 +86,14 @@ export default class CollectionView {
                         ev.stopPropagation()
                         ev.dataTransfer.effectAllowed = 'move'
                         MainView.dragInfo = { collection: collection, element: elCollection, origin: elCollection.nextSibling }
-                        elCollection.style.opacity = 0.5
+                        this.style.opacity = 0.5
                         MainView.elTrash.classList.add('active')
                     }
                     this.ondragend = () => {
                         if (MainView.dragInfo && !MainView.dragInfo.dropped) {
                             MainView.dragInfo.origin.parentElement.insertBefore(elCollection, MainView.dragInfo.origin)
                         }
-                        elCollection.style.opacity = null
+                        this.style.opacity = null
                         MainView.elTrash.classList.remove('active')
                         MainView.dragInfo = null
                     }
@@ -144,7 +149,7 @@ export default class CollectionView {
             if (!collection.collapsed) {
                 const bookmarks = collection.bookmarks.list()
                 for (var i = 0; i < bookmarks.length; ++i) {
-                    BookmarkView.display(bookmarks[i], i == 0, i == bookmarks.length - 1, refreshList)
+                    BookmarkView.display(layout, collection, bookmarks[i], i == 0, i == bookmarks.length - 1, refreshList)
                 }
 
                 if (layout.allowEdits && !collection.readonly && (!collection.isExternal || collection.isFolder)) {
@@ -153,7 +158,8 @@ export default class CollectionView {
                         title: 'Add bookmark',
                         onclick: () => Dialogs.newBookmark(collection).then(refreshList),
                         ondragenter: function () {
-                            if (MainView.dragInfo?.bookmark) {
+                            const bookmark = MainView.dragInfo?.bookmark
+                            if (bookmark && (bookmark.folderId !== collection.id || collection.sortOrder === 0)) {
                                 this.parentElement.insertBefore(MainView.dragInfo.element, this)
                             }
                         }
@@ -161,7 +167,6 @@ export default class CollectionView {
                 }
             }
         })
-        return elCollection
     }
 }
 

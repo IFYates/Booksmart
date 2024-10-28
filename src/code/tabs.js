@@ -1,9 +1,9 @@
 /*
-Useful functions for working with tabs.
+Useful functions for working with browser tabs.
 */
 export default class Tabs {
     static subscribe(callback) {
-        subscribers.push(callback)
+        _subscribers.push(callback)
     }
 
     static async list() {
@@ -45,9 +45,9 @@ export default class Tabs {
     }
 }
 
-const subscribers = []
+const _subscribers = []
 function emit(event, tabOrId) {
-    for (const subscriber of subscribers) {
+    for (const subscriber of _subscribers) {
         subscriber(event, tabOrId)
     }
 }

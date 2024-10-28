@@ -68,7 +68,7 @@ export default class FontAwesome {
                 type: 'text',
                 placeholder: 'Filter'
             }, function () {
-                this.onkeyup = (ev) => {
+                this.onkeyup = () => {
                     for (const [_, el] of Object.entries(icons)) {
                         el.style.display = !this.value || el.title.includes(this.value) ? '' : 'none'
                     }
@@ -76,7 +76,7 @@ export default class FontAwesome {
             })
 
             add('list', () => {
-                for (const [icon, styles] of Object.entries(FontAwesome.icons)) {
+                for (const [icon, styles] of Object.entries(FontAwesome.icons).sort((a, b) => a[0].localeCompare(b[0]) )) {
                     for (const style of styles) {
                         const value = `${style} ${icon}`
                         icons[value] = add('i', {

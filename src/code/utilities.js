@@ -24,6 +24,18 @@ globalThis.num = function (value, otherwise = 0) {
     return !isNaN(result) ? result : otherwise
 }
 
+Object.prototype.keyTrim = function (keyList, predicate) {
+    if (!predicate && typeof keyList === 'function') {
+        [predicate, keyList] = [keyList, null]
+    }
+    for (var [key, value] of Object.entries(this)) {
+        if (keyList?.includes(key) === false || predicate?.call(this, value, key) === false) {
+            delete this[key]
+        }
+    }
+}
+Object.defineProperty(Object.prototype, 'tidy', { enumerable: false, writable: false, configurable: false });
+
 /**
  * Tries to parse a JSON string, returning the result or a default value on failure.
  * If the second argument is a function, it is called with no arguments and its

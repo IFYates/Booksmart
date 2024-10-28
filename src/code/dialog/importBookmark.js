@@ -1,19 +1,24 @@
 import BaseDialog from './base.js'
 
 export default class ImportBookmarkDialog extends BaseDialog {
-    constructor(title) {
+    constructor() {
         super('fas fa-bookmark', 'Import bookmarks')
     }
 
     #tree
-    async _prepare() {
+    #collections
+    async _prepare(layout) {
         this.#tree = (await chrome.bookmarks.getTree())[0].children[0]
+        this.#collections = await layout.collections.entries()
     }
 
     _display(dialog, layout) {
-        const collections = layout.collections
         const folders = []
         function showFolder(folder, parentShowHide, depth = 0) {
+            if (folder.id === layout.id) {
+                return // Hide Booksmart root
+            }
+
             folders.push(folder)
             const showHide = create('i', { className: 'icon fa-fw fas fa-chevron-down' })
             showHide.onclick = () => {
@@ -26,7 +31,7 @@ export default class ImportBookmarkDialog extends BaseDialog {
             var el = add('div', { className: 'folder', style: `margin-left: ${depth}px` }, () => {
                 add(showHide)
                 const id = 'folder-' + folder.id
-                folder.showCollection = collections.some(c => c.id === folder.id)
+                folder.showCollection = this.#collections.some(c => c.id === folder.id)
                 add('input', { type: 'checkbox', id: id, checked: folder.showCollection }).onchange = function () {
                     folder.showCollection = this.checked
                 }
@@ -36,7 +41,7 @@ export default class ImportBookmarkDialog extends BaseDialog {
             const children = []
             for (const child of folder.children.sort((a, b) => a.title.localeCompare(b.title))) {
                 if (!child.url) {
-                    children.push(showFolder(child, showHide, depth + 20))
+                    children.push(showFolder.call(this, child, showHide, depth + 20))
                 }
             }
 
@@ -56,7 +61,7 @@ export default class ImportBookmarkDialog extends BaseDialog {
 
         add('p', 'Choose the bookmark folders to include on your dashboard:')
         const folderList = add('div', { className: 'folderList' }, () => {
-            showFolder(this.#tree)
+            showFolder.call(this, this.#tree)
         })
         setTimeout(() => {
             folderList.style.height = `${folderList.offsetHeight}px`
@@ -71,10 +76,10 @@ export default class ImportBookmarkDialog extends BaseDialog {
                 add('span', ' Save')
             }).onclick = async () => {
                 for (const folder of folders) {
-                    const collection = collections.find(c => c.id === folder.id)
+                    const collection = this.#collections.find(c => c.id === folder.id)
                     if (folder.showCollection) {
                         if (!collection) {
-                            await layout.folders.show(folder)
+                            await layout.collections.add(folder)
                         }
                     } else if (collection) {
                         await layout.folders.remove(folder)

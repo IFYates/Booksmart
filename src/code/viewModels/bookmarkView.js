@@ -2,13 +2,11 @@
 View model for Bookmark.
 */
 export default class BookmarkView {
-    static display(bookmark, isFirst, isLast, refreshList) {
+    static display(layout, collection, bookmark, isFirst, isLast, refreshList) {
         if (bookmark.type === 'separator') {
             return add('bookmark', { className: 'separator' })
         }
 
-        const collection = bookmark.collection
-        const layout = collection.layout
         return add('bookmark', {
             id: bookmark.id ? ((bookmark.isTab ? 'tab-' : 'bookmark-') + bookmark.id) : null,
             classes: [bookmark.favourite ? 'favourite' : '', bookmark.readonly ? 'tab' : ''],
@@ -28,8 +26,13 @@ export default class BookmarkView {
                 }
             },
             ondragenter: function () {
-                if (MainView.dragInfo?.bookmark && !bookmark.isTab && MainView.dragInfo.bookmark.collection.sortOrder === 0) {
-                    var target = !MainView.dragInfo.bookmark.favourite ? this : this.parentElement.querySelectorAll('bookmark:first-of-type')[0]
+                const dragging = MainView.dragInfo?.bookmark
+                if (dragging && !bookmark.isTab) {
+                    if (dragging.folderId === collection.id && collection.sortOrder !== 0) {
+                        return // Cannot reorder non-manual collection
+                    }
+
+                    var target = !dragging.favourite ? this : this.parentElement.querySelectorAll('bookmark:first-of-type')[0]
                     if (target !== MainView.dragInfo.element) {
                         const startIndex = Array.prototype.indexOf.call(target.parentElement.children, MainView.dragInfo.element)
                         const targetIndex = Array.prototype.indexOf.call(target.parentElement.children, target)
@@ -59,7 +62,7 @@ export default class BookmarkView {
                 title: bookmark.url,
                 href: bookmark.url,
                 target: layout.openNewTab ? '_blank' : '',
-                onclick: (ev) => bookmark.click(ev, layout.openExistingTab),
+                onclick: (ev) => bookmark.click(ev, layout.openExistingTab, layout.openNewTab),
                 onmouseenter: () => bookmark.hasOpenTab()
             }, () => {
                 var faIcon = add('i', { className: 'icon fa-fw' })
@@ -111,7 +114,7 @@ export default class BookmarkView {
                                 iconButton('fas fa-arrow-down', 'Move down', () => bookmark.setIndex(bookmark.index + 1).then(refreshList))
                             }
                         }
-                        iconButton('fas fa-pen', 'Edit bookmark', () => Dialogs.editBookmark(bookmark).then(refreshList))
+                        iconButton('fas fa-pen', 'Edit bookmark', () => Dialogs.editBookmark(bookmark, collection).then(refreshList))
                     })
                 }
             })

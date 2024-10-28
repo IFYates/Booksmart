@@ -121,8 +121,8 @@ export default class OptionsDialog extends BaseDialog {
                 add('i', { className: 'fa-fw fas fa-upload' })
                 add('span', ' Export')
 
-                this.onclick = async function () {
-                    const data = JSON.stringify(layout.export(), null, '  ')
+                this.onclick = async () => {
+                    const data = JSON.stringify(await layout.export(), null, '  ')
                     const dataUrl = URL.createObjectURL(new Blob([data], { type: 'application/octet-binary' }));
                     chrome.downloads.download({ url: dataUrl, filename: 'booksmart_export.json', conflictAction: 'overwrite', saveAs: true });
                 }
@@ -173,7 +173,7 @@ export default class OptionsDialog extends BaseDialog {
                 }
 
                 // Full delete
-                await chrome.bookmarks.removeTree(layout.id)
+                await chrome.bookmarks.removeTree(layout.dataId)
                 document.location.reload()
             }
         })

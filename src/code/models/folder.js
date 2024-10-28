@@ -2,93 +2,71 @@
 A folder in the bookmarks hierarchy.
 */
 export default class Folder {
-    #_ = {}
-    #registered = 0
-    _share = () => !this.#registered++ ? this.#_ : undefined
+    #storage
+    #parentId
+    #id
+    #title
+    #data = {}
+    #bookmarks = []
+    #owned = true
 
-    constructor(layout, folder) {
-        this.#_.layout = layout
-        this.#_.folder = folder
-        this.#_.isExternal = folder.parentId !== layout.id
-
-        this.#_.apply = (folder) => {
-            this.#_.folder = folder
-            this.#_.rebuild(folder)
-            this.#_.applyData(folder.data)
-        }
-        this.#_.rebuild = (folder) => {
-            this.#_.bookmarks = []
-            for (const child of folder.children?.filter(c => c.url).sort(b => b.index) ?? []) {
-                this.#_.bookmarks.push(new Bookmark(this, child))
-            }
-        }
-        this.#_.applyData = (data) => {
-            data.favourite = !!data.favourite
-            data.icon = data.icon || ''
-            data.index = num(data.index, 999)
-            data.collapsed = !!data.collapsed
-            data.sortOrder = num(data.sortOrder)
-            data.title = data.title?.trim()
-            this.#_.data = data
-        }
-
-        if (new.target === Folder) {
-            this.#registered = 1
-            this.#_.folder = folder
-            this.#_.rebuild(folder)
-            this.#_.applyData(folder.data)
+    constructor(storage, folder, data, isOwned) {
+        this.#storage = storage
+        this.#parentId = folder.parentId
+        this.#id = folder.id
+        this.#title = folder.title
+        this.#owned = isOwned
+        this.#applyData(data)
+    }
+    #applyData(data) {
+        this.#data = {
+            favourite: !!data.favourite,
+            icon: data.icon || '',
+            index: num(data.index, 999),
+            collapsed: !!data.collapsed,
+            sortOrder: num(data.sortOrder)
         }
     }
 
-    get isExternal() { return this.#_.isExternal }
-    get isFolder() { return true }
-    get layout() { return this.#_.layout }
-    get id() { return this.#_.folder.id }
-    get index() { return this.#_.data.index }
-    get title() { return this.#_.folder.title }
-    set title(value) { this.#_.data.title = value?.trim() }
+    get readonly() { return !this.#storage }
+    get immobile() { return false } // TODO
+    get fixed() { return false } // TODO
+    get isFolder() { return !this.#owned }
 
-    get collapsed() { return this.#_.data.collapsed }
-    set collapsed(value) { this.#_.data.collapsed = !!value }
-    get favourite() { return this.#_.data.favourite }
-    set favourite(value) { this.#_.data.favourite = !!value }
-    get icon() { return this.#_.data.icon }
-    set icon(value) { this.#_.data.icon = value?.trim() }
-    get sortOrder() { return this.#_.data.sortOrder } // 0: Manual, 1: Alphabetic, 2: Creation date, 3: Clicks (then alphabetic), 4 Last click, -ve = opposite
-    set sortOrder(value) { this.#_.data.sortOrder = num(value) }
+    get parentId() { return this.#parentId }
+    get id() { return this.#id }
+    get title() { return this.#title }
+    set title(value) { this.#title = value?.trim() }
 
-    static async get(id, layout, data) {
-        try {
-            const folder = (await chrome.bookmarks.get(id))[0]
-            if (folder) {
-                if (!data.hidden) {
-                    folder.children = await chrome.bookmarks.getChildren(id)
-                }
-                folder.data = data
-                return new Folder(layout, folder)
-            }
-        } catch {
-        }
-        return null
-    }
+    get collapsed() { return this.#data.collapsed }
+    set collapsed(value) { this.#data.collapsed = !!value }
+    get favourite() { return this.#data.favourite }
+    set favourite(value) { this.#data.favourite = !!value }
+    get icon() { return this.#data.icon }
+    set icon(value) { this.#data.icon = value?.trim() }
+    get index() { return this.#data.index }
+    get sortOrder() { return this.#data.sortOrder } // 0: Manual, 1: Alphabetic, 2: Creation date, 3: Clicks (then alphabetic), 4 Last click, -ve = opposite
+    set sortOrder(value) { this.#data.sortOrder = num(value) }
 
-    async delete() {
-        await this.#_.layout.folders.remove(this)
-        await this.#_.layout.reload()
-    }
-
-    async reload() {
-        this.#_.folder = (await chrome.bookmarks.get(this.id))[0]
-        this.#_.folder.children = await chrome.bookmarks.getChildren(this.id)
-        this.#_.folder.data = tryParse(this.#_.folder.title, { title: this.#_.folder.title })
-        this.#_.apply(this.#_.folder)
-    }
-
-    // TODO: change structure (like collections in layout)
     bookmarks = {
-        count: () => this.#_.bookmarks.length,
+        count: () => this.#bookmarks.length,
+        add: async (bookmark) => {
+            if (bookmark.folderId !== this.id) {
+                await bookmark.moveTo(this)
+            } else if (!this.#bookmarks.includes(bookmark)) {
+                this.#bookmarks.push(bookmark)
+            }
+            return bookmark
+        },
+        create: async (title, url) => {
+            return this.#storage.createBookmark(this, title, url)
+        },
         list: () => {
-            var result = [...this.#_.bookmarks]
+            const result = []
+            for (const bookmark of this.#bookmarks) {
+                result.push(bookmark)
+            }
+
             function compareFavourite(a, b) { return (a.favourite ? 0 : 1) - (b.favourite ? 0 : 1) }
             switch (Math.abs(this.sortOrder)) {
                 default: // Manual
@@ -109,56 +87,55 @@ export default class Folder {
             }
             return this.sortOrder < 0 ? result.reverse() : result
         },
-        add: async (bookmark) => {
-            if (bookmark.collection.id !== this.id) {
-                await bookmark.moveTo(this)
-            } else if (this.#_.bookmarks.indexOf(bookmark) < 0) {
-                this.#_.bookmarks.push(bookmark)
-            }
-            return bookmark
-        },
-        create: async (title, url) => {
-            const bookmark = new Bookmark(this, {
-                title: title,
-                url: url
-            })
-            this.#_.bookmarks.push(bookmark)
-            return bookmark
-        },
         remove: (bookmark) => {
-            const index = this.#_.bookmarks.indexOf(bookmark)
+            const index = this.#bookmarks.indexOf(bookmark)
             if (index >= 0) {
-                this.#_.bookmarks.splice(index, 1)
+                this.#bookmarks.splice(index, 1)
             }
         }
     }
 
-    export(standalone) {
-        const data = { ...this.#_.data }
-        if (standalone) {
-            data['.booksmart.version'] = 1
-            data['.booksmart.content'] = 'folder'
+    async delete() {
+        if (this.readonly) return
+        await this.#storage.delete(this)
+    }
+
+    export(includeInternals = true, includeVersion = false) {
+        const data = { ...this.#data }
+        data.keyTrim(['favourite', 'icon', 'collapsed', 'sortOrder'], (v, k) => !!v)
+        data.index = this.#data.index
+
+        if (includeVersion) {
+            data['.booksmart'] = { version: 1, content: 'folder' }
         }
-        data.id = this.id
-        data.index = this.index
-        data.bookmarks = this.#_.bookmarks.map(b => b.export())
+        if (includeInternals) {
+            data.id = this.id
+            data.title = this.title
+            data.bookmarks = this.#bookmarks.map(b => b.export())
+        }
         return data
     }
-
-    async setIndex(index) {
-        this.#_.data.index = (index - 1) + 0.5
-        await this.#_.layout.save()
+    import(data) {
+        this.title = data.title
+        delete data.title
+        this.url = data.url
+        delete data.url
+        this.#applyData(data)
     }
 
     async save() {
-        if (this.#_.data.title && this.#_.data.title !== this.#_.folder.title) {
-            await chrome.bookmarks.update(this.#_.folder.id, { title: this.#_.data.title })
-            this.#_.folder.title = this.#_.data.title
-        }
-        delete this.#_.data.title
+        if (this.readonly) return
+        await this.#storage.save(this)
+    }
 
-        await this.#_.layout.save()
+    async setIndex(index) {
+        if (this.readonly) return
+        this.#data.index = index // TODO: (index - 1) + 0.5
+        await this.#storage.save(this)
+    }
+
+    async remove() {
+        if (this.readonly) return
+        await this.#storage.remove(this)
     }
 }
-
-import Bookmark from './bookmark.js'

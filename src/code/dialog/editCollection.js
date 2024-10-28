@@ -165,32 +165,35 @@ export default class EditCollectionDialog extends BaseDialog {
             if (collection) {
                 var confirmedDelete = false
                 add('button', { type: 'button' }, () => {
-                    add('span', '\u00A0')
-                    add('i', { className: 'fa-fw fas fa-trash', title: 'Delete collection' })
-                    add('span', '\u00A0')
+                    add('i', { className: 'fa-fw fas fa-trash-can', title: 'Delete collection' })
+                    add('span', ' Delete')
                 }).onclick = async function () {
-                    if (collection.isFolder) {
-                        await collection.layout.folders.remove(collection.id)
-                        await collection.layout.reload()
-                    } else {
-                        if (!confirmedDelete) {
-                            confirmedDelete = true
-                            this.add('span', 'Press again to confirm')
-                            this.classList.add('danger')
-                            return
-                        }
-
-                        await collection.delete()
+                    if (!confirmedDelete) {
+                        confirmedDelete = true
+                        this.add('span', 'Press again to confirm')
+                        this.classList.add('danger')
+                        return
                     }
 
+                    await collection.delete()
                     dialog.close()
+                }
+
+                if (collection.isFolder) {
+                    add('button', { type: 'button' }, () => {
+                        add('i', { className: 'fa-fw fas fa-folder-minus', title: 'Remove folder' })
+                        add('span', ' Remove')
+                    }).onclick = async function () {
+                        await collection.remove()
+                        dialog.close()
+                    }
                 }
             }
             add('button', { type: 'button' }, () => {
                 add('i', { className: 'fa-fw fas fa-upload' })
                 add('span', ' Export')
             }).onclick = async () => {
-                const data = JSON.stringify(collection.export(true), null, '  ')
+                const data = JSON.stringify(collection.export(true, true), null, '  ')
                 const dataUrl = URL.createObjectURL(new Blob([data], { type: 'application/octet-binary' }));
                 chrome.downloads.download({ url: dataUrl, filename: 'booksmart_export.json', conflictAction: 'overwrite', saveAs: true });
             }

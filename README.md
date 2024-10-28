@@ -14,7 +14,7 @@ A bookmark management tool and customisable homepage.
 - Give quick list of most visited sites
 - Select own accent colour
 - Specify background image
-- Export and reimport all settings
+???- Export and reimport all settings
 - Lock for edits
 
 ## Collections (Group of bookmarks)
@@ -35,17 +35,13 @@ A bookmark management tool and customisable homepage.
 - Pin within collection
 - Add notes
 
-## Popup
-- List of favourites / last used bookmarks
-
 # Future possible features
-- Options for folder bookmarks
-    > Only use actual bookmarks
-    > Better storage structure
-- Tidier data-structure, so trashed items are less ugly
+- Improve drag accuracy
 - Performance improvement with partial page rebuilds
 - Style bookmarks by domain (across all collections)
 - ? Show preview image
 - ? Side panel add-on (https://developer.chrome.com/docs/extensions/develop/ui#side-panels)
 - ? Non-bookmark items (e.g., notes)
 - ? Show if bookmark is open (& switch to)
+- Popup
+  - Quick list of favourites / last used bookmarks
