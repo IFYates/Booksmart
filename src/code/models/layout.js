@@ -96,7 +96,7 @@ export default class Layout {
 
             // Update bookmarks by ID and URL
             const unimportedBookmarks = []
-            for (const importBookmark of data.bookmarks) {
+            for (const importBookmark of data.bookmarks || []) {
                 var bookmark = bookmarks.find(b => b.id == importBookmark.id && b.url === importBookmark.url)
                 if (bookmark) {
                     bookmarks.splice(bookmarks.indexOf(bookmark), 1)
