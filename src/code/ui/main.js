@@ -118,7 +118,7 @@ export default class MainView {
         document.documentElement.style.setProperty('--accent-colour-saturation', `${MainView.layout.themeAccent[1]}%`)
         document.documentElement.style.setProperty('--accent-colour-lightness', '24%')
         document.documentElement.style.setProperty('--text-colour', '#eee')
-        document.documentElement.style.setProperty('--layout-columns', MainView.layout.columns)
+        document.documentElement.style.setProperty('--layout-columns', MainView.layout.columns === -1 ? '100%' : MainView.layout.columns + 'px')
         document.body.style.backgroundImage = MainView.layout.backgroundImage ? `url(${MainView.layout.backgroundImage})` : null
     }
 

@@ -9,13 +9,20 @@ export default class OptionsDialog extends BaseDialog {
     _display(dialog, layout) {
         // Column count
         add('div', { classes: 'spanCols4' }, () => {
-            const columnCount = add('label', 'Columns ').add('span', `(${layout.columns})`)
-            add('input', { type: 'range', min: 1, max: 6, value: layout.columns }, function () {
+            const sizes = { '200': 'Tiny', '350': 'Narrow', '500': 'Medium', '750': 'Wide', '-1': 'Full' }
+            const values = Object.keys(sizes)
+            if (!sizes.hasOwnProperty(layout.columns)) {
+                layout.columns = 500
+            }
+
+            const columnCount = add('label', 'Columns ').add('span')
+            add('input', { type: 'range', min: 0, max: values.length - 1, value: values.indexOf('' + layout.columns) }, function () {
                 this.oninput = () => {
-                    layout.columns = parseInt(this.value)
+                    layout.columns = values[this.value]
                     layout.onchange() // MainView.setTheme() doesn't work for changing grid column
-                    columnCount.innerText = `(${layout.columns})`
+                    columnCount.innerText = `(${sizes[layout.columns]})`
                 }
+                this.oninput()
             })
         })
 

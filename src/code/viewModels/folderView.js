@@ -197,8 +197,8 @@ export default class FolderView {
 
     static displayEmpty() {
         add('bookmark', 'You don\'t have any folders; create one now', {
+            id: 'folder-empty',
             className: 'empty',
-            style: 'grid-column: span ' + MainView.layout.columns,
             onclick: () => MainView.btnAddFolder.click()
         })
     }
