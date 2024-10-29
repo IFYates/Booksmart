@@ -164,7 +164,12 @@ export default class Storage {
                     entries.push(folder)
                 }
             }
-            return entries.sort((a, b) => a.index - b.index)
+            entries.sort((a, b) => a.index - b.index)
+            if (entries.length) {
+                entries[0].isFirst = true
+                entries[entries.length - 1].isLast = true
+            }
+            return entries
         },
         remove: async (folder) => {
             delete this.#data.folders[folder.id]
@@ -175,10 +180,9 @@ export default class Storage {
                 title: folder.title
             })
 
-            if (item.parentId !== folder.parentId || item.index !== folder.index) {
+            if (item.parentId !== folder.parentId) {
                 await chrome.bookmarks.move(folder.id, {
-                    parentId: folder.parentId,
-                    index: folder.index
+                    parentId: folder.parentId
                 })
             }
 

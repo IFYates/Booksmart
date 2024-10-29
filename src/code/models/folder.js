@@ -29,9 +29,7 @@ export default class Folder {
     }
 
     get readonly() { return !this.#storage }
-    get immobile() { return false } // TODO
-    get fixed() { return false } // TODO
-    get isFolder() { return !this.#owned }
+    get isOwned() { return this.#owned }
 
     get parentId() { return this.#parentId }
     get id() { return this.#id }
@@ -130,7 +128,7 @@ export default class Folder {
 
     async setIndex(index) {
         if (this.readonly) return
-        this.#data.index = index // TODO: (index - 1) + 0.5
+        this.#data.index = index
         await this.#storage.save(this)
     }
 

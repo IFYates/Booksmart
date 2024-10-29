@@ -179,7 +179,7 @@ export default class EditFolderDialog extends BaseDialog {
                     dialog.close()
                 }
 
-                if (folder.isFolder) {
+                if (!folder.isOwned) {
                     add('button', { type: 'button' }, () => {
                         add('i', { className: 'fa-fw fas fa-folder-minus', title: 'Remove folder' })
                         add('span', ' Remove')

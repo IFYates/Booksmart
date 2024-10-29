@@ -10,9 +10,6 @@ export default class Layout {
     static async load() {
         const layout = new Layout()
         await layout.reload()
-        if (!layout.folders.count()) {
-            await layout.folders.create('My Bookmarks')
-        }
         return layout
     }
 

@@ -2,7 +2,7 @@
 View model for Bookmark.
 */
 export default class BookmarkView {
-    static display(layout, folder, bookmark, isFirst, isLast, refreshList) {
+    static display(layout, folder, bookmark, isFirst, isLast) {
         if (bookmark.type === 'separator') {
             return add('bookmark', { className: 'separator' })
         }
@@ -91,7 +91,7 @@ export default class BookmarkView {
                             onclick: (ev) => {
                                 ev.stopPropagation()
                                 bookmark.favourite = !bookmark.favourite
-                                bookmark.save().then(refreshList)
+                                bookmark.save().then(MainView.displayAllTabs)
                                 return false
                             }
                         })
@@ -108,13 +108,13 @@ export default class BookmarkView {
                     add('div', { className: 'actions' }, () => {
                         if (folder.sortOrder === 0 && !bookmark.readonly) {
                             if (!isFirst) {
-                                iconButton('fas fa-arrow-up', 'Move up', () => bookmark.setIndex(bookmark.index - 1).then(refreshList))
+                                iconButton('fas fa-arrow-up', 'Move up', () => bookmark.setIndex(bookmark.index - 1).then(MainView.displayAllTabs))
                             }
                             if (!isLast) {
-                                iconButton('fas fa-arrow-down', 'Move down', () => bookmark.setIndex(bookmark.index + 1).then(refreshList))
+                                iconButton('fas fa-arrow-down', 'Move down', () => bookmark.setIndex(bookmark.index + 1).then(MainView.displayAllTabs))
                             }
                         }
-                        iconButton('fas fa-pen', 'Edit bookmark', () => Dialogs.editBookmark(bookmark, folder).then(refreshList))
+                        iconButton('fas fa-pen', 'Edit bookmark', () => Dialogs.editBookmark(bookmark, folder).then(MainView.displayAllTabs))
                     })
                 }
             })
@@ -122,5 +122,5 @@ export default class BookmarkView {
     }
 }
 
-import Dialogs from '../dialogs.js'
-import MainView from "./main.js"
+import Dialogs from '../ui/dialogs.js'
+import MainView from "../ui/main.js"

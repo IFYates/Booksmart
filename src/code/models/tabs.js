@@ -54,7 +54,7 @@ function emit(event, tabOrId) {
 }
 chrome.tabs.onUpdated.addListener(async (_, changeInfo, tab) => {
     if (tab.url === document.location.href) return
-    if (changeInfo.hasOwnProperty('title')) {
+    if (changeInfo.status === 'complete' || changeInfo.hasOwnProperty('title')) {
         emit('updated', tab)
     }
 })

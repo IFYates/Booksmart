@@ -11,7 +11,9 @@
 }
 
 a,
-button {
+button,
+.collapsable,
+*[draggable='true'] {
     cursor: pointer;
 }
 
@@ -91,6 +93,7 @@ bookmark.favourite * {
 
 html {
     background: var(--theme-colour-darkest);
+    user-select: none;
 }
 
 body {
@@ -252,6 +255,7 @@ layout {
     grid-gap: 20px;
     margin-top: 5px;
     margin-bottom: 3.5em;
+    grid-template-columns: repeat(var(--layout-columns), 1fr);
 }
 
 folder {
@@ -295,8 +299,7 @@ folder>title>.actions {
     visibility: hidden;
 }
 
-folder:not(.collapsed) title:hover .actions,
-folder:not(.collapsed) .actions:hover {
+folder title:hover .actions {
     visibility: visible;
 }
 
@@ -318,10 +321,15 @@ bookmark {
     cursor: pointer;
     padding: 5px 10px;
     margin: 5px;
-    border-radius: 999px;
+    border-radius: 0.8em;
     flex-grow: 5;
     min-width: 150px;
     font-size: 130%;
+}
+
+bookmark.empty {
+    text-align: center;
+    zoom: 200%;
 }
 
 bookmark .icon {

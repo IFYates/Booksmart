@@ -1,3 +1,4 @@
+import MainView from '../main.js'
 import BaseDialog from './base.js'
 
 export default class OptionsDialog extends BaseDialog {
@@ -12,7 +13,7 @@ export default class OptionsDialog extends BaseDialog {
             add('input', { type: 'range', min: 1, max: 6, value: layout.columns }, function () {
                 this.oninput = () => {
                     layout.columns = parseInt(this.value)
-                    layout.onchange()
+                    layout.onchange() // MainView.setTheme() doesn't work for changing grid column
                     columnCount.innerText = `(${layout.columns})`
                 }
             })
@@ -31,7 +32,6 @@ export default class OptionsDialog extends BaseDialog {
         add('input', { type: 'checkbox', checked: layout.openExistingTab })
             .onclick = function () {
                 layout.openExistingTab = this.checked
-                layout.onchange()
             }
 
         // Open in new tab
@@ -39,7 +39,6 @@ export default class OptionsDialog extends BaseDialog {
         add('input', { type: 'checkbox', checked: layout.openNewTab })
             .onclick = function () {
                 layout.openNewTab = this.checked
-                layout.onchange()
             }
 
         // Show topSites
@@ -78,7 +77,7 @@ export default class OptionsDialog extends BaseDialog {
                 }
                 this.onchange = () => {
                     layout.themeAccent = accent
-                    layout.onchange()
+                    MainView.setTheme()
                 }
                 this.oninput()
             })
@@ -91,7 +90,7 @@ export default class OptionsDialog extends BaseDialog {
                 }
                 this.onchange = () => {
                     layout.themeAccent = accent
-                    layout.onchange()
+                    MainView.setTheme()
                 }
                 this.oninput()
             })
@@ -99,7 +98,7 @@ export default class OptionsDialog extends BaseDialog {
             add('label', 'Background image URL', { style: 'text-align:right' })
             const bgImage = create('img', { style: 'max-width:100%;max-height:100%', src: layout.backgroundImage || '' }, function () {
                 this.onload = () => {
-                    layout.onchange()
+                    MainView.setTheme()
                 }
             })
             add('textarea', { classes: 'spanCols2', style: 'width:100%;height:100%;resize:none', value: layout.backgroundImage || '' }, function () {
@@ -107,7 +106,7 @@ export default class OptionsDialog extends BaseDialog {
                     bgImage.src = this.value
                     layout.backgroundImage = this.value
                     if (!this.value) {
-                        layout.onchange()
+                        MainView.setTheme()
                     }
                 }
             })

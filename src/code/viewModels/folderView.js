@@ -2,8 +2,15 @@
 View model for Folder.
 */
 export default class FolderView {
-    static display(layout, folder, isFirst, isLast, refreshList) {
-        return add('folder', { className: folder.collapsed ? 'collapsed' : '' }, function () {
+    static create(folder) {
+        const layout = MainView.layout
+        const isFirst = folder.isFirst
+        const isLast = folder.isLast
+
+        return createElement('folder', {
+            id: 'folder-' + folder.id,
+            className: folder.collapsed ? 'collapsed' : ''
+        }, function () {
             const elFolder = this
             if (layout.allowEdits && !folder.immobile) {
                 this.ondragenter = () => {
@@ -23,7 +30,7 @@ export default class FolderView {
                         if (bookmark.folderId === folder.id && folder.sortOrder !== 0) {
                             return // Cannot reorder non-manual folder
                         }
-                        
+
                         ev.preventDefault() // Can drop here
                         ev.dataTransfer.dropEffect = bookmark.folderId !== folder.id && (bookmark.isTab || ev.ctrlKey) ? 'copy' : 'move'
                     }
@@ -64,15 +71,16 @@ export default class FolderView {
                         const index = num(siblings[position - 1].getAttribute('data-index'))
                         await bookmark.setIndex(index + 1)
                     }
-                    await refreshList()
+                    MainView.fullRefresh()
                 }
             }
 
-            add('title', { draggable: layout.allowEdits && !folder.immobile }, function () {
-                this.onclick = () => {
+            add('title', { classList: [!folder.fixed ? 'collapsable' : ''], draggable: layout.allowEdits && !folder.immobile }, function () {
+                this.onclick = async () => {
                     if (!folder.fixed) {
                         folder.collapsed = !folder.collapsed
-                        folder.save().then(refreshList)
+                        await folder.save()
+                        MainView.refreshFolder(folder)
                     }
                 }
 
@@ -124,23 +132,23 @@ export default class FolderView {
                 if (layout.allowEdits) {
                     add('div', { className: 'actions' }, () => {
                         if (!isFirst && !folder.immobile) {
-                            iconButton('fas fa-arrow-up', 'Move up', () => folder.setIndex(folder.index - 1).then(refreshList))
+                            iconButton('fas fa-arrow-up', 'Move up', () => folder.setIndex(folder.index - 1).then(MainView.fullRefresh))
                         }
                         if (!isLast && !folder.immobile) {
-                            iconButton('fas fa-arrow-down', 'Move down', () => folder.setIndex(folder.index + 1).then(refreshList))
+                            iconButton('fas fa-arrow-down', 'Move down', () => folder.setIndex(folder.index + 1).then(MainView.fullRefresh))
                         }
                         if (!folder.readonly) {
-                            iconButton('fas fa-pen', 'Edit folder', () => Dialogs.editFolder(folder).then(refreshList))
+                            iconButton('fas fa-pen', 'Edit folder', () => Dialogs.editFolder(folder).then(MainView.fullRefresh))
                         }
                     })
                 }
 
-                if (folder.isFolder) {
+                if (!folder.isOwned) {
                     add('a', () => {
                         add('i', { className: 'action fa-fw fas fa-folder', title: 'This is a folder from your browser bookmarks' })
                     }).onclick = (ev) => {
                         ev.stopPropagation()
-                        Dialogs.importBookmarks(layout).then(refreshList)
+                        Dialogs.importBookmarks(layout).then(MainView.fullRefresh)
                     }
                 }
             })
@@ -149,14 +157,14 @@ export default class FolderView {
             if (!folder.collapsed) {
                 const bookmarks = folder.bookmarks.list()
                 for (var i = 0; i < bookmarks.length; ++i) {
-                    BookmarkView.display(layout, folder, bookmarks[i], i == 0, i == bookmarks.length - 1, refreshList)
+                    BookmarkView.display(layout, folder, bookmarks[i], i == 0, i == bookmarks.length - 1)
                 }
 
-                if (layout.allowEdits && !folder.readonly && (!folder.isExternal || folder.isFolder)) {
+                if (layout.allowEdits && !folder.readonly) {
                     add('bookmark', {
                         className: 'add',
                         title: 'Add bookmark',
-                        onclick: () => Dialogs.newBookmark(folder).then(refreshList),
+                        onclick: () => Dialogs.newBookmark(folder).then(MainView.fullRefresh),
                         ondragenter: function () {
                             const bookmark = MainView.dragInfo?.bookmark
                             if (bookmark && (bookmark.folderId !== folder.id || folder.sortOrder === 0)) {
@@ -168,8 +176,31 @@ export default class FolderView {
             }
         })
     }
+
+    static display(folder) {
+        return add(this.create(folder))
+    }
+
+    static displayEmpty() {
+        add('bookmark', 'You don\'t have any folders; create one now', {
+            className: 'empty',
+            style: 'grid-column: span ' + MainView.layout.columns,
+            onclick: () => MainView.btnAddFolder.click()
+        })
+    }
+
+    static update(folder) {
+        const oldView = document.getElementById('folder-' + folder.id)
+        const view = FolderView.create(folder)
+        if (oldView) {
+            oldView.replaceWith(view)
+        } else {
+            MainView.elLayout.add(view)
+        }
+        return view
+    }
 }
 
 import BookmarkView from './bookmarkView.js'
-import Dialogs from '../dialogs.js'
-import MainView from "./main.js"
+import Dialogs from '../ui/dialogs.js'
+import MainView from "../ui/main.js"

@@ -45,3 +45,4 @@ A bookmark management tool and customisable homepage.
 - ? Show if bookmark is open (& switch to)
 - Popup
   - Quick list of favourites / last used bookmarks
+- ? Custom HTML components

@@ -31,7 +31,7 @@ export default class Bookmark {
         }
     }
 
-    get readonly() { return false } // TODO: return this.#folder.readonly || (this.#folder.isExternal && !this.#folder.isFolder) }
+    get readonly() { return !this.#storage }
 
     get folderId() { return this.#parentId }
     get id() { return this.#id }
@@ -128,4 +128,4 @@ export default class Bookmark {
     }
 }
 
-import Tabs from '../tabs.js'
+import Tabs from './tabs.js'
