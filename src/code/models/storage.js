@@ -157,6 +157,7 @@ export default class Storage {
             return folder
         },
         entries: async () => {
+            // Build data
             const entries = []
             for (const id of Object.keys(this.#data.folders)) {
                 const folder = await this.folders.get(id)
@@ -164,7 +165,21 @@ export default class Storage {
                     entries.push(folder)
                 }
             }
+
+            // Ensure order
             entries.sort((a, b) => a.index - b.index)
+            var changed = false
+            for (const [index, folder] of entries.entries()) {
+                if (folder.index !== index) {
+                    folder.index = index
+                    this.#data.folders[folder.id].index = index
+                    changed = true
+                }
+            }
+            if (changed) {
+                await this.save()
+            }
+
             if (entries.length) {
                 entries[0].isFirst = true
                 entries[entries.length - 1].isLast = true
@@ -184,6 +199,9 @@ export default class Storage {
                 await chrome.bookmarks.move(folder.id, {
                     parentId: folder.parentId
                 })
+            }
+            if (isNaN(folder.index)) {
+                folder.index = Object.entries(this.#data.folders).map(f => num(f[1].index)).reduce((a, b) => Math.max(a, b)) + 1
             }
 
             const dataItem = await this.#getItem(this.#dataId)

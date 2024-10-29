@@ -269,6 +269,11 @@ folder {
     padding: 5px;
 }
 
+folder#folder-tabs,
+folder#folder-topSites {
+    grid-column: span var(--layout-columns);
+}
+
 folder .icon {
     width: 22px;
     max-height: 22px;

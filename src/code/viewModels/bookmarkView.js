@@ -91,7 +91,7 @@ export default class BookmarkView {
                             onclick: (ev) => {
                                 ev.stopPropagation()
                                 bookmark.favourite = !bookmark.favourite
-                                bookmark.save().then(MainView.displayAllTabs)
+                                bookmark.save().then(MainView.updateTabsList)
                                 return false
                             }
                         })
@@ -108,13 +108,13 @@ export default class BookmarkView {
                     add('div', { className: 'actions' }, () => {
                         if (folder.sortOrder === 0 && !bookmark.readonly) {
                             if (!isFirst) {
-                                iconButton('fas fa-arrow-up', 'Move up', () => bookmark.setIndex(bookmark.index - 1).then(MainView.displayAllTabs))
+                                iconButton('fas fa-arrow-up', 'Move up', () => bookmark.setIndex(bookmark.index - 1).then(MainView.updateTabsList))
                             }
                             if (!isLast) {
-                                iconButton('fas fa-arrow-down', 'Move down', () => bookmark.setIndex(bookmark.index + 1).then(MainView.displayAllTabs))
+                                iconButton('fas fa-arrow-down', 'Move down', () => bookmark.setIndex(bookmark.index + 1).then(MainView.updateTabsList))
                             }
                         }
-                        iconButton('fas fa-pen', 'Edit bookmark', () => Dialogs.editBookmark(bookmark, folder).then(MainView.displayAllTabs))
+                        iconButton('fas fa-pen', 'Edit bookmark', () => Dialogs.editBookmark(bookmark, folder).then(MainView.updateTabsList))
                     })
                 }
             })

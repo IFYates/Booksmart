@@ -129,17 +129,31 @@ export default class FolderView {
                 add('span', folder.title)
 
                 // Folder actions
-                if (layout.allowEdits) {
+                if (layout.allowEdits && !folder.readonly) {
                     add('div', { className: 'actions' }, () => {
                         if (!isFirst && !folder.immobile) {
-                            iconButton('fas fa-arrow-up', 'Move up', () => folder.setIndex(folder.index - 1).then(MainView.fullRefresh))
+                            iconButton('fas fa-arrow-up', 'Move up', async () => {
+                                const sibling = elFolder.previousElementSibling
+                                const otherFolder = sibling.id?.startsWith('folder-') ? await layout.folders.get(sibling.id.substring(7)) : null
+                                if (otherFolder) {
+                                    folder.index = otherFolder.index - 1
+                                    await folder.save()
+                                    sibling.parentElement.insertBefore(elFolder, sibling)
+                                }
+                            })
                         }
                         if (!isLast && !folder.immobile) {
-                            iconButton('fas fa-arrow-down', 'Move down', () => folder.setIndex(folder.index + 1).then(MainView.fullRefresh))
+                            iconButton('fas fa-arrow-down', 'Move down', async () => {
+                                const sibling = elFolder.nextElementSibling
+                                const otherFolder = sibling.id?.startsWith('folder-') ? await layout.folders.get(sibling.id.substring(7)) : null
+                                if (otherFolder) {
+                                    folder.index = otherFolder.index + 1
+                                    await folder.save()
+                                    elFolder.parentElement.insertBefore(sibling, elFolder)
+                                }
+                            })
                         }
-                        if (!folder.readonly) {
-                            iconButton('fas fa-pen', 'Edit folder', () => Dialogs.editFolder(folder).then(MainView.fullRefresh))
-                        }
+                        iconButton('fas fa-pen', 'Edit folder', () => Dialogs.editFolder(folder).then(MainView.fullRefresh))
                     })
                 }
 

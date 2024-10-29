@@ -13,13 +13,13 @@ export default class ImportBookmarkDialog extends BaseDialog {
     }
 
     _display(dialog, layout) {
-        const folders = []
+        const items = []
         function showFolder(folder, parentShowHide, depth = 0) {
             if (folder.id === layout.id) {
                 return // Hide Booksmart root
             }
 
-            folders.push(folder)
+            items.push(folder)
             const showHide = create('i', { className: 'icon fa-fw fas fa-chevron-down' })
             showHide.onclick = () => {
                 showHide.value = !showHide.value
@@ -75,11 +75,13 @@ export default class ImportBookmarkDialog extends BaseDialog {
                 add('i', { className: 'fa-fw fas fa-save' })
                 add('span', ' Save')
             }).onclick = async () => {
-                for (const folder of folders) {
-                    const folder = this.#folders.find(c => c.id === folder.id)
-                    if (folder.showFolder) {
+                for (const item of items) {
+                    var folder = this.#folders.find(c => c.id === item.id)
+                    if (item.showFolder) {
                         if (!folder) {
-                            await layout.folders.add(folder)
+                            folder = await layout.folders.add(item)
+                            folder.index = NaN
+                            await folder.save()
                         }
                     } else if (folder) {
                         await layout.folders.remove(folder)

@@ -22,7 +22,7 @@ export default class Folder {
         this.#data = {
             favourite: !!data.favourite,
             icon: data.icon || '',
-            index: num(data.index, 999),
+            index: num(data.index, NaN),
             collapsed: !!data.collapsed,
             sortOrder: num(data.sortOrder)
         }
@@ -43,6 +43,7 @@ export default class Folder {
     get icon() { return this.#data.icon }
     set icon(value) { this.#data.icon = value?.trim() }
     get index() { return this.#data.index }
+    set index(value) { this.#data.index = (isNaN(value) && typeof value === 'number') ? value : num(value) }
     get sortOrder() { return this.#data.sortOrder } // 0: Manual, 1: Alphabetic, 2: Creation date, 3: Clicks (then alphabetic), 4 Last click, -ve = opposite
     set sortOrder(value) { this.#data.sortOrder = num(value) }
 
@@ -123,12 +124,6 @@ export default class Folder {
 
     async save() {
         if (this.readonly) return
-        await this.#storage.save(this)
-    }
-
-    async setIndex(index) {
-        if (this.readonly) return
-        this.#data.index = index
         await this.#storage.save(this)
     }
 

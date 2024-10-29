@@ -36,8 +36,7 @@ A bookmark management tool and customisable homepage.
 - Add notes
 
 # Future possible features
-- Improve drag accuracy
-- Performance improvement with partial page rebuilds
+- Improve bookmark drag accuracy
 - Style bookmarks by domain (across all folders)
 - ? Show preview image
 - ? Side panel add-on (https://developer.chrome.com/docs/extensions/develop/ui#side-panels)

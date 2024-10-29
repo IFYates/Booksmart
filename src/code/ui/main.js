@@ -108,7 +108,7 @@ export default class MainView {
         Tabs.subscribe(async () => {
             MainView.tabs = await Tabs.list()
             if (!MainView.tabFolder.collapsed) {
-                MainView.displayAllTabs()
+                MainView.updateTabsList()
             }
         })
     }
@@ -148,18 +148,22 @@ export default class MainView {
                     if (!MainView.dragInfo) return
                     MainView.dragInfo.dropped = true
 
-                    var folder = MainView.dragInfo?.folder
+                    const folder = MainView.dragInfo?.folder
                     if (!folder) {
                         return
                     }
                     const element = MainView.dragInfo.element
 
                     // Position
-                    const siblings = [...element.parentElement.querySelectorAll('folder')]
-                    const index = siblings.indexOf(element)
-                    if (index >= 0) {
-                        await folder.setIndex(index).then(MainView.displayAllTabs)
+                    const folderElements = [...element.parentElement.querySelectorAll('folder')]
+                    for (const [index, el] of folderElements.entries()) {
+                        const item = el.id?.startsWith('folder-') ? await MainView.layout.folders.get(el.id.substring(7)) : null
+                        if (item) {
+                            item.index = index
+                            await item.save()
+                        }
                     }
+                    //await MainView.fullRefresh()
                 }
 
                 if (!folders.length) {
@@ -169,9 +173,10 @@ export default class MainView {
                     FolderView.display(folder)
                 }
                 if (MainView.layout.showTopSites) {
-                    MainView.displayTopSites()
+                    FolderView.display(MainView.sitesFolder)
+                    MainView.updateTopSitesList()
                 }
-                MainView.displayAllTabs()
+                MainView.updateTabsList(false)
                 this.classList.toggle('editable', MainView.layout.allowEdits)
             })
 
@@ -183,7 +188,7 @@ export default class MainView {
 
     static refreshFolder(folder) {
         if (folder.id === 'tabs') {
-            MainView.displayAllTabs()
+            MainView.updateTabsList()
             return
         }
 
@@ -194,10 +199,7 @@ export default class MainView {
         })
     }
 
-    static displayTopSites() {
-        const tabList = FolderView.display(MainView.sitesFolder)
-        tabList.style.gridColumn = `span ${MainView.layout.columns}`
-
+    static updateTopSitesList() {
         chrome.topSites.get((sites) => {
             MainView.sitesFolder.bookmarks.splice(0, MainView.sitesFolder.bookmarks.length)
             for (const site of sites.filter(s => s.url !== document.location.href)) {
@@ -207,12 +209,11 @@ export default class MainView {
                 }, {}))
             }
 
-            const tabList = FolderView.update(MainView.sitesFolder)
-            tabList.style.gridColumn = `span ${MainView.layout.columns}`
+            FolderView.update(MainView.sitesFolder)
         })
     }
 
-    static displayAllTabs() {
+    static updateTabsList(inplace = true) {
         // Rebuild list
         MainView.tabFolder.bookmarks.splice(0, MainView.tabFolder.bookmarks.length)
         var lastWindowId = 0
@@ -225,14 +226,11 @@ export default class MainView {
         }
 
         // Rebuild view
-        MainView.elLayout.display(() => {
-            const tabListOld = document.getElementById('folder-tabs')
-
-            const tabList = FolderView.display(MainView.tabFolder)
-            tabList.style.gridColumn = `span ${MainView.layout.columns}`
-
-            tabListOld?.remove()
-        })
+        if (inplace) {
+            FolderView.update(MainView.tabFolder)
+        } else {
+            FolderView.display(MainView.tabFolder)
+        }
     }
 }
 
