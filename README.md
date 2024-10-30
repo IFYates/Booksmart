@@ -36,8 +36,8 @@ A bookmark management tool and customisable homepage.
 - Add notes
 
 # Future possible features
-- Improve bookmark drag accuracy
 - Style bookmarks by domain (across all folders)
+- Use browser history to suggest URL on bookmark creation
 - ? Show preview image
 - ? Side panel add-on (https://developer.chrome.com/docs/extensions/develop/ui#side-panels)
 - ? Non-bookmark items (e.g., notes)
@@ -45,4 +45,3 @@ A bookmark management tool and customisable homepage.
 - Popup
   - Quick list of favourites / last used bookmarks
 - ? Custom HTML components
-- Use browser history to suggest URL on bookmark creation

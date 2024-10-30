@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Booksmart",
   "description": "Customisable bookmark manager and homepage",
-  "version": "0.2",
+  "version": "1.0.0",
   "author": "IFYates",
   "icons": {
     "128": "assets/icon.png"

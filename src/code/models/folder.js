@@ -101,7 +101,7 @@ export default class Folder {
 
     export(includeInternals = true, includeVersion = false) {
         const data = { ...this.#data }
-        data.keyTrim(['favourite', 'icon', 'collapsed', 'sortOrder'], (v, k) => !!v)
+        data.tidy(['favourite', 'icon', 'collapsed', 'sortOrder'], (v) => !!v)
         data.index = this.#data.index
 
         if (includeVersion) {

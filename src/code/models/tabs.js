@@ -8,7 +8,7 @@ export default class Tabs {
 
     static async list() {
         const tabs = await chrome.tabs.query({})
-        return tabs.filter(tab => tab.url !== document.location.href)
+        return tabs.filter(tab => !isSelf(tab))
             .sort((a, b) => (a.windowId - b.windowId) || a.title.localeCompare(b.title))
     }
 
@@ -46,15 +46,17 @@ export default class Tabs {
     }
 }
 
+const ownTab = (await chrome.tabs.getCurrent()).tidy(['id', 'url'])
+const isSelf = (tab) => tab.id === ownTab.id || tab.url === ownTab.url || tab.favIconUrl.startsWith(document.location.origin)
+
 const _subscribers = []
 function emit(event, tabOrId) {
     for (const subscriber of _subscribers) {
         subscriber(event, tabOrId)
     }
 }
-chrome.tabs.onUpdated.addListener(async (_, changeInfo, tab) => {
-    if (tab.url === document.location.href) return
-    if (changeInfo.status === 'complete' || changeInfo.hasOwnProperty('title')) {
+chrome.tabs.onUpdated.addListener(async (id, changeInfo, tab) => {
+    if (!isSelf(tab) && changeInfo.status === 'complete' || changeInfo.hasOwnProperty('title')) {
         emit('updated', tab)
     }
 })

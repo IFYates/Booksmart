@@ -24,17 +24,40 @@ globalThis.num = function (value, otherwise = 0) {
     return !isNaN(result) ? result : otherwise
 }
 
-Object.prototype.keyTrim = function (keyList, predicate) {
-    if (!predicate && typeof keyList === 'function') {
-        [predicate, keyList] = [keyList, null]
+/**
+ * Removes all keys from the object that don't match the given key list or
+ * predicate.
+ * @param {string[]|function} [keyList] List of keys to keep. If a function,
+ * it will be called with each value and key as arguments, and return true if
+ * the key should be kept.
+ * @param {function?} [fallbackPredicate] Predicate to use if the key is not in
+ * the defaults object.
+ * @returns {this} The object with removed keys
+ */
+Object.prototype.tidy = function (defaults, fallbackPredicate) {
+    if (Array.isArray(defaults)) {
+        defaults = defaults.reduce((res, k) => { res[k] = undefined; return res }, {})
     }
     for (var [key, value] of Object.entries(this)) {
-        if (keyList?.includes(key) === false || predicate?.call(this, value, key) === false) {
+        if ((!defaults.hasOwnProperty(key) && (!fallbackPredicate || fallbackPredicate(value, key) === true))
+            || areEquivalent(defaults[key], value)
+            || (typeof defaults[key] === 'function' && defaults[key](value, key) === true)) {
             delete this[key]
         }
     }
+    return this
 }
 Object.defineProperty(Object.prototype, 'tidy', { enumerable: false, writable: false, configurable: false });
+function areEquivalent(a, b) {
+    if (a === b) {
+        return true
+    }
+    if (Array.isArray(a) && Array.isArray(b)) {
+        return a.length === b.length
+            && a.every((e, i) => b[i] === e)
+    }
+    return false
+}
 
 /**
  * Tries to parse a JSON string, returning the result or a default value on failure.

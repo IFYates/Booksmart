@@ -22,7 +22,7 @@ export default class Layout {
         this.#data = {
             allowEdits: data.allowEdits !== false,
             backgroundImage: data.backgroundImage,
-            columns: num(data.columns, 2),
+            columns: num(data.columns, 500),
             openExistingTab: data.openExistingTab !== false,
             openNewTab: !!data.openNewTab,
             showFavicons: data.showFavicons !== false,
@@ -143,25 +143,19 @@ export default class Layout {
     }
 
     async save() {
-        this.#data.keyTrim((v, k) => {
-            switch (k) {
-                case 'allowEdits':
-                case 'openExistingTab':
-                case 'showFavicons':
-                case 'wrapTitles':
-                    return v === false
-                case 'backgroundImage':
-                case 'openNewTab':
-                case 'showTabList':
-                case 'showTopSites':
-                case 'themeAccent':
-                case 'bookmarks':
-                case 'folders':
-                    return !!v
-                case 'columns':
-                    return v !== 2
-            }
-            return false
+        this.#data.tidy({
+            allowEdits: true,
+            columns: 500,
+            backgroundImage: (v) => !v,
+            openExistingTab: true,
+            openNewTab: false,
+            showFavicons: true,
+            showTabList: false,
+            showTopSites: false,
+            themeAccent: [240, 14],
+            wrapTitles: true,
+            bookmarks: null,
+            folders: null
         })
         this.#storage.save(this.#data)
         this.#applyData(this.#data)

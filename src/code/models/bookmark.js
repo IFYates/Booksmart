@@ -84,7 +84,7 @@ export default class Bookmark {
 
     export(includeInternals = true) {
         const data = this.#data
-        data.keyTrim(['favourite', 'icon', 'click', 'lastClick', 'notes'], (v, k) => !!v)
+        data.tidy(['favourite', 'icon', 'click', 'lastClick', 'notes'], (v) => !!v)
         
         if (includeInternals) {
             data.id = this.id
@@ -119,11 +119,7 @@ export default class Bookmark {
     }
 
     async setIndex(index) {
-        index = Math.max(0, index)
-        if (this.index < index) {
-            index += 1
-        }
-        this.#index = index
+        this.#index = Math.max(0, index)
         await this.save()
     }
 }
