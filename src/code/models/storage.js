@@ -3,11 +3,11 @@ Abstracts away the Chrome bookmark storage, without understanding model data str
 */
 export default class Storage {
     #dataId = -1
-    #bookmarkRootId = -1
+    #booksmartRootId = -1
     #data = {}
 
     static get Title() { return '(Booksmart)' }
-    get rootId() { return this.#bookmarkRootId }
+    get rootId() { return this.#booksmartRootId }
     get dataId() { return this.#dataId }
     get data() {
         const data = { ...this.#data }
@@ -22,18 +22,20 @@ export default class Storage {
         const bookmarkRoot = tree.find(b => b.title === 'Bookmarks')
         const booksmartRoot = bookmarkRoot.children.find(b => b.title === Storage.Title)
             || await chrome.bookmarks.create({ parentId: bookmarkRoot.id, title: Storage.Title })
+        bookmarkRoot.children.push(booksmartRoot)
 
         const hiddenRoot = tree.find(b => b.title === 'Other bookmarks')
         const dataItem = hiddenRoot.children.find(b => b.title.startsWith(Storage.Title))
             || await chrome.bookmarks.create({ parentId: hiddenRoot.id, title: `${Storage.Title}{}` })
 
-        return new Storage(dataItem, booksmartRoot)
+        return new Storage(dataItem, bookmarkRoot, booksmartRoot)
     }
 
-    constructor(dataItem, bookmarkRoot) {
+    constructor(dataItem, bookmarkRoot, booksmartRoot) {
         this.#dataId = dataItem.id
-        this.#bookmarkRootId = bookmarkRoot.id
+        this.#booksmartRootId = booksmartRoot.id
         this.#parseData(dataItem.title)
+        this.#cacheTree(bookmarkRoot)
 
         // Booksmart children are always included
         for (const child of bookmarkRoot.children) {
@@ -48,13 +50,47 @@ export default class Storage {
         this.#data.folders ??= {}
     }
 
-    async #getItem(id) {
-        try {
-            const item = (await chrome.bookmarks.get(id))[0]
-            if (!item.url) {
-                item.children = await chrome.bookmarks.getChildren(id)
+    #cache = {}
+    #cacheTree(tree) {
+        this.#cache = {}
+        cacheItem.call(this, tree, { bookmarks: { add: () => { } } })
+
+        function cacheItem(item, folder) {
+            for (const child of item.children) {
+                if (child.url) {
+                    if (this.#data.bookmarks.hasOwnProperty(child.id)) {
+                        folder.bookmarks.add(this.#cacheAdd(child))
+                    }
+                } else {
+                    if (this.#data.folders.hasOwnProperty(child.id)) {
+                        cacheItem.call(this, child, this.#cacheAdd(child))
+                    }
+                }
             }
-            return item
+        }
+    }
+    #cacheAdd(item) {
+        if (!this.#cache[item.id]) {
+            this.#cache[item.id] = item.url
+                ? new Bookmark(this.bookmarks, item, this.#data.bookmarks[item.id] ??= {})
+                : new Folder(this.folders, item, this.#data.folders[item.id] ??= {}, item.parentId === this.#booksmartRootId)
+        }
+        return this.#cache[item.id]
+    }
+    async #cacheGet(id) {
+        try {
+            if (!this.#cache[id]) {
+                const item = (await chrome.bookmarks.get(id))[0]
+                if (!item) {
+                    return null
+                }
+                if (!item.url) {
+                    item.children = await chrome.bookmarks.getChildren(id)
+                }
+                this.#cacheAdd(item)
+                this.#cacheTree(item)
+            }
+            return this.#cache[id]
         } catch {
             return null
         }
@@ -62,14 +98,14 @@ export default class Storage {
 
     bookmarks = {
         create: async (folder, title, url) => {
-            const bookmark = await chrome.bookmarks.create({
+            const item = await chrome.bookmarks.create({
                 parentId: String(folder.id || num(folder)),
                 title: title,
                 url: url
             })
-            this.#data.bookmarks[bookmark.id] = {}
+            this.#data.bookmarks[item.id] = {}
             await this.save()
-            return new Bookmark(this.bookmarks, bookmark, this.#data.bookmarks[bookmark.id])
+            return this.#cacheAdd(item)
         },
         data: (id) => {
             return this.#data.bookmarks[id] ??= {}
@@ -80,15 +116,14 @@ export default class Storage {
             await this.save()
         },
         get: async (id) => {
-            const item = await this.#getItem(id)
-            if (!item) {
+            const bookmark = await this.#cacheGet(id)
+            if (!bookmark) {
                 if (this.#data.bookmarks[id]) {
                     delete this.#data.bookmarks[id]
                 }
                 return null
             }
-
-            return new Bookmark(this.bookmarks, item, this.#data.bookmarks[id] ??= {})
+            return bookmark
         },
         save: async (bookmark) => {
             const item = await chrome.bookmarks.update(bookmark.id, {
@@ -103,7 +138,7 @@ export default class Storage {
                 })
             }
 
-            const dataItem = await this.#getItem(this.#dataId)
+            const dataItem = (await chrome.bookmarks.get(this.#dataId))[0]
             this.#parseData(dataItem.title)
             this.#data.bookmarks[bookmark.id] = bookmark.export(false)
             await this.save()
@@ -111,23 +146,23 @@ export default class Storage {
     }
 
     folders = {
+        bookmarks: this.bookmarks,
         ids: () => Object.keys(this.#data.folders),
         count: () => Object.keys(this.#data.folders).length,
         add: async (folder) => {
             if (!folder.url) {
                 this.#data.folders[folder.id] ??= {}
                 await this.save()
-                return new Folder(this.folders, folder, this.#data.folders[folder.id], folder.parentId === this.#bookmarkRootId)
+                return this.#cacheAdd(folder)
             }
         },
         create: async (title) => {
             const folder = await chrome.bookmarks.create({
-                parentId: this.#bookmarkRootId,
+                parentId: this.#booksmartRootId,
                 title: title
             })
             return await this.folders.add(folder)
         },
-        createBookmark: (folder, title, url) => this.bookmarks.create(folder, title, url),
         data: async (id) => {
             return this.#data.folders[id] ??= {}
         },
@@ -137,23 +172,22 @@ export default class Storage {
             await this.save()
         },
         get: async (id) => {
-            const item = await this.#getItem(id)
-            if (!item) {
+            if (num(id, null) === null) {
+                return null
+            }
+
+            const folder = await this.#cacheGet(id)
+            if (!folder) {
                 if (this.#data.folders[id]) {
                     delete this.#data.folders[id]
                 }
                 return null
             }
 
-            const folder = new Folder(this.folders, item, this.#data.folders[id] ??= {}, item.parentId === this.#bookmarkRootId)
-
-            for (const child of item.children) {
-                const item = await this.bookmarks.get(child.id)
-                if (item?.url) {
-                    folder.bookmarks.add(item)
-                }
+            if (folder.bookmarks.length) {
+                folder.bookmarks[0].isFirst = true
+                folder.bookmarks[entries.length - 1].isLast = true
             }
-
             return folder
         },
         entries: async () => {
@@ -204,7 +238,7 @@ export default class Storage {
                 folder.index = Object.entries(this.#data.folders).map(f => num(f[1].index)).reduce((a, b) => Math.max(a, b)) + 1
             }
 
-            const dataItem = await this.#getItem(this.#dataId)
+            const dataItem = (await chrome.bookmarks.get(this.#dataId))[0]
             this.#parseData(dataItem.title)
             this.#data.folders[folder.id] = folder.export(false)
             await this.save()

@@ -170,8 +170,8 @@ export default class FolderView {
             // Bookmarks
             if (!folder.collapsed) {
                 const bookmarks = folder.bookmarks.list()
-                for (var i = 0; i < bookmarks.length; ++i) {
-                    BookmarkView.display(layout, folder, bookmarks[i], i == 0, i == bookmarks.length - 1)
+                for (const bookmark of bookmarks) {
+                    BookmarkView.display(layout, folder, bookmark)
                 }
 
                 if (layout.allowEdits && !folder.readonly) {

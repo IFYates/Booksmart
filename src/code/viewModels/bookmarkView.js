@@ -7,7 +7,7 @@ export default class BookmarkView {
             return add('bookmark', { className: 'separator' })
         }
 
-        return add('bookmark', {
+        /*add('bookmark', {
             id: bookmark.id ? ((bookmark.isTab ? 'tab-' : 'bookmark-') + bookmark.id) : null,
             classes: [bookmark.favourite ? 'favourite' : '', bookmark.readonly ? 'tab' : ''],
             draggable: layout.allowEdits,
@@ -83,25 +83,6 @@ export default class BookmarkView {
                     }
                 }
 
-                if (layout.allowEdits && !bookmark.readonly) {
-                    add('div', { className: 'favourite' }, () => {
-                        const btnFavourite = add('i', {
-                            className: 'fa-fw',
-                            title: bookmark.favourite ? 'Unpin' : 'Pin',
-                            onclick: (ev) => {
-                                ev.stopPropagation()
-                                bookmark.favourite = !bookmark.favourite
-                                bookmark.save().then(() => MainView.refreshFolder(folder))
-                                return false
-                            }
-                        })
-                        btnFavourite.classList.toggle('far', !bookmark.favourite)
-                        btnFavourite.classList.toggle('fa-square', !bookmark.favourite)
-                        btnFavourite.classList.toggle('fas', bookmark.favourite)
-                        btnFavourite.classList.toggle('fa-thumbtack', bookmark.favourite)
-                    })
-                }
-
                 add('span', bookmark.title, { classes: ['title', layout.wrapTitles ? '' : 'nowrap'] })
 
                 if (layout.allowEdits && !bookmark.readonly) {
@@ -118,9 +99,203 @@ export default class BookmarkView {
                     })
                 }
             })
+        })/**/
+        return add('bs-bookmark', {
+            $bookmark: `${folder.id}#${bookmark.id}`
         })
     }
 }
 
 import Dialogs from '../ui/dialogs.js'
 import MainView from "../ui/main.js"
+
+class Styles {
+    static #cache = {}
+    static #work = []
+
+    static get(url) {
+        if (!Styles.#cache[url]) {
+            Styles.#cache[url] = new CSSStyleSheet()
+            Styles.#work.push(fetch(url)
+                .then(response => response.text())
+                .then(css => Styles.#cache[url].replaceSync(css)))
+        }
+        return Styles.#cache[url]
+    }
+
+    static root() {
+        if (!Styles.#cache['.root']) {
+            Styles.#cache['.root'] = new CSSStyleSheet()
+            for (const rule of [...document.querySelectorAll('link[rel=stylesheet]')].flatMap(s => [...s.sheet.rules])) {
+                Styles.#cache['.root'].insertRule(rule.cssText)
+            }
+        }
+        return Styles.#cache['.root']
+    }
+
+    static async wait() { return await Promise.allSettled(Styles.#work) }
+}
+
+class BaseHTMLElement extends HTMLElement {
+    #template
+    #styles
+
+    constructor(template, styles) {
+        super()
+        this.attachShadow({ mode: 'open' })
+
+        this.#template = template
+        this.#styles = styles
+        this.reset()
+    }
+
+    reset() {
+        this.shadowRoot.innerHTML = ''
+        this.shadowRoot.appendChild(this.#template.content.cloneNode(true))
+
+        if (!this.#styles) {
+            // Apply main CSS to shadow
+            this.shadowRoot.adoptedStyleSheets.push(Styles.root())
+        } else {
+            for (const style of this.#styles) {
+                this.shadowRoot.adoptedStyleSheets.push(Styles.get(style))
+            }
+        }
+    }
+
+    #displayed = false
+    async connectedCallback() {
+        if (this.#displayed) return
+        this.#displayed = true
+        const self = this
+
+        this.shadowRoot.host.style.display = 'none'
+        await this.ondisplay()
+        await Styles.wait()
+        this.shadowRoot.host.style.display = null
+
+        if (this.onclick) {
+            this.shadowRoot.host.addEventListener('click', (ev) => this.onclick.call(self, ev))
+        }
+    }
+
+    // Called whenever element customisation should occur
+    async ondisplay() { }
+
+    //onclick() // optional
+
+    // Apply changes to matching elements
+    _apply(selector, logic) {
+        for (const el of this.shadowRoot.querySelectorAll(selector)) {
+            logic.call(el, el)
+        }
+    }
+}
+
+const template = document.createElement('template')
+template.innerHTML = `
+<a>
+    <i class="icon fa-fw fas fa-bookmark"></i>
+    <img class="icon" style="display:none" />
+    <div class="favourite">
+        <i class="fa-fw far fa-square" title="Pin"></i>
+        <i class="fa-fw fas fa-thumbtack" title="Unpin"></i>
+    </div>
+    <span class="title"></span>
+    <div class="actions">
+        <i class="fa-fw fas fa-arrow-up" title="Move up"></i>
+        <i class="fa-fw fas fa-arrow-down" title="Move down"></i>
+        <i class="fa-fw fas fa-pen" title="Edit bookmark"></i>
+    </div>
+</a>
+`
+class BookmarkElement extends BaseHTMLElement {
+    #bookmark
+
+    constructor() {
+        super(template, ['/code/ui/common.css', '/code/ui/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
+    }
+
+    async ondisplay() {
+        super.reset()
+        const self = this
+
+        // Find source data
+        const bookmarkRef = this.getAttribute('bookmark')?.split('#')
+        const folder = bookmarkRef?.length === 2 ? await MainView.layout.folders.get(bookmarkRef[0]) : null
+        const bookmark = folder ? await folder.bookmarks.get(bookmarkRef[1]) : null
+        this.#bookmark = bookmark
+
+        // Icon
+        const icon = bookmark?.icon ? bookmark.icon : bookmark?.domain ? `${bookmark.domain}/favicon.ico` : ''
+        const faIcon = this.shadowRoot.querySelector('i.icon')
+        if (icon.includes('fa-')) {
+            faIcon.classList.remove('fas', 'fa-bookmark')
+            faIcon.classList.add(...bookmark.icon.split(' '))
+        } else if (icon && !icon.startsWith('chrome:') /* TODO && layout.showFavicons*/) {
+            this._apply('img.icon', function () {
+                this.onload = () => {
+                    faIcon.replaceWith(this)
+                    this.style.display = ''
+                }
+                this.src = icon
+            })
+        }
+
+        // Link
+        this._apply('a', function () {
+            this.href = bookmark?.url
+            this.title = bookmark?.url
+        })
+        this.shadowRoot.querySelector('a>span').textContent = bookmark?.title
+
+        // Style
+        this.shadowRoot.host.classList.toggle('favourite', bookmark?.favourite)
+        this.shadowRoot.host.classList.toggle('readonly', bookmark?.readonly || !MainView.layout.allowEdits)
+
+        // Favourite
+        this.shadowRoot.querySelector('.favourite>i[title="Pin"]').style.display = bookmark?.favourite ? 'none' : ''
+        this.shadowRoot.querySelector('.favourite>i[title="Unpin"]').style.display = bookmark?.favourite ? '' : 'none'
+        this.shadowRoot.querySelector('.favourite').onclick = () => {
+            bookmark.favourite = !bookmark.favourite
+            bookmark.save().then(() => MainView.refreshFolder(folder))
+            return false
+        }
+
+        // Move
+        this._apply('.actions>i[title="Move up"]', function () {
+            this.style.display = bookmark?.isFirst ? 'none' : ''
+            this.onclick = () => {
+                const [newIndex, oldIndex] = [bookmark.previous.index, bookmark.index]
+                Promise.allSettled([
+                    bookmark.setIndex(newIndex),
+                    bookmark.previous.setIndex(oldIndex)
+                ]).then(() => { console.log(bookmark.id, bookmark.index); MainView.refreshFolder(folder) })
+                return false
+            }
+        })
+        this._apply('.actions>i[title="Move down"]', function () {
+            this.style.display = bookmark?.isLast ? 'none' : ''
+            this.onclick = () => {
+                const [newIndex, oldIndex] = [bookmark.next.index, bookmark.index]
+                Promise.allSettled([
+                    bookmark.setIndex(newIndex),
+                    bookmark.next.setIndex(oldIndex)
+                ]).then(() => MainView.refreshFolder(folder))
+                return false
+            }
+        })
+        if (bookmark.favourite) {
+            this._apply('.actions>i[title="Move up"],.actions>i[title="Move down"]', (el) => {
+                el.style.display = 'none'
+            })
+        }
+
+        // Edit
+        this.shadowRoot.querySelector('i[title="Edit bookmark"]').onclick = () => {
+            Dialogs.editBookmark(bookmark, folder).then(() => MainView.refreshFolder(folder))
+            return false
+        }
+    }
+}
+customElements.define('bs-bookmark', BookmarkElement);

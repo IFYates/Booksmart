@@ -17,6 +17,7 @@ export default class Folder {
         this.#title = folder.title
         this.#owned = isOwned
         this.#applyData(data)
+        this.bookmarks.list()
     }
     #applyData(data) {
         this.#data = {
@@ -47,6 +48,8 @@ export default class Folder {
     get sortOrder() { return this.#data.sortOrder } // 0: Manual, 1: Alphabetic, 2: Creation date, 3: Clicks (then alphabetic), 4 Last click, -ve = opposite
     set sortOrder(value) { this.#data.sortOrder = num(value) }
 
+    guid = crypto.randomUUID()
+
     bookmarks = {
         count: () => this.#bookmarks.length,
         add: async (bookmark) => {
@@ -57,19 +60,19 @@ export default class Folder {
             }
             return bookmark
         },
-        create: async (title, url) => {
-            return this.#storage.createBookmark(this, title, url)
+        create: (title, url) => {
+            return this.#storage.bookmarks.create(this, title, url)
+        },
+        get: (id) => {
+            return this.#bookmarks.find(b => b.id === id)
+                || this.#storage.bookmarks.get(id)
         },
         list: () => {
-            const result = []
-            for (const bookmark of this.#bookmarks) {
-                result.push(bookmark)
-            }
-
-            function compareFavourite(a, b) { return (a.favourite ? 0 : 1) - (b.favourite ? 0 : 1) }
+            const result = [...this.#bookmarks]
+            const compareFavourite = (a, b) => (a.favourite ? 0 : 1) - (b.favourite ? 0 : 1)
             switch (Math.abs(this.sortOrder)) {
                 default: // Manual
-                    result.sort(compareFavourite)
+                    result.sort((a, b) => compareFavourite(a, b) || a.index - b.index)
                     break;
                 case 1: // Alphabetic
                     result.sort((a, b) => compareFavourite(a, b) || a.title.localeCompare(b.title))
@@ -84,7 +87,18 @@ export default class Folder {
                     result.sort((a, b) => compareFavourite(a, b) || b.lastClick - a.lastClick)
                     break;
             }
-            return this.sortOrder < 0 ? result.reverse() : result
+            if (this.sortOrder < 0) {
+                result.reverse()
+            }
+            var previous = null
+            for (const entry of result) {
+                entry.folder = this
+                entry.next = null
+                if (previous) previous.next = entry
+                entry.previous = previous
+                previous = entry
+            }
+            return result
         },
         remove: (bookmark) => {
             const index = this.#bookmarks.indexOf(bookmark)

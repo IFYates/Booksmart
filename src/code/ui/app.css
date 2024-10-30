@@ -10,8 +10,6 @@
     transform: rotate(180deg) scaleX(-1);
 }
 
-a,
-button,
 .collapsable,
 *[draggable='true'] {
     cursor: pointer;
@@ -31,46 +29,6 @@ i.action,
 i.action:hover,
 .actions>i:hover {
     opacity: 1;
-}
-
-.spanRows2 {
-    grid-row: span 2;
-}
-
-.spanCols2 {
-    grid-column: span 2;
-}
-
-.spanCols3 {
-    grid-column: span 3;
-}
-
-.spanCols4 {
-    grid-column: span 4;
-}
-
-* {
-    border: 0 solid var(--theme-colour-lighter);
-    color: var(--text-colour);
-}
-
-button,
-button *,
-input,
-select,
-option,
-textarea {
-    color: initial;
-    border: revert !important;
-}
-
-.danger,
-.danger * {
-    color: darkred !important;
-}
-
-.error {
-    color: red;
 }
 
 bookmark.separator {
@@ -115,10 +73,6 @@ body>.actions {
 
 body>.actions * {
     pointer-events: auto;
-}
-
-h1 {
-    margin: 0;
 }
 
 #btnAddFolder {
@@ -373,10 +327,6 @@ bookmark a .title.nowrap {
 bookmark .favourite {
     position: absolute;
     visibility: hidden;
-}
-
-bookmark .favourite button {
-    padding: 1px 0;
 }
 
 folder bookmark:hover .favourite {

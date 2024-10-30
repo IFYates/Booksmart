@@ -39,6 +39,8 @@ globalThis.createElement = (type, text, args, layout) => {
         Object.entries(args).forEach(v => {
             if (v[1] === null || v[1] === undefined) {
                 delete el[v[0]]
+            } else if (v[0][0] === '$') {
+                el.setAttribute(v[0].substring(1), v[1])
             } else {
                 el[v[0]] = v[1]
             }

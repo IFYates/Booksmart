@@ -1,0 +1,105 @@
+:host {
+    background: var(--accent-colour);
+    cursor: pointer;
+    padding: 5px 10px;
+    margin: 5px;
+    border-radius: 0.8em;
+    flex-grow: 5;
+    min-width: 150px;
+    font-size: 130%;
+}
+
+:host.empty {
+    text-align: center;
+    zoom: 200%;
+}
+
+.icon {
+    max-width: 16px;
+    max-height: 16px;
+    padding-right: 4px;
+}
+
+:host(:not(.readonly):not(.tab):hover) .icon {
+    visibility: hidden;
+}
+
+:host(:hover) {
+    filter: brightness(1.2);
+}
+
+:host(:active) {
+    filter: brightness(0.8);
+}
+
+a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+a .title {
+    margin-left: 5px;
+}
+
+a .title.nowrap {
+    white-space: nowrap;
+    overflow-x: hidden;
+}
+
+:host(.favourite),
+:host(.favourite) .actions {
+    background: #ff8;
+}
+
+:host(.favourite) * {
+    color: black;
+}
+
+.favourite {
+    position: absolute;
+    visibility: hidden;
+}
+
+.favourite button {
+    padding: 1px 0;
+}
+
+:host(:not(.readonly):hover) .favourite {
+    visibility: visible;
+}
+
+:host.add {
+    background: hsl(var(--accent-colour-hue), calc(var(--accent-colour-saturation) * 0.4), calc(var(--accent-colour-lightness) * 0.585), 0.5);
+    flex-grow: 1;
+    border-radius: 5px;
+    text-align: center;
+    min-width: initial;
+}
+
+:host.add i {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.actions {
+    background: var(--accent-colour);
+    border-radius: 5px;
+    position: absolute;
+    right: 5px;
+    visibility: hidden;
+}
+
+:host(:not(.readonly):hover) .actions {
+    visibility: visible;
+}
+
+.actions>i {
+    cursor: pointer;
+    opacity: 0.3;
+}
+
+.actions>i:hover {
+    opacity: 1;
+}

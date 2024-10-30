@@ -52,6 +52,12 @@ export default class Bookmark {
     get notes() { return this.#data.notes }
     set notes(value) { this.#data.notes = value?.trim() }
 
+    folder
+    previous
+    next
+    get isFirst() { return !this.previous }
+    get isLast() { return !this.next }
+
     #lastTab = null
     async click(ev, openExistingTab, openNewTab) {
         if (openExistingTab && this.#lastTab) {

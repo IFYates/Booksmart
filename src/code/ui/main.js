@@ -238,3 +238,4 @@ import Bookmark from '../models/bookmark.js'
 import Dialogs from './dialogs.js'
 import FolderView from '../viewModels/folderView.js'
 import Tabs from '../models/tabs.js'
+globalThis.MainView = MainView

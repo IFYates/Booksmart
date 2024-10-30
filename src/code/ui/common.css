@@ -1,0 +1,48 @@
+* {
+    border: 0 solid var(--theme-colour-lighter);
+    color: var(--text-colour);
+}
+
+a,
+button {
+    cursor: pointer;
+}
+
+button,
+button *,
+input,
+select,
+option,
+textarea {
+    color: initial;
+    border: revert !important;
+}
+
+h1 {
+    margin: 0;
+}
+
+.danger,
+.danger * {
+    color: darkred !important;
+}
+
+.error {
+    color: red;
+}
+
+.spanRows2 {
+    grid-row: span 2;
+}
+
+.spanCols2 {
+    grid-column: span 2;
+}
+
+.spanCols3 {
+    grid-column: span 3;
+}
+
+.spanCols4 {
+    grid-column: span 4;
+}

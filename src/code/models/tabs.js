@@ -47,7 +47,7 @@ export default class Tabs {
 }
 
 const ownTab = (await chrome.tabs.getCurrent()).tidy(['id', 'url'])
-const isSelf = (tab) => tab.id === ownTab.id || tab.url === ownTab.url || tab.favIconUrl.startsWith(document.location.origin)
+const isSelf = (tab) => tab.id === ownTab.id || tab.url === ownTab.url || tab.favIconUrl?.startsWith(document.location.origin)
 
 const _subscribers = []
 function emit(event, tabOrId) {
