@@ -23,11 +23,11 @@ import { BaseHTMLElement } from "../common/html.js"
 const template = document.createElement('template')
 template.innerHTML = `
 <a>
-    <i class="icon fa-fw fas fa-bookmark"></i>
+    <i class="icon fa-fw far fa-bookmark"></i>
     <img class="icon" style="display:none" />
     <div class="favourite">
-        <i class="fa-fw far fa-square" title="Pin"></i>
-        <i class="fa-fw fas fa-thumbtack" title="Unpin"></i>
+        <i class="fa-fw far fa-star" title="Pin"></i>
+        <i class="fa-fw fas fa-star" title="Unpin"></i>
     </div>
 
     <span class="title"></span>
@@ -39,12 +39,13 @@ template.innerHTML = `
     </div>
 </a>
 `
+
 export class BookmarkElement extends BaseHTMLElement {
     #bookmark
     get bookmark() { return this.#bookmark }
 
     constructor(bookmark) {
-        super(template, ['/code/ui/common.css', '/code/ui/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
+        super(template, ['/code/styles/common.css', '/code/styles/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
         this.#bookmark = bookmark
         this.id = 'bookmark-' + bookmark.id
     }
@@ -57,11 +58,11 @@ export class BookmarkElement extends BaseHTMLElement {
         const icon = bookmark.icon || bookmark.domain ? `${bookmark.domain}/favicon.ico` : ''
         const faIcon = root.querySelector('i.icon')
         if (bookmark.altIcon?.includes('fa-')) {
-            faIcon.classList.remove('fas', 'fa-bookmark')
+            faIcon.classList.remove('far', 'fa-bookmark')
             faIcon.classList.add('fas', bookmark.altIcon)
         }
         if (icon.includes('fa-')) {
-            faIcon.classList.remove('fas', 'fa-bookmark')
+            faIcon.classList.remove('far', 'fa-bookmark')
             faIcon.classList.add(...bookmark.icon.split(' '))
         } else if (icon && !icon.startsWith('chrome:') /* TODO && layout.showFavicons*/) {
             this._apply('img.icon', function () {
@@ -100,7 +101,7 @@ export class BookmarkElement extends BaseHTMLElement {
         root.querySelector('.favourite>i[title="Unpin"]').style.display = bookmark.favourite ? '' : 'none'
         root.querySelector('.favourite').onclick = () => {
             bookmark.favourite = !bookmark.favourite
-            bookmark.save().then(() => MainView.refreshFolder(folder))
+            bookmark.save().then(() => host.refresh())
             return false
         }
 
@@ -112,7 +113,7 @@ export class BookmarkElement extends BaseHTMLElement {
                 Promise.allSettled([
                     bookmark.setIndex(newIndex),
                     bookmark.previous.setIndex(oldIndex)
-                ]).then(() => MainView.refreshFolder(folder)) // TODO: refresh element directly
+                ]).then(() => host.parentNode.host.refresh())
                 return false
             }
         })
@@ -123,7 +124,7 @@ export class BookmarkElement extends BaseHTMLElement {
                 Promise.allSettled([
                     bookmark.setIndex(newIndex),
                     bookmark.next.setIndex(oldIndex)
-                ]).then(() => MainView.refreshFolder(folder))
+                ]).then(() => host.parentNode.host.refresh())
                 return false
             }
         })
@@ -135,7 +136,7 @@ export class BookmarkElement extends BaseHTMLElement {
 
         // Edit
         root.querySelector('i[title="Edit bookmark"]').onclick = () => {
-            Dialogs.editBookmark(bookmark, folder).then(() => MainView.refreshFolder(folder))
+            Dialogs.editBookmark(bookmark, folder).then(() => host.parentNode.host.refresh())
             return false
         }
 
@@ -187,4 +188,4 @@ export class BookmarkElement extends BaseHTMLElement {
         }
     }
 }
-customElements.define('bs-bookmark', BookmarkElement);
+customElements.define('bs-bookmark', BookmarkElement)

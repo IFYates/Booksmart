@@ -1,18 +1,7 @@
-:root {
-    --accent-colour: hsl(var(--accent-colour-hue), var(--accent-colour-saturation), var(--accent-colour-lightness));
-    --theme-colour-darkest: hsl(var(--accent-colour-hue), var(--accent-colour-saturation), calc(var(--accent-colour-lightness) * 0.585));
-    --theme-colour-lighter: hsl(var(--accent-colour-hue), calc(var(--accent-colour-saturation) * 1.5), calc(var(--accent-colour-lightness) * 1.625));
-}
-
 .obfuscated {
     filter: blur(3px);
     /*-webkit-text-security: disc;*/
     transform: rotate(180deg) scaleX(-1);
-}
-
-folder.collapsable title,
-*[draggable='true'] {
-    cursor: pointer;
 }
 
 .actions>button,
@@ -60,6 +49,7 @@ body>.actions {
     pointer-events: none;
     bottom: 0;
     width: 100%;
+    z-index: 1;
 }
 
 body>.actions * {

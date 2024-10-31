@@ -78,6 +78,7 @@ export default class Bookmark {
         delete data.lastClick
 
         const bookmark = await this.#storage.create(this.folderId, this.title, this.url)
+        bookmark.folder = this.folder
         bookmark.#applyData(data)
         await this.save()
         return bookmark
@@ -85,6 +86,7 @@ export default class Bookmark {
 
     async delete() {
         if (this.readonly) return
+        this.folder.bookmarks.remove(this)
         await this.#storage.delete(this)
     }
 
@@ -116,6 +118,7 @@ export default class Bookmark {
     async moveTo(folder) {
         if (this.readonly) return
         if (this.folder.id !== folder.id) {
+            this.#index = null
             this.folder = folder
             await folder.bookmarks.add(this)
             this.#parentId = folder.id

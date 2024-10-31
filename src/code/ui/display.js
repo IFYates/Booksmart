@@ -1,3 +1,4 @@
+// Obsolete
 globalThis.iconButton = function (icon, title, onclick) {
     add('i', {
         className: `fa-fw ${icon}`,

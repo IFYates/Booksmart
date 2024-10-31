@@ -134,43 +134,12 @@ export default class MainView {
         const folders = await MainView.layout.folders.entries()
 
         document.body.display(() => {
-            add('layout', function () {
-                MainView.elLayout = this
-
-                this.ondragover = (ev) => {
-                    const folder = MainView.dragInfo?.folder
-                    if (folder) {
-                        ev.preventDefault() // Can drop here
-                        ev.dataTransfer.dropEffect = 'move'
-                    }
-                }
-                this.ondrop = async () => {
-                    if (!MainView.dragInfo) return
-                    MainView.dragInfo.dropped = true
-
-                    const folder = MainView.dragInfo?.folder
-                    if (!folder) {
-                        return
-                    }
-                    const element = MainView.dragInfo.element
-
-                    // Position
-                    const folderElements = [...element.parentElement.querySelectorAll('folder')]
-                    for (const [index, el] of folderElements.entries()) {
-                        const item = el.id?.startsWith('folder-') ? await MainView.layout.folders.get(el.id.substring(7)) : null
-                        if (item) {
-                            item.index = index
-                            await item.save()
-                        }
-                    }
-                    //await MainView.fullRefresh()
-                }
-
+            MainView.elLayout = add('layout', function () {
                 if (!folders.length) {
                     FolderView.displayEmpty()
                 }
                 for (const folder of folders) {
-                    FolderView.display(folder)
+                    add(new FolderElement(folder))
                 }
                 if (MainView.layout.showTopSites) {
                     FolderView.display(MainView.sitesFolder)
@@ -184,19 +153,32 @@ export default class MainView {
             const oldLayout = document.getElementsByTagName('layout')[0]
             oldLayout.replaceWith(MainView.elLayout)
         })
-    }
 
-    static refreshFolder(folder) {
-        if (folder.id === 'tabs') {
-            MainView.updateTabsList()
-            return
+        const drag = new DragDropHandler(MainView.elLayout)
+        drag.ondragover = (ev, state) => {
+            const folder = state?.folder
+            if (folder) {
+                ev.preventDefault() // Can drop here
+                ev.dataTransfer.dropEffect = 'move'
+            }
         }
+        drag.ondrop = async (ev, state) => {
+            const folder = state?.folder
+            if (!folder) {
+                return
+            }
+            state.dropped = true
 
-        MainView.elLayout.display(() => {
-            const folderOld = document.getElementById('folder-' + folder.id)
-            const folderNew = FolderView.create(folder)
-            folderOld?.replaceWith(folderNew)
-        })
+            // Place folder
+            if (folder.previous) folder.previous.next = folder.next
+            if (folder.next) folder.next.previous = folder.previous
+            folder.previous = state.element.previousSibling?.folder
+            if (folder.previous) folder.previous.next = folder
+            folder.next = state.element.nextSibling?.folder
+            if (folder.next) folder.next.previous = folder
+            await folder.reindexAll()
+            MainView.fullRefresh()
+        }
     }
 
     static updateTopSitesList() {
@@ -236,6 +218,7 @@ export default class MainView {
 
 import Bookmark from '../models/bookmark.js'
 import Dialogs from './dialogs.js'
-import FolderView from '../viewModels/folderView.js'
+import { FolderElement, FolderView } from '../viewModels/folderView.js'
 import Tabs from '../models/tabs.js'
+import { DragDropHandler } from '../common/html.js'
 globalThis.MainView = MainView

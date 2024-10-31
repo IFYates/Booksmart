@@ -2,64 +2,9 @@
 View model for Folder.
 */
 // TODO: obsolete
-export default class FolderView {
-    static create(folder) {
-        const layout = MainView.layout
-        const isFirst = folder.isFirst
-        const isLast = folder.isLast
-
-        return new FolderElement(folder)
-
-        //     if (layout.allowEdits && !folder.immobile) {
-        //         this.ondrop = async (ev) => {
-        //             if (!MainView.dragInfo) return
-        //             MainView.dragInfo.dropped = true
-
-        //             var bookmark = MainView.dragInfo.bookmark
-        //             if (!bookmark) {
-        //                 return
-        //             }
-        //             const element = MainView.dragInfo.element
-
-        //             // Copy tab here
-        //             if (bookmark.isTab) {
-        //                 const originalIcon = MainView.dragInfo.bookmark.icon
-        //                 bookmark = await folder.bookmarks.create(bookmark.title, bookmark.url)
-        //                 bookmark.icon = originalIcon
-        //                 await bookmark.save()
-        //             }
-        //             else if (bookmark.folderId !== folder.id) {
-        //                 // Copy bookmark
-        //                 if (ev.ctrlKey) {
-        //                     bookmark = await bookmark.duplicate()
-        //                 }
-
-        //                 // Move bookmark here
-        //                 await bookmark.moveTo(folder)
-        //             }
-
-        //             // Position
-        //             const siblings = [...element.parentElement.querySelectorAll('bookmark')]
-        //             const position = siblings.indexOf(element)
-        //             if (position === 0) {
-        //                 await bookmark.setIndex(0)
-        //             } else if (position > 0) {
-        //                 const index = num(siblings[position - 1].getAttribute('data-index'))
-        //                 await bookmark.setIndex(index + 1)
-        //             }
-        //             MainView.fullRefresh()
-        //         }
-        //     }
-
-        //         if (layout.allowEdits && !folder.immobile) {
-        //         }
-
-        //     })
-        // })
-    }
-
+export class FolderView {
     static display(folder) {
-        return add(this.create(folder))
+        return add(new FolderElement(folder))
     }
 
     static displayEmpty() {
@@ -69,19 +14,9 @@ export default class FolderView {
             onclick: () => MainView.btnAddFolder.click()
         })
     }
-
-    static update(folder) {
-        const oldView = document.getElementById('folder-' + folder.id)
-        const view = FolderView.create(folder)
-        if (oldView) {
-            oldView.replaceWith(view)
-        } else {
-            MainView.elLayout.add(view)
-        }
-        return view
-    }
 }
 
+import { AddBookmarkElement } from './addBookmark.js'
 import { BookmarkElement } from './bookmarkView.js'
 import Dialogs from '../ui/dialogs.js'
 import MainView from "../ui/main.js"
@@ -91,8 +26,8 @@ import { BaseHTMLElement, DropHandler, DragDropHandler } from "../common/html.js
 const template = document.createElement('template')
 template.innerHTML = `
 <h1>
-    <i class="showHide fa-fw fas fa-chevron-down" title="Show"></i>
-    <i class="showHide fa-fw fas fa-chevron-up" title="Hide"></i>
+    <i class="showHide fa-fw far fa-square-caret-down" title="Show"></i>
+    <i class="showHide fa-fw far fa-square-caret-up" title="Hide"></i>
     <i class="icon fa-fw fas fa-book"></i>
     <img class="icon" style="display:none" />
 
@@ -108,12 +43,13 @@ template.innerHTML = `
 </h1>
 <!-- Bookmarks -->
 `
-class FolderElement extends BaseHTMLElement {
+
+export class FolderElement extends BaseHTMLElement {
     #folder
     get folder() { return this.#folder }
 
     constructor(folder) {
-        super(template, ['/code/ui/common.css', '/code/styles/folder.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
+        super(template, ['/code/styles/common.css', '/code/styles/folder.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
         this.#folder = folder
         this.id = 'folder-' + folder.id
     }
@@ -123,7 +59,7 @@ class FolderElement extends BaseHTMLElement {
 
         // Show/hide
         this._apply('i.showHide', function () {
-            this.style.display = !folder.fixed && this.classList.contains('fa-chevron-down') === folder.collapsed ? '' : 'none'
+            this.style.display = !folder.fixed && this.classList.contains('fa-square-caret-up') === folder.collapsed ? '' : 'none'
         })
         root.querySelector('h1').onclick = () => {
             folder.collapsed = !folder.collapsed
@@ -212,18 +148,7 @@ class FolderElement extends BaseHTMLElement {
             }
 
             if (MainView.layout.allowEdits && !folder.readonly) {
-                // TODO
-                root.appendChild(createElement('bookmark', {
-                    className: 'add',
-                    title: 'Add bookmark',
-                    onclick: () => Dialogs.newBookmark(folder).then(MainView.fullRefresh),
-                    // ondragenter: function () {
-                    //     const bookmark = MainView.dragInfo?.bookmark
-                    //     if (bookmark && (bookmark.folderId !== folder.id || folder.sortOrder === 0)) {
-                    //         this.parentElement.insertBefore(MainView.dragInfo.element, this)
-                    //     }
-                    // }
-                }, () => add('i', { className: 'fa-fw fas fa-plus', title: 'Add bookmark' })))
+                root.appendChild(new AddBookmarkElement(folder))
             }
         }
 
@@ -264,25 +189,44 @@ class FolderElement extends BaseHTMLElement {
         // Bookmark dropping
         if (MainView.layout.allowEdits) {
             const drop = new DropHandler(host)
-
             drop.ondragover = (ev, state) => {
                 const bookmark = state?.bookmark
-                console.log('ondragover', ev, state)
                 if (bookmark) {
                     if (bookmark.folderId === folder.id && folder.sortOrder !== 0) return // Cannot reorder non-manual folder
                     ev.preventDefault() // Can drop here
                     ev.dataTransfer.dropEffect = bookmark.folderId !== folder.id && (bookmark.isTab || ev.ctrlKey) ? 'copy' : 'move' // Can copy to another collection
                 }
             }
-            // TODO: index
             drop.ondrop = async (ev, state) => {
-                if (state?.bookmark) {
-                    await state.bookmark.moveTo(folder)
-                    state.bookmark.save().then(() => MainView.fullRefresh())
-                    // TODO: refresh only affected folders
+                var bookmark = state?.bookmark
+                if (!bookmark) {
+                    return
                 }
+                state.dropped = true
+
+                // Copy tab here
+                if (bookmark.isTab) {
+                    const originalIcon = bookmark.icon
+                    bookmark = await folder.bookmarks.create(bookmark.title, bookmark.url)
+                    bookmark.icon = originalIcon
+                    await bookmark.save()
+                }
+                else if (bookmark.folderId !== folder.id) {
+                    // Copy bookmark
+                    if (ev.ctrlKey) {
+                        bookmark = await bookmark.duplicate()
+                    }
+
+                    // Move bookmark here
+                    await bookmark.moveTo(folder)
+                }
+
+                // Place bookmark
+                const index = state.element.previousSibling?.bookmark?.index + 1 || 0
+                await folder.bookmarks.move(bookmark, index)
+                this.refresh()
             }
         }
     }
 }
-customElements.define('bs-folder', FolderElement);
+customElements.define('bs-folder', FolderElement)

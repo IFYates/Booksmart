@@ -37,37 +37,23 @@ export default class Storage {
         this.#parseData(dataItem.title)
         this.#cacheTree(bookmarkRoot)
         delete this.#data.folders[booksmartRoot.id]
-
-        // Booksmart children are always included
-        for (const child of bookmarkRoot.children) {
-            if (!child.url) {
-                this.folders.add(child)
-            }
-        }
     }
     #parseData(data) {
         this.#data = tryParse(data.substring(Storage.Title.length))
         this.#data.bookmarks ??= {}
         this.#data.folders ??= {}
-        ({ 30: this.#data.folders[30]?.index, 31: this.#data.folders[31]?.index })
+            ({ 30: this.#data.folders[30]?.index, 31: this.#data.folders[31]?.index })
     }
 
     #cache = {}
-    #cacheTree(tree) {
-        this.#cache = {}
-        cacheItem.call(this, tree, { bookmarks: { add: () => { } } })
-
-        function cacheItem(item, folder) {
-            for (const child of item.children) {
-                if (child.url) {
-                    if (this.#data.bookmarks.hasOwnProperty(child.id)) {
-                        folder.bookmarks.add(this.#cacheAdd(child))
-                    }
-                } else {
-                    if (this.#data.folders.hasOwnProperty(child.id)) {
-                        cacheItem.call(this, child, this.#cacheAdd(child))
-                    }
-                }
+    #cacheTree(tree, parent = null) {
+        for (const child of tree.children) {
+            if (!child.url) {
+                const folder = child.parentId === this.#booksmartRootId || this.#data.folders.hasOwnProperty(child.id)
+                    ? this.#cacheAdd(child) : null
+                this.#cacheTree.call(this, child, folder)
+            } else if (parent) {
+                parent.bookmarks.add(this.#cacheAdd(child))
             }
         }
     }
@@ -134,10 +120,22 @@ export default class Storage {
             })
 
             if (item.parentId !== bookmark.folderId || item.index !== bookmark.index) {
-                await chrome.bookmarks.move(bookmark.id, {
-                    parentId: bookmark.folderId,
-                    index: bookmark.index
-                })
+                var index = bookmark.index
+                if (index === null) {
+                    index = bookmark.folder.bookmarks.count() - 1
+                }
+
+                try {
+                    await chrome.bookmarks.move(bookmark.id, {
+                        parentId: bookmark.folderId,
+                        index: index
+                    })
+                } catch {
+                    await chrome.bookmarks.move(bookmark.id, {
+                        parentId: bookmark.folderId,
+                        index: bookmark.folder.bookmarks.count() - 1
+                    })
+                }
             }
 
             const dataItem = (await chrome.bookmarks.get(this.#dataId))[0]

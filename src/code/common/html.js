@@ -133,7 +133,7 @@ export class BaseHTMLElement extends HTMLElement {
 
     refresh() {
         this._reset()
-        this._ondisplay(this.shadowRoot.host)
+        this._ondisplay(this.shadowRoot, this.shadowRoot.host)
     }
 
     _reset() {
@@ -169,7 +169,7 @@ export class BaseHTMLElement extends HTMLElement {
     }
 
     // Called whenever element customisation should occur
-    async _ondisplay(host) { }
+    async _ondisplay(root, host) { }
 
     //onclick() // optional
 
@@ -187,9 +187,6 @@ export class BaseHTMLElement extends HTMLElement {
 }
 
 export class DropHandler {
-    // The current global drag state
-    static #currentState = null
-
     #element
     get element() { return this.#element }
 
@@ -205,7 +202,7 @@ export class DropHandler {
             this.ondragover.call(element, ev, DragDropHandler.state)
         })
         element.addEventListener('drop', (ev) => {
-            console.log('ondrop', element, ev, DragDropHandler.state)
+            // console.log('ondrop', element, ev, DragDropHandler.state)
             this.ondrop.call(element, ev, DragDropHandler.state)
         })
     }
@@ -226,10 +223,10 @@ export class DragDropHandler extends DropHandler {
 
         element.addEventListener('dragstart', (ev) => {
             DragDropHandler.#currentState = this.ondragstart.call(element, ev)
-            console.log('ondragstart', element, ev, DragDropHandler.#currentState)
+            // console.log('ondragstart', element, ev, DragDropHandler.#currentState)
         })
         element.addEventListener('dragend', (ev) => {
-            console.log('ondragend', element, ev, DragDropHandler.#currentState)
+            // console.log('ondragend', element, ev, DragDropHandler.#currentState)
             this.ondragend.call(element, ev, DragDropHandler.#currentState)
             DragDropHandler.#currentState = null
         })

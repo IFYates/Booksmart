@@ -1,6 +1,8 @@
 :host {
     position: relative;
     display: flex;
+    align-content: baseline;
+    align-self: stretch;
     flex-wrap: wrap;
     border-width: 1px;
     border-radius: 5px;
@@ -36,13 +38,16 @@ i.action:hover,
 }
 
 :host(.collapsed) {
-    filter: brightness(0.6);
+    filter: brightness(0.8);
+    align-self: unset;
 }
 
 h1 {
     background: var(--accent-colour);
     display: flex;
     align-items: center;
+    align-self: start;
+    text-align: center;
     width: 100%;
     border-bottom-width: 1px;
     padding: 5px;

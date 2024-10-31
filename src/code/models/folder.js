@@ -52,7 +52,9 @@ export default class Folder {
     next
     get isFirst() { return !this.previous }
     get isLast() { return !this.next }
+    get first() { return this.previous?.first || this }
 
+    // TODO: remove this.save() and have global save manage all
     bookmarks = {
         count: () => this.#bookmarks.length,
         add: async (bookmark) => {
@@ -95,21 +97,38 @@ export default class Folder {
             if (this.sortOrder < 0) {
                 result.reverse()
             }
-            var previous = null
-            for (const entry of result) {
-                entry.folder = this
-                entry.next = null
-                if (previous) previous.next = entry
-                entry.previous = previous
-                previous = entry
-            }
+            this.#reindex(result)
             return result
+        },
+        move: async (bookmark, index) => { // TODO: combine in to 'add'?
+            await this.bookmarks.add(bookmark)
+            this.bookmarks.remove(bookmark)
+            const idx = this.#bookmarks.filter((b) => b.index < index).length
+            this.#bookmarks.splice(idx, 0, bookmark)
+            await bookmark.setIndex(index)
+            await this.#reindex(this.#bookmarks)
         },
         remove: (bookmark) => {
             const index = this.#bookmarks.indexOf(bookmark)
             if (index >= 0) {
                 this.#bookmarks.splice(index, 1)
             }
+        }
+    }
+
+    // Ensures all bookmarks have a valid index and double-linked
+    async #reindex(array) {
+        var previous = null
+        for (const entry of array) {
+            if (entry.index <= previous?.index) {
+                await entry.setIndex(previous.index + 1)
+            }
+
+            entry.folder = this
+            entry.next = null
+            if (previous) previous.next = entry
+            entry.previous = previous
+            previous = entry
         }
     }
 
@@ -141,13 +160,26 @@ export default class Folder {
         this.#applyData(data)
     }
 
-    async save() {
+    async reindexAll() {
         if (this.readonly) return
-        await this.#storage.save(this)
+        var idx = -1
+        var item = this.first
+        while (item) {
+            if (item.index !== ++idx) {
+                item.index = idx
+                await item.save()
+            }
+            item = item.next
+        }
     }
 
     async remove() {
         if (this.readonly) return
         await this.#storage.remove(this)
+    }
+
+    async save() {
+        if (this.readonly) return
+        await this.#storage.save(this)
     }
 }
