@@ -1,6 +1,6 @@
-import './ui/html.js'
+import './common/html.js'
+import './common/utilities.js'
 import './ui/display.js'
-import './utilities.js'
 
 import Layout from './models/layout.js'
 import MainView from "./ui/main.js"

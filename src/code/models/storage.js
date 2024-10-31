@@ -36,6 +36,7 @@ export default class Storage {
         this.#booksmartRootId = booksmartRoot.id
         this.#parseData(dataItem.title)
         this.#cacheTree(bookmarkRoot)
+        delete this.#data.folders[booksmartRoot.id]
 
         // Booksmart children are always included
         for (const child of bookmarkRoot.children) {
@@ -172,7 +173,7 @@ export default class Storage {
             await this.save()
         },
         get: async (id) => {
-            if (num(id, null) === null) {
+            if (num(id, null) === null || id == this.#booksmartRootId) {
                 return null
             }
 
