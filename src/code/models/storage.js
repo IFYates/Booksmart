@@ -49,6 +49,7 @@ export default class Storage {
         this.#data = tryParse(data.substring(Storage.Title.length))
         this.#data.bookmarks ??= {}
         this.#data.folders ??= {}
+        ({ 30: this.#data.folders[30]?.index, 31: this.#data.folders[31]?.index })
     }
 
     #cache = {}
@@ -152,8 +153,10 @@ export default class Storage {
         count: () => Object.keys(this.#data.folders).length,
         add: async (folder) => {
             if (!folder.url) {
-                this.#data.folders[folder.id] ??= {}
-                await this.save()
+                if (folder.id != this.#booksmartRootId && !this.#data.folders.hasOwnProperty(folder.id)) {
+                    this.#data.folders[folder.id] = {}
+                    await this.save()
+                }
                 return this.#cacheAdd(folder)
             }
         },
@@ -215,9 +218,12 @@ export default class Storage {
                 await this.save()
             }
 
-            if (entries.length) {
-                entries[0].isFirst = true
-                entries[entries.length - 1].isLast = true
+            var previous = null
+            for (const entry of entries) {
+                entry.next = null
+                if (previous) previous.next = entry
+                entry.previous = previous
+                previous = entry
             }
             return entries
         },

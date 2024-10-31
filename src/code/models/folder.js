@@ -48,14 +48,19 @@ export default class Folder {
     get sortOrder() { return this.#data.sortOrder } // 0: Manual, 1: Alphabetic, 2: Creation date, 3: Clicks (then alphabetic), 4 Last click, -ve = opposite
     set sortOrder(value) { this.#data.sortOrder = num(value) }
 
-    guid = crypto.randomUUID()
+    previous
+    next
+    get isFirst() { return !this.previous }
+    get isLast() { return !this.next }
 
     bookmarks = {
         count: () => this.#bookmarks.length,
         add: async (bookmark) => {
             if (bookmark.folderId !== this.id) {
+                bookmark.folder?.bookmarks.remove(bookmark)
                 await bookmark.moveTo(this)
-            } else if (!this.#bookmarks.includes(bookmark)) {
+            }
+            if (!this.#bookmarks.includes(bookmark)) {
                 this.#bookmarks.push(bookmark)
             }
             return bookmark

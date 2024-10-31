@@ -1,0 +1,79 @@
+:host {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    border-width: 1px;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    padding: 5px;
+}
+
+:host#folder-tabs,
+:host#folder-topSites {
+    grid-column: 1 / -1;
+}
+
+i.action,
+.actions>i {
+    cursor: pointer;
+    opacity: 0.3;
+}
+
+i.action:hover,
+.actions>i:hover {
+    opacity: 1;
+}
+
+.icon {
+    width: 22px;
+    max-height: 22px;
+    padding-right: 4px;
+}
+
+:host(.collapsable) h1 {
+    cursor: pointer;
+}
+
+:host(.collapsed) {
+    filter: brightness(0.6);
+}
+
+h1 {
+    background: var(--accent-colour);
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-bottom-width: 1px;
+    padding: 5px;
+    font-weight: bold;
+    font-size: initial;
+    margin: -5px;
+    margin-bottom: 5px;
+}
+
+h1>span {
+    flex-grow: 1;
+}
+
+h1>.actions {
+    visibility: hidden;
+    padding-right: 5px;
+}
+
+h1:hover .actions {
+    visibility: visible;
+}
+
+h1:hover .icon {
+    visibility: hidden;
+}
+
+.showHide {
+    position: absolute;
+    visibility: hidden;
+}
+
+h1:hover .showHide {
+    visibility: visible;
+}

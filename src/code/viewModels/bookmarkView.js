@@ -2,8 +2,8 @@
 View model for Bookmark.
 */
 // TODO: obsolete
-export default class BookmarkView {
-    static display(layout, folder, bookmark, isFirst, isLast) {
+export class BookmarkView {
+    static display(layout, folder, bookmark) {
         if (bookmark.type === 'separator') {
             return add('bookmark', { className: 'separator' }) // TODO: new element?
         }
@@ -12,13 +12,13 @@ export default class BookmarkView {
             id: bookmark.id ? ((bookmark.isTab ? 'tab-' : 'bookmark-') + bookmark.id) : null
         })/**/
         // TODO: bookmark.isTab - add('bs-tab', { $tab: `${bookmark.id}` })
-        return add('bs-bookmark', { $bookmark: `${folder.id}:${bookmark.id}` })
+        return add(new BookmarkElement(bookmark))
     }
 }
 
 import Dialogs from '../ui/dialogs.js'
 import MainView from "../ui/main.js"
-import { BaseHTMLElement, DragDrop } from "../common/html.js"
+import { BaseHTMLElement } from "../common/html.js"
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -29,7 +29,9 @@ template.innerHTML = `
         <i class="fa-fw far fa-square" title="Pin"></i>
         <i class="fa-fw fas fa-thumbtack" title="Unpin"></i>
     </div>
+
     <span class="title"></span>
+
     <div class="actions">
         <i class="fa-fw fas fa-arrow-up" title="Move up"></i>
         <i class="fa-fw fas fa-arrow-down" title="Move down"></i>
@@ -37,29 +39,23 @@ template.innerHTML = `
     </div>
 </a>
 `
-class BookmarkElement extends BaseHTMLElement {
+export class BookmarkElement extends BaseHTMLElement {
     #bookmark
     get bookmark() { return this.#bookmark }
-    #folder
-    get folder() { return this.#folder }
 
-    constructor() {
+    constructor(bookmark) {
         super(template, ['/code/ui/common.css', '/code/ui/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
+        this.#bookmark = bookmark
+        this.id = 'bookmark-' + bookmark.id
     }
 
-    async ondisplay() {
-        super.reset()
-        const self = this
-
-        // Find source data
-        const bookmarkRef = this.getAttribute('bookmark')?.split(':')
-        const folder = bookmarkRef?.length === 2 ? await MainView.layout.folders.get(bookmarkRef[0]) : null
-        const bookmark = folder ? await folder.bookmarks.get(bookmarkRef[1]) : null
-        this.#bookmark = bookmark
+    async _ondisplay(root, host) {
+        const bookmark = this.#bookmark
+        const folder = bookmark.folder
 
         // Icon
-        const icon = bookmark?.icon ? bookmark.icon : bookmark?.domain ? `${bookmark.domain}/favicon.ico` : ''
-        const faIcon = this.shadowRoot.querySelector('i.icon')
+        const icon = bookmark.icon || bookmark.domain ? `${bookmark.domain}/favicon.ico` : ''
+        const faIcon = root.querySelector('i.icon')
         if (bookmark.altIcon?.includes('fa-')) {
             faIcon.classList.remove('fas', 'fa-bookmark')
             faIcon.classList.add('fas', bookmark.altIcon)
@@ -79,15 +75,15 @@ class BookmarkElement extends BaseHTMLElement {
 
         // Link
         this._apply('a', function () {
-            this.href = bookmark?.url
-            this.title = bookmark?.url
+            this.href = bookmark.url
+            this.title = bookmark.url
             this.target = MainView.layout.openNewTab ? '_blank' : ''
             this.onclick = (ev) => {
                 bookmark.click(ev, MainView.layout.openExistingTab, MainView.layout.openNewTab)
             }
         })
         this._apply('span.title', function () {
-            this.textContent = bookmark?.title
+            this.textContent = bookmark.title
             this.classList.toggle('nowrap', !MainView.layout.wrapTitles)
         })
         this.onmouseenter = () => bookmark.hasOpenTab()
@@ -95,14 +91,14 @@ class BookmarkElement extends BaseHTMLElement {
         // TODO: handle click here?
 
         // Style
-        this.shadowRoot.host.classList.toggle('tab', bookmark?.isTab) // TODO: probably handled through 'bs-tab' element
-        this.shadowRoot.host.classList.toggle('favourite', bookmark?.favourite)
-        this.shadowRoot.host.classList.toggle('readonly', bookmark?.readonly || !MainView.layout.allowEdits)
+        //host.classList.toggle('tab', bookmark.isTab) // TODO: probably handled through 'bs-tab' element
+        host.classList.toggle('favourite', bookmark.favourite)
+        host.classList.toggle('readonly', bookmark.readonly || !MainView.layout.allowEdits)
 
         // Favourite
-        this.shadowRoot.querySelector('.favourite>i[title="Pin"]').style.display = bookmark?.favourite ? 'none' : ''
-        this.shadowRoot.querySelector('.favourite>i[title="Unpin"]').style.display = bookmark?.favourite ? '' : 'none'
-        this.shadowRoot.querySelector('.favourite').onclick = () => {
+        root.querySelector('.favourite>i[title="Pin"]').style.display = bookmark.favourite ? 'none' : ''
+        root.querySelector('.favourite>i[title="Unpin"]').style.display = bookmark.favourite ? '' : 'none'
+        root.querySelector('.favourite').onclick = () => {
             bookmark.favourite = !bookmark.favourite
             bookmark.save().then(() => MainView.refreshFolder(folder))
             return false
@@ -110,18 +106,18 @@ class BookmarkElement extends BaseHTMLElement {
 
         // Move
         this._apply('.actions>i[title="Move up"]', function () {
-            this.style.display = bookmark?.isFirst ? 'none' : ''
+            this.style.display = bookmark.isFirst ? 'none' : ''
             this.onclick = () => {
                 const [newIndex, oldIndex] = [bookmark.previous.index, bookmark.index]
                 Promise.allSettled([
                     bookmark.setIndex(newIndex),
                     bookmark.previous.setIndex(oldIndex)
-                ]).then(() => { console.log(bookmark.id, bookmark.index); MainView.refreshFolder(folder) })
+                ]).then(() => MainView.refreshFolder(folder)) // TODO: refresh element directly
                 return false
             }
         })
         this._apply('.actions>i[title="Move down"]', function () {
-            this.style.display = bookmark?.isLast ? 'none' : ''
+            this.style.display = bookmark.isLast ? 'none' : ''
             this.onclick = () => {
                 const [newIndex, oldIndex] = [bookmark.next.index, bookmark.index]
                 Promise.allSettled([
@@ -131,14 +127,14 @@ class BookmarkElement extends BaseHTMLElement {
                 return false
             }
         })
-        if (bookmark?.favourite) {
+        if (bookmark.favourite) {
             this._apply('.actions>i[title="Move up"],.actions>i[title="Move down"]', (el) => {
                 el.style.display = 'none'
             })
         }
 
         // Edit
-        this.shadowRoot.querySelector('i[title="Edit bookmark"]').onclick = () => {
+        root.querySelector('i[title="Edit bookmark"]').onclick = () => {
             Dialogs.editBookmark(bookmark, folder).then(() => MainView.refreshFolder(folder))
             return false
         }
@@ -161,23 +157,23 @@ class BookmarkElement extends BaseHTMLElement {
 
                 // Didn't drop on folder, so reset
                 if (state && !state.dropped) {
-                    state.origin.parentElement.insertBefore(this, state.origin)
+                    state.origin.parentNode.insertBefore(this, state.origin)
                 }
             }
 
             drag.ondragenter = (ev, state) => {
-                const dragging = state.bookmark
+                const dragging = state?.bookmark
                 if (dragging && dragging !== bookmark && !bookmark.isTab) {
                     if (dragging.folderId === folder.id && folder.sortOrder !== 0) {
                         return // Cannot reorder non-manual folder
                     }
 
-                    var target = !dragging.favourite ? this : this.parentElement.querySelectorAll('bookmark:first-of-type')[0]
+                    var target = !dragging.favourite ? this : this.parentNode.querySelectorAll('bookmark:first-of-type')[0]
                     if (target !== state.element) {
-                        const startIndex = Array.prototype.indexOf.call(target.parentElement.children, state.element)
-                        const targetIndex = Array.prototype.indexOf.call(target.parentElement.children, target)
+                        const startIndex = Array.prototype.indexOf.call(target.parentNode.children, state.element)
+                        const targetIndex = Array.prototype.indexOf.call(target.parentNode.children, target)
                         if (startIndex < 0 || startIndex > targetIndex) {
-                            target.parentElement.insertBefore(state.element, target)
+                            target.parentNode.insertBefore(state.element, target)
                         } else {
                             target.insertAdjacentElement('afterend', state.element)
                         }

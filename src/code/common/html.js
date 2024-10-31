@@ -128,10 +128,15 @@ export class BaseHTMLElement extends HTMLElement {
 
         this.#template = template
         this.#styles = styles
-        this.reset()
+        this._reset()
     }
 
-    reset() {
+    refresh() {
+        this._reset()
+        this._ondisplay(this.shadowRoot.host)
+    }
+
+    _reset() {
         this.shadowRoot.innerHTML = ''
         this.shadowRoot.appendChild(this.#template.content.cloneNode(true))
 
@@ -152,8 +157,10 @@ export class BaseHTMLElement extends HTMLElement {
         const self = this
 
         this.shadowRoot.host.style.display = 'none'
-        await this.ondisplay()
-        await StyleManager.wait()
+        await Promise.allSettled([
+            this._ondisplay(this.shadowRoot, this.shadowRoot.host),
+            StyleManager.wait()
+        ])
         this.shadowRoot.host.style.display = null
 
         if (typeof this.onclick === 'function') {
@@ -162,7 +169,7 @@ export class BaseHTMLElement extends HTMLElement {
     }
 
     // Called whenever element customisation should occur
-    async ondisplay() { }
+    async _ondisplay(host) { }
 
     //onclick() // optional
 
@@ -175,52 +182,59 @@ export class BaseHTMLElement extends HTMLElement {
 
     #dragLogic = null
     _enableDragDrop() {
-        return this.#dragLogic ??= new DragDrop(this.shadowRoot.host)
+        return this.#dragLogic ??= new DragDropHandler(this.shadowRoot.host)
     }
 }
 
-export class DragDrop {
+export class DropHandler {
     // The current global drag state
     static #currentState = null
 
-    #dragging = false
-    get dragging() { return this.#dragging }
-
     #element
+    get element() { return this.#element }
 
     constructor(element) {
         this.#element = element
 
-        element.ondragstart = (ev) => {
-            this.#dragging = true
-            DragDrop.#currentState = this.ondragstart.call(element, ev)
-            console.log('ondragstart', element, ev, DragDrop.#currentState)
-        }
-        element.ondragend = (ev) => {
-            this.#dragging = false
-            console.log('ondragend', element, ev, DragDrop.#currentState)
-            this.ondragend.call(element, ev, DragDrop.#currentState)
-            DragDrop.#currentState = null
-        }
-
-        element.ondragenter = (ev) => {
-            // console.log('ondragenter', element, ev, DragDrop.#currentState)
-            this.ondragenter.call(element, ev, DragDrop.#currentState)
-        }
-        element.ondragover = (ev) => {
-            // console.log('ondragover', element, ev, DragDrop.#currentState)
-            this.ondragover.call(element, ev, DragDrop.#currentState)
-        }
-        element.ondrop = (ev) => {
-            console.log('ondrop', element, ev, DragDrop.#currentState)
-            this.ondrop.call(element, ev, DragDrop.#currentState)
-        }
+        element.addEventListener('dragenter', (ev) => {
+            // console.log('ondragenter', element, ev, DragDropHandler.#currentState)
+            this.ondragenter.call(element, ev, DragDropHandler.state)
+        })
+        element.addEventListener('dragover', (ev) => {
+            // console.log('ondragover', element, ev, DragDropHandler.#currentState)
+            this.ondragover.call(element, ev, DragDropHandler.state)
+        })
+        element.addEventListener('drop', (ev) => {
+            console.log('ondrop', element, ev, DragDropHandler.state)
+            this.ondrop.call(element, ev, DragDropHandler.state)
+        })
     }
-
-    ondragstart(ev) { } // return the state object to share to other drag/drop events
-    ondragend(ev, state) { }
 
     ondragenter(ev, state) { }
     ondragover(ev, state) { }
     ondrop(ev, state) { }
+}
+
+export class DragDropHandler extends DropHandler {
+    // The current global drag state
+    static #currentState = null
+    static get state() { return DragDropHandler.#currentState }
+
+    constructor(element) {
+        super(element)
+        element.draggable = true
+
+        element.addEventListener('dragstart', (ev) => {
+            DragDropHandler.#currentState = this.ondragstart.call(element, ev)
+            console.log('ondragstart', element, ev, DragDropHandler.#currentState)
+        })
+        element.addEventListener('dragend', (ev) => {
+            console.log('ondragend', element, ev, DragDropHandler.#currentState)
+            this.ondragend.call(element, ev, DragDropHandler.#currentState)
+            DragDropHandler.#currentState = null
+        })
+    }
+
+    ondragstart(ev) { } // return the state object to share to other drag/drop events
+    ondragend(ev, state) { }
 }

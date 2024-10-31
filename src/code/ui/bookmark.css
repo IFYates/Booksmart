@@ -9,7 +9,7 @@
     font-size: 130%;
 }
 
-:host.empty {
+:host(.empty) {
     text-align: center;
     zoom: 200%;
 }
@@ -106,4 +106,20 @@ a .title.nowrap {
 
 .actions>i:hover {
     opacity: 1;
+}
+
+
+/*** TEMP TODO ***/
+:host(.add) {
+    background: hsl(var(--accent-colour-hue), calc(var(--accent-colour-saturation) * 0.4), calc(var(--accent-colour-lightness) * 0.585), 0.5);
+    flex-grow: 1;
+    border-radius: 5px;
+    text-align: center;
+    min-width: initial;
+}
+
+:host(.add) i {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
 }

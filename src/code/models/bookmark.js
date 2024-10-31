@@ -91,7 +91,7 @@ export default class Bookmark {
     export(includeInternals = true) {
         const data = this.#data
         data.tidy(['favourite', 'icon', 'click', 'lastClick', 'notes'], (v) => !!v)
-        
+
         if (includeInternals) {
             data.id = this.id
             data.index = this.index
@@ -115,8 +115,12 @@ export default class Bookmark {
 
     async moveTo(folder) {
         if (this.readonly) return
-        this.#parentId = folder.id
-        await this.save()
+        if (this.folder.id !== folder.id) {
+            this.folder = folder
+            await folder.bookmarks.add(this)
+            this.#parentId = folder.id
+            await this.save()
+        }
     }
 
     async save() {

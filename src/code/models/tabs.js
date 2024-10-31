@@ -15,8 +15,12 @@ export default class Tabs {
     static async find(url) {
         url = new URL(url)
         const q = `*://${url.host}${url.pathname}${url.search}`
-        var tabs = await chrome.tabs.query({ url: q })
-        return tabs.length > 0 ? tabs[0] : null
+        try {
+            const tabs = await chrome.tabs.query({ url: q })
+            return tabs.length > 0 ? tabs[0] : null
+        } catch {
+            return null
+        }
     }
 
     static async focus(tab) {

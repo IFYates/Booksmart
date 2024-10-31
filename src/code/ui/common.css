@@ -8,6 +8,10 @@ button {
     cursor: pointer;
 }
 
+*[draggable='true'] {
+    cursor: pointer;
+}
+
 button,
 button *,
 input,

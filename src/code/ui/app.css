@@ -10,7 +10,7 @@
     transform: rotate(180deg) scaleX(-1);
 }
 
-.collapsable,
+folder.collapsable title,
 *[draggable='true'] {
     cursor: pointer;
 }
@@ -38,15 +38,6 @@ bookmark.separator {
     pointer-events: none;
     height: 0.7em;
     opacity: 0.5;
-}
-
-bookmark.favourite,
-bookmark.favourite .actions {
-    background: #ff8;
-}
-
-bookmark.favourite * {
-    color: black;
 }
 
 html {
@@ -273,89 +264,6 @@ folder .showHide {
 }
 
 folder title:hover .showHide {
-    visibility: visible;
-}
-
-bookmark {
-    background: var(--accent-colour);
-    cursor: pointer;
-    padding: 5px 10px;
-    margin: 5px;
-    border-radius: 0.8em;
-    flex-grow: 5;
-    min-width: 150px;
-    font-size: 130%;
-}
-
-bookmark.empty {
-    text-align: center;
-    zoom: 200%;
-}
-
-bookmark .icon {
-    max-width: 16px;
-    max-height: 16px;
-}
-
-layout.editable bookmark:not(.tab):hover .icon {
-    visibility: hidden;
-}
-
-bookmark:hover {
-    filter: brightness(1.2);
-}
-
-bookmark:active {
-    filter: brightness(0.8);
-}
-
-bookmark a {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-}
-
-bookmark a .title {
-    margin-left: 5px;
-}
-
-bookmark a .title.nowrap {
-    white-space: nowrap;
-    overflow-x: hidden;
-}
-
-bookmark .favourite {
-    position: absolute;
-    visibility: hidden;
-}
-
-folder bookmark:hover .favourite {
-    visibility: visible;
-}
-
-bookmark.add {
-    background: hsl(var(--accent-colour-hue), calc(var(--accent-colour-saturation) * 0.4), calc(var(--accent-colour-lightness) * 0.585), 0.5);
-    flex-grow: 1;
-    border-radius: 5px;
-    text-align: center;
-    min-width: initial;
-}
-
-bookmark.add i {
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-bookmark>a>.actions {
-    background: var(--accent-colour);
-    border-radius: 5px;
-    position: absolute;
-    right: 5px;
-    visibility: hidden;
-}
-
-folder bookmark:hover>a>.actions {
     visibility: visible;
 }
 
