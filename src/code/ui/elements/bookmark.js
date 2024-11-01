@@ -1,6 +1,6 @@
-import Dialogs from '../ui/dialogs.js'
-import MainView from "../ui/main.js"
-import { BaseHTMLElement } from "../common/html.js"
+import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
+import { Tabs } from "../../common/tabs.js"
+import Dialogs from '../dialogs.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -25,6 +25,10 @@ template.innerHTML = `
 export class BookmarkElement extends BaseHTMLElement {
     #bookmark
     get bookmark() { return this.#bookmark }
+    //get folder() { return this.parentNode?.host.folder || this.#bookmark.folder }
+    get folder() { return this.#bookmark.folder }
+    set folder(value) { this.#bookmark.folder = value } // TEMP
+    get url() { return this.#bookmark.url }
 
     constructor(bookmark) {
         super(template, ['/code/styles/common.css', '/code/styles/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
@@ -33,9 +37,10 @@ export class BookmarkElement extends BaseHTMLElement {
     }
 
     async _ondisplay(root, host) {
+        const self = this
         const bookmark = this.#bookmark
         const folder = this.parentNode.host.folder
-        const readonly = !MainView.layout.allowEdits || bookmark.readonly || folder.host
+        bookmark.readonly = bookmark.readonly || !MainView.layout.allowEdits || folder.readonly
 
         // Replace templates
         var m
@@ -44,11 +49,11 @@ export class BookmarkElement extends BaseHTMLElement {
         }
 
         // Icon
-        const icon = bookmark.icon || bookmark.domain ? `${bookmark.domain}/favicon.ico` : ''
+        const icon = bookmark.icon || (bookmark.domain ? `${bookmark.domain}/favicon.ico` : '')
         const faIcon = root.querySelector('i.icon')
         if (bookmark.altIcon?.includes('fa-')) {
             faIcon.classList.remove('far', 'fa-bookmark')
-            faIcon.classList.add('fas', bookmark.altIcon)
+            faIcon.classList.add(...bookmark.altIcon.split(' '))
         }
         if (icon.includes('fa-')) {
             faIcon.classList.remove('far', 'fa-bookmark')
@@ -67,20 +72,26 @@ export class BookmarkElement extends BaseHTMLElement {
         this._apply('a', function () {
             this.target = MainView.layout.openNewTab ? '_blank' : ''
             this.onclick = (ev) => {
-                bookmark.click(ev, MainView.layout.openExistingTab, MainView.layout.openNewTab)
+                if (!ev.ctrlKey && !ev.shiftKey && MainView.layout.openExistingTab && self.#lastTab) {
+                    ev.preventDefault()
+                    self.#lastTab.focus()
+                } else if (!MainView.layout.openNewTab) {
+                    ev.target.parentNode.classList.add('pulse') // TODO
+                }
+
+                // TODO
+                // self.#bookmark.clicks += 1
+                // self.#bookmark.lastClick = new Date().getTime()
+                // this.save()
             }
         })
         this._apply('span.title', function () {
             this.classList.toggle('nowrap', !MainView.layout.wrapTitles)
         })
-        this.onmouseenter = () => bookmark.hasOpenTab()
-
-        // TODO: handle click here?
 
         // Style
-        //host.classList.toggle('tab', !!bookmark.isTab) // TODO: probably handled through 'bs-tab' element
         host.classList.toggle('favourite', !!bookmark.favourite)
-        host.classList.toggle('readonly', !!readonly)
+        host.classList.toggle('readonly', !!bookmark.readonly)
 
         // Favourite
         root.querySelector('.favourite>i[title="Pin"]').style.display = bookmark.favourite ? 'none' : ''
@@ -94,7 +105,7 @@ export class BookmarkElement extends BaseHTMLElement {
 
         // Move
         this._apply('.actions>i[title="Move up"]', function () {
-            this.style.display = readonly || bookmark.isFirst ? 'none' : ''
+            this.style.display = bookmark.readonly || bookmark.isFirst ? 'none' : ''
             this.onclick = (ev) => {
                 ev.stopPropagation()
                 const [newIndex, oldIndex] = [bookmark.previous.index, bookmark.index]
@@ -106,7 +117,7 @@ export class BookmarkElement extends BaseHTMLElement {
             }
         })
         this._apply('.actions>i[title="Move down"]', function () {
-            this.style.display = readonly || bookmark.isLast ? 'none' : ''
+            this.style.display = bookmark.readonly || bookmark.isLast ? 'none' : ''
             this.onclick = (ev) => {
                 ev.stopPropagation()
                 const [newIndex, oldIndex] = [bookmark.next.index, bookmark.index]
@@ -125,7 +136,7 @@ export class BookmarkElement extends BaseHTMLElement {
 
         // Edit
         this._apply('i[title="Edit bookmark"]', function () {
-            this.style.display = readonly ? 'none' : ''
+            this.style.display = bookmark.readonly ? 'none' : ''
             this.onclick = (ev) => {
                 ev.stopPropagation()
                 Dialogs.editBookmark(bookmark, folder).then(() => host.parentNode.host.refresh())
@@ -134,28 +145,27 @@ export class BookmarkElement extends BaseHTMLElement {
         })
 
         // Dragging
-        const drag = this._enableDragDrop()
-        if (!readonly) {
-            drag.ondragstart = (ev) => {
-                ev.stopPropagation()
+        const drag = new DragDropHandler(host)
+        drag.ondragstart = (ev) => {
+            ev.stopPropagation()
 
-                ev.dataTransfer.effectAllowed = bookmark.isTab ? 'copy' : 'copyMove'
-                this.classList.add('dragging')
-                MainView.elTrash.classList.toggle('active', !bookmark.isTab) // TODO: through global style?
+            ev.dataTransfer.effectAllowed = bookmark.readonly ? 'copy' : 'copyMove'
+            this.classList.add('dragging')
+            MainView.elTrash.classList.toggle('active', !bookmark.isTab) // TODO: through global style?
 
-                return { bookmark: bookmark, element: this, origin: this.nextSibling }
+            return { bookmark: bookmark, element: this, origin: this.nextSibling }
+        }
+        drag.ondragend = (ev, state) => {
+            this.classList.remove('dragging')
+            MainView.elTrash.classList.remove('active') // TODO: through global style?
+
+            // Didn't drop on folder, so reset
+            if (state && !state.dropped) {
+                state.origin.parentNode.insertBefore(this, state.origin)
             }
-            drag.ondragend = (ev, state) => {
-                this.classList.remove('dragging')
-                MainView.elTrash.classList.remove('active') // TODO: through global style?
-
-                // Didn't drop on folder, so reset
-                if (state && !state.dropped) {
-                    state.origin.parentNode.insertBefore(this, state.origin)
-                }
-            }
-
-            drag.ondragenter = (ev, state) => {
+        }
+        if (!bookmark.readonly) {
+            drag.ondragenter = (_, state) => {
                 const dragging = state?.bookmark
                 if (dragging && dragging !== bookmark && !bookmark.isTab) {
                     if (dragging.folderId === folder.id && folder.sortOrder !== 0) {
@@ -174,23 +184,23 @@ export class BookmarkElement extends BaseHTMLElement {
                     }
                 }
             }
-        } else {
-            drag.ondragstart = (ev) => {
-                ev.preventDefault()
-            }
+        }
+    }
+
+    #lastTab = null
+    onmouseenter() {
+        Tabs.find(this.url).then(t => this.#lastTab = t)
+    }
+
+    async moveTo(folder) {
+        if (this.readonly) return
+        if (this.folder.id !== folder.id) {
+            this.#bookmark.index = null
+            this.folder = folder
+            await folder.bookmarks.add(this)
+            this.#bookmark.parentId = folder.id
+            await this.save()
         }
     }
 }
 customElements.define('bs-bookmark', BookmarkElement)
-
-export class NoFoldersElement extends BookmarkElement {
-    constructor() {
-        super({})
-        this.id = 'empty'
-    }
-
-    async _ondisplay(root) {
-        root.innerHTML = 'You don\'t have any bookmarks; create one now'
-    }
-}
-customElements.define('bs-nobookmarks', NoFoldersElement)

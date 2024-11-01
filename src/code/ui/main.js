@@ -1,48 +1,13 @@
-/*
-View model for the main window.
-*/
+// TODO: obsolete / reduce
 export default class MainView {
-    static dragInfo = null
     static layout
 
-    static tabFolder = {
-        id: 'tabs',
-        isOwned: true,
-        immobile: true,
-        readonly: true,
-        fullWidth: true,
-        sortOrder: 0,
-        icon: 'fas fa-window-restore',
-        title: 'Open tabs',
-        layout: null,
-        bookmarks: [],
-        collapsed: null,
-        save: async () => {
-            MainView.layout.showTabList = !MainView.tabFolder.collapsed
-            await MainView.layout.save()
-        }
-    }
-    static tabs = [] // TODO: fold in to tabFolder.bookmarks
-    static sitesFolder = {
-        id: 'topSites',
-        isOwned: true,
-        fixed: true,
-        immobile: true,
-        readonly: true,
-        fullWidth: true,
-        sortOrder: 0,
-        icon: 'fas fa-signal fa-rotate-270',
-        title: 'Most visited sites',
-        layout: null,
-        bookmarks: []
-    }
-
-    static btnAddFolder = document.getElementById('btnAddFolder')
     static elLayout
     static elEditLock = document.getElementById('editLock')
     static elTrash = document.getElementById('trash')
 
     static async init() {
+        MainView.setTheme()        
         const layout = MainView.layout
         layout.onchange = () => MainView.fullRefresh()
 
@@ -81,37 +46,12 @@ export default class MainView {
         document.getElementById('options')
             .onclick = () => Dialogs.options(layout).then(() => layout.reload().then(MainView.fullRefresh))
 
-        MainView.btnAddFolder.onclick = () => Dialogs.newFolder(layout).then(MainView.fullRefresh)
-
         MainView.elEditLock.onclick = () => {
             layout.allowEdits = !layout.allowEdits
             layout.save().then(MainView.fullRefresh)
-        }
 
-        MainView.sitesFolder.layout = layout
-        MainView.sitesFolder.bookmarks.list = () => MainView.sitesFolder.bookmarks
-        if (layout.showTopSites) {
-            chrome.topSites.get((sites) => {
-                for (const site of sites.filter(s => s.url !== document.location.href)) {
-                    MainView.sitesFolder.bookmarks.push(Tabs.asBookmark({
-                        id: site.id,
-                        title: site.title,
-                        url: site.url
-                    }, MainView.sitesFolder))
-                }
-            })
+            document.getElementsByTagName(customElements.getName(FolderAddElement))[0].style.visibility = !layout.allowEdits ? 'hidden' : null
         }
-
-        MainView.tabFolder.layout = layout
-        MainView.tabFolder.collapsed = !layout.showTabList
-        MainView.tabFolder.bookmarks.list = () => MainView.tabFolder.bookmarks
-        MainView.tabs = await Tabs.list()
-        Tabs.subscribe(async () => {
-            MainView.tabs = await Tabs.list()
-            if (!MainView.tabFolder.collapsed) {
-                MainView.updateTabsList()
-            }
-        })
     }
 
     static setTheme() {
@@ -127,7 +67,6 @@ export default class MainView {
         MainView.setTheme()
 
         MainView.elTrash.style.visibility = MainView.layout.allowEdits ? null : 'hidden'
-        MainView.btnAddFolder.style.visibility = MainView.layout.allowEdits ? null : 'hidden'
         MainView.elEditLock.classList.toggle('fa-lock', !MainView.layout.allowEdits)
         MainView.elEditLock.classList.toggle('fa-unlock', !!MainView.layout.allowEdits)
         MainView.elEditLock.title = MainView.layout.allowEdits ? 'Lock for edits' : 'Allow edits'
@@ -141,13 +80,12 @@ export default class MainView {
                     this.appendChild(new NoFoldersElement())
                 }
                 for (const folder of folders) {
-                    add(new FolderElement(folder))
+                    this.appendChild(new FolderElement(folder))
                 }
                 if (MainView.layout.showTopSites) {
-                    FolderView.display(MainView.sitesFolder)
-                    MainView.updateTopSitesList()
+                    this.appendChild(SiteListElement.instance)
                 }
-                MainView.updateTabsList(false)
+                this.appendChild(TabListElement.instance)
                 this.classList.toggle('editable', !!MainView.layout.allowEdits)
             })
 
@@ -183,29 +121,17 @@ export default class MainView {
         }
     }
 
-    static updateTopSitesList() {
-        chrome.topSites.get((sites) => {
-            MainView.sitesFolder.bookmarks.splice(0, MainView.sitesFolder.bookmarks.length)
-            for (const site of sites.filter(s => s.url !== document.location.href)) {
-                MainView.sitesFolder.bookmarks.push(new Bookmark(null, {
-                    title: site.title,
-                    url: site.url
-                }, {}))
-            }
-        })
-    }
-
     static updateTabsList(inplace = true) {
         // Rebuild list
         MainView.tabFolder.bookmarks.splice(0, MainView.tabFolder.bookmarks.length)
         var lastWindowId = 0
-        for (const tab of MainView.tabs.sort((a, b) => (a.windowId - b.windowId) || (a.index - b.index))) {
+        for (const tab of MainView.tabs) {
             // TODO
             // if (lastWindowId && lastWindowId !== tab.windowId) {
             //     MainView.tabFolder.bookmarks.push({ type: 'separator' })
             // }
             //lastWindowId = tab.windowId
-            MainView.tabFolder.bookmarks.push(Tabs.asBookmark(tab, MainView.tabFolder))
+            MainView.tabFolder.bookmarks.push(tab)
         }
 
         const el = document.getElementById('folder-' + MainView.tabFolder.id)
@@ -218,10 +144,11 @@ export default class MainView {
     }
 }
 
-import Bookmark from '../models/bookmark.js'
 import Dialogs from './dialogs.js'
-import { FolderElement, FolderView } from '../viewModels/folderView.js'
-import Tabs from '../models/tabs.js'
 import { DropHandler } from '../common/html.js'
-import { NoFoldersElement } from '../viewModels/bookmarkView.js'
-globalThis.MainView = MainView
+import { FolderElement } from './elements/folder.js'
+import { FolderAddElement } from './elements/folderAdd.js'
+import { NoFoldersElement } from './elements/noFolders.js'
+import { SiteListElement } from './elements/sites.js'
+import { TabListElement } from './elements/tabs.js'
+globalThis.MainView = MainView // TODO: drop

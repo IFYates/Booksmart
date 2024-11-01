@@ -56,12 +56,6 @@ body>.actions * {
     pointer-events: auto;
 }
 
-#btnAddFolder {
-    margin-right: -20px;
-    flex-grow: unset;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
-}
-
 title {
     font-size: 140%;
 }

@@ -20,6 +20,7 @@ export default class Bookmark {
         this.#url = bookmark.url
         this.#dateAdded = bookmark.dateAdded
         this.#applyData(data)
+        this.readonly = !storage
     }
     #applyData(data) {
         this.#data = {
@@ -31,7 +32,7 @@ export default class Bookmark {
         }
     }
 
-    get readonly() { return !this.#storage }
+    readonly
 
     get folderId() { return this.#parentId }
     get id() { return this.#id }
@@ -57,20 +58,6 @@ export default class Bookmark {
     next
     get isFirst() { return !this.previous }
     get isLast() { return !this.next }
-
-    #lastTab = null
-    async click(ev, openExistingTab, openNewTab) {
-        if (openExistingTab && this.#lastTab) {
-            ev.preventDefault()
-            await Tabs.focus(this.#lastTab)
-        } else if (!openNewTab) {
-            ev.target.parentNode.classList.add('pulse')
-        }
-
-        this.#data.clicks += 1
-        this.#data.lastClick = new Date().getTime()
-        await this.save()
-    }
 
     async duplicate() {
         const data = { ...this.#data }
@@ -107,14 +94,6 @@ export default class Bookmark {
         this.#applyData(data)
     }
 
-    async hasOpenTab() {
-        if (!isURL(this.url)) {
-            return false
-        }
-        this.#lastTab = await Tabs.find(this.url)
-        return !!this.#lastTab
-    }
-
     async moveTo(folder) {
         if (this.readonly) return
         if (this.folder.id !== folder.id) {
@@ -137,4 +116,4 @@ export default class Bookmark {
     }
 }
 
-import Tabs from './tabs.js'
+import { TabListElement } from '../ui/elements/tabs.js'

@@ -1,4 +1,4 @@
-import MainView from '../main.js'
+//import MainView from '../main.js'
 import BaseDialog from './base.js'
 
 export default class OptionsDialog extends BaseDialog {
@@ -76,6 +76,13 @@ export default class OptionsDialog extends BaseDialog {
             }
 
             add('label', 'Colour', { style: 'text-align:right' })
+            add('input', { type: 'color', classes: 'spanCols3', value: `hsl(${accent[0]}, ${accent[1]}%, 24%)` }, function () { // TODO
+                // this.onchange = () => {
+                //     accent[2] = this.value
+                //     layout.themeAccent = accent
+                //     MainView.setTheme()
+                // }
+            })
             add('input', { classes: 'spanCols3', type: 'range', min: 0, max: 360, value: accent[0] }, function () {
                 rangeInputs.push(this)
                 this.oninput = () => {

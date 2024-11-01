@@ -62,6 +62,8 @@ h1>span {
 }
 
 h1>.actions {
+    position: absolute;
+    right: 0;
     visibility: hidden;
     padding-right: 5px;
 }

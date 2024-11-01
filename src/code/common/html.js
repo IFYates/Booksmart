@@ -1,5 +1,5 @@
 HTMLElement.prototype.add = addToElement
-HTMLElement.prototype.then = function (type, text, args, layout) { // Scoped
+HTMLElement.prototype.and = function (type, text, args, layout) { // Scoped
     const el = createElement(type, text, args, layout)
     this.insertAdjacentElement('afterend', el)
     return el
@@ -168,23 +168,22 @@ export class BaseHTMLElement extends HTMLElement {
         if (typeof this.onclick === 'function') {
             this.shadowRoot.host.addEventListener('click', (ev) => this.onclick.call(self, ev))
         }
+        if (typeof this.onmouseenter === 'function') {
+            this.shadowRoot.host.addEventListener('mouseenter', (ev) => this.onmouseenter.call(self, ev))
+        }
     }
 
     // Called whenever element customisation should occur
     async _ondisplay(root, host) { }
 
-    //onclick() // optional
+    //onclick(ev) // optional
+    //onmouseenter(ev) // optional
 
     // Apply changes to matching elements
     _apply(selector, logic) {
         for (const el of this.shadowRoot.querySelectorAll(selector)) {
             logic.call(el, el)
         }
-    }
-
-    #dragLogic = null
-    _enableDragDrop() {
-        return this.#dragLogic ??= new DragDropHandler(this.shadowRoot.host)
     }
 }
 

@@ -1,30 +1,7 @@
-/*
-View model for Folder.
-*/
-// TODO: obsolete
-export class FolderView {
-    static display(folder) {
-        return add(new FolderElement(folder))
-    }
-
-    static displayEmpty() {
-        add('bs-bookmark', 'You don\'t have any folders; create one now', {
-            id: 'folder-empty',
-            className: 'empty',
-            onclick: () => MainView.btnAddFolder.click(),
-            _ondisplay: () => {
-                debugger
-            }
-        })
-    }
-}
-
-import { AddBookmarkElement } from './addBookmark.js'
-import { BookmarkElement, } from './bookmarkView.js'
-import Dialogs from '../ui/dialogs.js'
-import MainView from "../ui/main.js"
-
-import { BaseHTMLElement, DropHandler, DragDropHandler } from "../common/html.js"
+import { BaseHTMLElement, DropHandler, DragDropHandler } from "../../common/html.js"
+import { BookmarkAddElement } from './bookmarkAdd.js'
+import { BookmarkElement, } from './bookmark.js'
+import Dialogs from '../dialogs.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -142,6 +119,7 @@ export class FolderElement extends BaseHTMLElement {
             }
         })
         if (!folder.isOwned) {
+            root.querySelector('.actions').style.right = '25px'
             this._apply('i.fa-folder', function () {
                 this.style.display = ''
                 this.onclick = (ev) => {
@@ -154,11 +132,11 @@ export class FolderElement extends BaseHTMLElement {
         // Bookmarks
         if (!folder.collapsed) {
             for (const bookmark of folder.bookmarks.list()) {
-                root.appendChild(new BookmarkElement(bookmark))
+                root.appendChild(bookmark instanceof BookmarkElement ? bookmark : new BookmarkElement(bookmark))
             }
 
             if (!readonly) {
-                root.appendChild(new AddBookmarkElement(folder))
+                root.appendChild(new BookmarkAddElement(folder))
             }
         }
 
@@ -200,7 +178,7 @@ export class FolderElement extends BaseHTMLElement {
                 if (bookmark) {
                     if (bookmark.folderId === folder.id && folder.sortOrder !== 0) return // Cannot reorder non-manual folder
                     ev.preventDefault() // Can drop here
-                    ev.dataTransfer.dropEffect = bookmark.folderId !== folder.id && (bookmark.isTab || ev.ctrlKey) ? 'copy' : 'move' // Can copy to another collection
+                    ev.dataTransfer.dropEffect = bookmark.folderId !== folder.id && (bookmark.readonly || ev.ctrlKey) ? 'copy' : 'move' // Can copy to another collection
                 }
             }
             drop.ondrop = async (ev, state) => {
@@ -211,7 +189,7 @@ export class FolderElement extends BaseHTMLElement {
                 state.dropped = true
 
                 // Copy tab here
-                if (bookmark.isTab) {
+                if (bookmark.readonly) {
                     const originalIcon = bookmark.icon
                     bookmark = await folder.bookmarks.create(bookmark.title, bookmark.url)
                     bookmark.icon = originalIcon
