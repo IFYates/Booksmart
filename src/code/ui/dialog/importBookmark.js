@@ -24,7 +24,7 @@ export default class ImportBookmarkDialog extends BaseDialog {
             showHide.onclick = () => {
                 showHide.value = !showHide.value
                 showHide.classList.toggle('fa-chevron-down', !showHide.value)
-                showHide.classList.toggle('fa-chevron-right', showHide.value)
+                showHide.classList.toggle('fa-chevron-right', !!showHide.value)
             }
             showHide.hide = () => !!showHide.value || parentShowHide?.hide()
 

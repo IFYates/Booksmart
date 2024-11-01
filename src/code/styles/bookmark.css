@@ -10,7 +10,8 @@
     font-size: 130%;
 }
 
-:host(.empty) {
+:host(#empty) {
+    grid-column: 1 / -1;
     text-align: center;
     zoom: 200%;
 }

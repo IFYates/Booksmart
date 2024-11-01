@@ -18,5 +18,5 @@ await MainView.fullRefresh()
 
 // Blur sensitive content
 globalThis.obfuscate = (on = true) => {
-    [...document.querySelectorAll('bookmark span, folder title span')].forEach(n => n.classList.toggle('obfuscated', on))
+    [...document.querySelectorAll('bookmark span, folder title span')].forEach(n => n.classList.toggle('obfuscated', !!on))
 }

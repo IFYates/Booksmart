@@ -47,27 +47,28 @@ export default class MainView {
         layout.onchange = () => MainView.fullRefresh()
 
         MainView.elTrash.display(function () {
-            this.ondragover = (ev) => {
-                const bookmark = MainView.dragInfo?.bookmark
-                const folder = MainView.dragInfo?.folder
+            const drag = new DropHandler(this)
+            drag.ondragover = (ev, state) => {
+                const bookmark = state?.bookmark
+                const folder = state?.folder
                 if ((bookmark && !bookmark.isTab) || folder) {
                     ev.preventDefault()
                     ev.dataTransfer.dropEffect = 'move'
                     this.classList.replace('fa-dumpster', 'fa-dumpster-fire')
                 }
             }
-            this.ondragleave = () => {
+            drag.ondragleave = () => {
                 this.classList.replace('fa-dumpster-fire', 'fa-dumpster')
             }
-            this.ondrop = () => {
-                this.ondragleave()
+            drag.ondrop = (ev, state) => {
+                drag.ondragleave()
 
-                const bookmark = MainView.dragInfo?.bookmark
+                const bookmark = state?.bookmark
                 if (bookmark && !bookmark.isTab) {
                     return bookmark.delete().then(MainView.fullRefresh)
                 }
 
-                const folder = MainView.dragInfo?.folder
+                const folder = state?.folder
                 if (folder) {
                     return folder.delete().then(MainView.fullRefresh)
                 }
@@ -128,15 +129,16 @@ export default class MainView {
         MainView.elTrash.style.visibility = MainView.layout.allowEdits ? null : 'hidden'
         MainView.btnAddFolder.style.visibility = MainView.layout.allowEdits ? null : 'hidden'
         MainView.elEditLock.classList.toggle('fa-lock', !MainView.layout.allowEdits)
-        MainView.elEditLock.classList.toggle('fa-unlock', MainView.layout.allowEdits)
+        MainView.elEditLock.classList.toggle('fa-unlock', !!MainView.layout.allowEdits)
         MainView.elEditLock.title = MainView.layout.allowEdits ? 'Lock for edits' : 'Allow edits'
 
         const folders = await MainView.layout.folders.entries()
 
         document.body.display(() => {
-            MainView.elLayout = add('layout', function () {
+            add('layout', function () {
+                MainView.elLayout = this
                 if (!folders.length) {
-                    FolderView.displayEmpty()
+                    this.appendChild(new NoFoldersElement())
                 }
                 for (const folder of folders) {
                     add(new FolderElement(folder))
@@ -146,7 +148,7 @@ export default class MainView {
                     MainView.updateTopSitesList()
                 }
                 MainView.updateTabsList(false)
-                this.classList.toggle('editable', MainView.layout.allowEdits)
+                this.classList.toggle('editable', !!MainView.layout.allowEdits)
             })
 
             // Swap
@@ -154,7 +156,7 @@ export default class MainView {
             oldLayout.replaceWith(MainView.elLayout)
         })
 
-        const drag = new DragDropHandler(MainView.elLayout)
+        const drag = new DropHandler(MainView.elLayout)
         drag.ondragover = (ev, state) => {
             const folder = state?.folder
             if (folder) {
@@ -190,8 +192,6 @@ export default class MainView {
                     url: site.url
                 }, {}))
             }
-
-            FolderView.update(MainView.sitesFolder)
         })
     }
 
@@ -199,19 +199,21 @@ export default class MainView {
         // Rebuild list
         MainView.tabFolder.bookmarks.splice(0, MainView.tabFolder.bookmarks.length)
         var lastWindowId = 0
-        for (const tab of MainView.tabs) {
-            if (lastWindowId && lastWindowId !== tab.windowId) {
-                MainView.tabFolder.bookmarks.push({ type: 'separator' })
-            }
-            lastWindowId = tab.windowId
+        for (const tab of MainView.tabs.sort((a, b) => (a.windowId - b.windowId) || (a.index - b.index))) {
+            // TODO
+            // if (lastWindowId && lastWindowId !== tab.windowId) {
+            //     MainView.tabFolder.bookmarks.push({ type: 'separator' })
+            // }
+            //lastWindowId = tab.windowId
             MainView.tabFolder.bookmarks.push(Tabs.asBookmark(tab, MainView.tabFolder))
         }
 
-        // Rebuild view
-        if (inplace) {
-            FolderView.update(MainView.tabFolder)
+        const el = document.getElementById('folder-' + MainView.tabFolder.id)
+        if (el && inplace) {
+            el.replaceWith(new FolderElement(MainView.tabFolder))
         } else {
-            FolderView.display(MainView.tabFolder)
+            el?.remove()
+            MainView.elLayout.appendChild(new FolderElement(MainView.tabFolder))
         }
     }
 }
@@ -220,5 +222,6 @@ import Bookmark from '../models/bookmark.js'
 import Dialogs from './dialogs.js'
 import { FolderElement, FolderView } from '../viewModels/folderView.js'
 import Tabs from '../models/tabs.js'
-import { DragDropHandler } from '../common/html.js'
+import { DropHandler } from '../common/html.js'
+import { NoFoldersElement } from '../viewModels/bookmarkView.js'
 globalThis.MainView = MainView

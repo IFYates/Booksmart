@@ -122,6 +122,8 @@ export class BaseHTMLElement extends HTMLElement {
     #template
     #styles
 
+    static TemplateRE = /<!--\$\s*([\w\.]+)\s*\$-->/g
+
     constructor(template, styles) {
         super()
         this.attachShadow({ mode: 'open' })
@@ -194,12 +196,16 @@ export class DropHandler {
         this.#element = element
 
         element.addEventListener('dragenter', (ev) => {
-            // console.log('ondragenter', element, ev, DragDropHandler.#currentState)
+            // console.log('ondragenter', element, ev, DragDropHandler.state)
             this.ondragenter.call(element, ev, DragDropHandler.state)
         })
         element.addEventListener('dragover', (ev) => {
-            // console.log('ondragover', element, ev, DragDropHandler.#currentState)
+            // console.log('ondragover', element, ev, DragDropHandler.state)
             this.ondragover.call(element, ev, DragDropHandler.state)
+        })
+        element.addEventListener('dragleave', (ev) => {
+            // console.log('ondragleave', element, ev, DragDropHandler.state)
+            this.ondragleave.call(element, ev, DragDropHandler.state)
         })
         element.addEventListener('drop', (ev) => {
             // console.log('ondrop', element, ev, DragDropHandler.state)
@@ -208,6 +214,7 @@ export class DropHandler {
     }
 
     ondragenter(ev, state) { }
+    ondragleave(ev, state) { }
     ondragover(ev, state) { }
     ondrop(ev, state) { }
 }
@@ -223,11 +230,11 @@ export class DragDropHandler extends DropHandler {
 
         element.addEventListener('dragstart', (ev) => {
             DragDropHandler.#currentState = this.ondragstart.call(element, ev)
-            // console.log('ondragstart', element, ev, DragDropHandler.#currentState)
+            // console.log('ondragstart', element, ev, DragDropHandler.state)
         })
         element.addEventListener('dragend', (ev) => {
-            // console.log('ondragend', element, ev, DragDropHandler.#currentState)
-            this.ondragend.call(element, ev, DragDropHandler.#currentState)
+            // console.log('ondragend', element, ev, DragDropHandler.state)
+            this.ondragend.call(element, ev, DragDropHandler.state)
             DragDropHandler.#currentState = null
         })
     }

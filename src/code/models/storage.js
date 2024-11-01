@@ -42,7 +42,6 @@ export default class Storage {
         this.#data = tryParse(data.substring(Storage.Title.length))
         this.#data.bookmarks ??= {}
         this.#data.folders ??= {}
-            ({ 30: this.#data.folders[30]?.index, 31: this.#data.folders[31]?.index })
     }
 
     #cache = {}

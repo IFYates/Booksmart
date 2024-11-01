@@ -47,7 +47,7 @@ body>.actions {
     display: flex;
     align-items: center;
     pointer-events: none;
-    bottom: 0;
+    bottom: 5px;
     width: 100%;
     z-index: 1;
 }
@@ -202,12 +202,6 @@ folder {
     background: rgba(0, 0, 0, 0.3);
     overflow: hidden;
     padding: 5px;
-}
-
-bookmark#folder-empty,
-folder#folder-tabs,
-folder#folder-topSites {
-    grid-column: 1 / -1;
 }
 
 folder .icon {

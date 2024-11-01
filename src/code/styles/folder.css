@@ -11,8 +11,8 @@
     padding: 5px;
 }
 
-:host#folder-tabs,
-:host#folder-topSites {
+:host(#folder-tabs),
+:host(#folder-topSites) {
     grid-column: 1 / -1;
 }
 
@@ -70,7 +70,7 @@ h1:hover .actions {
     visibility: visible;
 }
 
-h1:hover .icon {
+:host(.collapsable) h1:hover .icon {
     visibility: hidden;
 }
 

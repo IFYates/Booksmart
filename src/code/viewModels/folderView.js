@@ -8,16 +8,19 @@ export class FolderView {
     }
 
     static displayEmpty() {
-        add('bookmark', 'You don\'t have any folders; create one now', {
+        add('bs-bookmark', 'You don\'t have any folders; create one now', {
             id: 'folder-empty',
             className: 'empty',
-            onclick: () => MainView.btnAddFolder.click()
+            onclick: () => MainView.btnAddFolder.click(),
+            _ondisplay: () => {
+                debugger
+            }
         })
     }
 }
 
 import { AddBookmarkElement } from './addBookmark.js'
-import { BookmarkElement } from './bookmarkView.js'
+import { BookmarkElement, } from './bookmarkView.js'
 import Dialogs from '../ui/dialogs.js'
 import MainView from "../ui/main.js"
 
@@ -28,10 +31,10 @@ template.innerHTML = `
 <h1>
     <i class="showHide fa-fw far fa-square-caret-down" title="Show"></i>
     <i class="showHide fa-fw far fa-square-caret-up" title="Hide"></i>
-    <i class="icon fa-fw fas fa-book"></i>
+    <i class="icon fa-fw"></i>
     <img class="icon" style="display:none" />
 
-    <span class="title"></span>
+    <span class="title"><!--$ title $--></span>
 
     <div class="actions">
         <i class="fa-fw fas fa-arrow-up" title="Move up"></i>
@@ -48,6 +51,8 @@ export class FolderElement extends BaseHTMLElement {
     #folder
     get folder() { return this.#folder }
 
+    #data
+
     constructor(folder) {
         super(template, ['/code/styles/common.css', '/code/styles/folder.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
         this.#folder = folder
@@ -56,22 +61,31 @@ export class FolderElement extends BaseHTMLElement {
 
     async _ondisplay(root, host) {
         const folder = this.#folder
+        const readonly = !MainView.layout.allowEdits || folder.readonly
+        const immobile = !MainView.layout.allowEdits || folder.immobile || readonly
+
+        // Replace templates
+        var m
+        while (m = BaseHTMLElement.TemplateRE.exec(root.innerHTML)) {
+            root.innerHTML = String(root.innerHTML).replaceAll(m[0], folder[m[1]])
+        }
 
         // Show/hide
         this._apply('i.showHide', function () {
             this.style.display = !folder.fixed && this.classList.contains('fa-square-caret-up') === folder.collapsed ? '' : 'none'
         })
-        root.querySelector('h1').onclick = () => {
-            folder.collapsed = !folder.collapsed
-            folder.save().then(() => this.refresh())
+        if (!folder.fixed) {
+            root.querySelector('h1').onclick = () => {
+                folder.collapsed = !folder.collapsed
+                folder.save().then(() => this.refresh())
+            }
+            this.classList.toggle('collapsed', !!folder.collapsed)
+            this.classList.add('collapsable')
         }
-        this.classList.toggle('collapsed', folder.collapsed)
-        this.classList.toggle('collapsable', !folder.fixed)
 
         // Icon
         const faIcon = root.querySelector('i.icon')
         if (folder.icon?.includes('fa-')) {
-            faIcon.classList.remove('fas', 'fa-book')
             faIcon.classList.add(...folder.icon.split(' '))
         } else if (folder.icon && !folder.icon.startsWith('chrome:')) {
             this._apply('img.icon', function () {
@@ -83,14 +97,9 @@ export class FolderElement extends BaseHTMLElement {
             })
         }
 
-        // Title
-        this._apply('.title', function () {
-            this.innerText = folder.title
-        })
-
         // Move
         this._apply('.actions>i[title="Move up"]', function () {
-            this.style.display = folder.isFirst ? 'none' : ''
+            this.style.display = immobile || folder.isFirst ? 'none' : ''
             this.onclick = (ev) => {
                 ev.stopPropagation()
                 const other = folder.previous
@@ -107,7 +116,7 @@ export class FolderElement extends BaseHTMLElement {
             }
         })
         this._apply('.actions>i[title="Move down"]', function () {
-            this.style.display = folder?.isLast ? 'none' : ''
+            this.style.display = immobile || folder.isLast ? 'none' : ''
             this.onclick = (ev) => {
                 ev.stopPropagation()
                 const other = folder.next
@@ -126,6 +135,7 @@ export class FolderElement extends BaseHTMLElement {
 
         // Edit
         this._apply('i.fa-pen', function () {
+            this.style.display = readonly ? 'none' : ''
             this.onclick = (ev) => {
                 ev.stopPropagation()
                 Dialogs.editFolder(folder).then(MainView.fullRefresh)
@@ -147,14 +157,14 @@ export class FolderElement extends BaseHTMLElement {
                 root.appendChild(new BookmarkElement(bookmark))
             }
 
-            if (MainView.layout.allowEdits && !folder.readonly) {
+            if (!readonly) {
                 root.appendChild(new AddBookmarkElement(folder))
             }
         }
 
         // Collection dragging
-        const drag = new DragDropHandler(root.querySelector('h1'))
-        if (MainView.layout.allowEdits && !folder.immobile) {
+        if (!immobile) {
+            const drag = new DragDropHandler(root.querySelector('h1'))
             drag.ondragstart = (ev) => {
                 ev.stopPropagation()
                 ev.dataTransfer.effectAllowed = 'move'
@@ -180,14 +190,10 @@ export class FolderElement extends BaseHTMLElement {
                     }
                 }
             }
-        } else {
-            drag.ondragstart = (ev) => {
-                ev.preventDefault()
-            }
         }
 
         // Bookmark dropping
-        if (MainView.layout.allowEdits) {
+        if (!readonly) {
             const drop = new DropHandler(host)
             drop.ondragover = (ev, state) => {
                 const bookmark = state?.bookmark

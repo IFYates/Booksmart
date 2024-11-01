@@ -37,7 +37,7 @@ export default class EditFolderDialog extends BaseDialog {
             this.onchange()
         })
 
-        const iconPreviewDefault = create('i', { className: 'fa-fw fa-3x fas fa-book centred' })
+        const iconPreviewDefault = create('i', { className: 'fa-fw fa-3x centred' })
         const iconPreviewCustom = create('img', { className: 'iconPreview centred' }, function () {
             this.show = (url) => {
                 if (!url || (!url?.startsWith('data:image/') && !url?.includes('://'))) {
@@ -60,24 +60,24 @@ export default class EditFolderDialog extends BaseDialog {
             }
         })
 
-        const lstFontAwesomeIcons = FontAwesome.getSelectionList(folder?.icon || 'fas fa-book')
+        const lstFontAwesomeIcons = FontAwesome.getSelectionList(folder?.icon || '')
         lstFontAwesomeIcons.classList.add('faIconList')
-        const iconPreviewFA = create('i', { className: 'fa-fw fa-3x fas fa-book centred' }, function () {
-            var _lastValue = 'fas fa-book'
+        const iconPreviewFA = create('i', { className: 'fa-fw fa-3x centred' }, function () {
+            var _lastValue = ''
             this.update = (icon) => {
                 if (lstIconType.value === '1' && icon?.includes('fa-')) {
-                    iconPreviewFA.classList.remove(..._lastValue.split(' '))
+                    if (_lastValue) iconPreviewFA.classList.remove(..._lastValue.split(' '))
                     iconPreviewFA.classList.add(...icon.split(' '))
                     _lastValue = icon
                 }
             }
         })
 
-        const isFontAwesomeIcon = !folder?.icon || (folder?.icon?.includes('fa-') && !folder.icon.startsWith('data:image/') && !folder.icon.includes('://'))
-        const bookmarkIcon = !isFontAwesomeIcon ? folder?.bookmarks?.list().find(b => b.icon === folder?.icon) : null
+        const isFontAwesomeIcon = folder?.icon?.includes('fa-') && !folder.icon.startsWith('data:image/') && !folder.icon.includes('://')
+        const bookmarkIcon = !isFontAwesomeIcon ? folder?.bookmarks?.list().find(b => b.icon && b.icon === folder.icon) : null
         const lstBookmarkIcons = create('select', function () {
             folder?.bookmarks.list().forEach(b => {
-                add('option', b.title, { value: b.icon }, function () {
+                add('option', b.title, { value: b.icon || '(none)' }, function () {
                     this.selected = bookmarkIcon === b
                     this.disabled = !b.icon?.startsWith('data:image/') && !b.icon?.includes('://')
                 })
@@ -100,6 +100,7 @@ export default class EditFolderDialog extends BaseDialog {
         })
 
         const lstIconType = create('select', function () {
+            add('option', 'None', { value: 0 })
             add('option', 'Font Awesome', { value: 1 })
             if (folder?.bookmarks?.count() > 0) {
                 add('option', 'From bookmark', { value: 2 })
@@ -114,26 +115,29 @@ export default class EditFolderDialog extends BaseDialog {
                 txtCustomIcon.style.display = 'none'
 
                 switch (this.value) {
+                    case '1':
+                        lstFontAwesomeIcons.style.display = ''
+                        iconPreviewFA.style.display = ''
+                        iconPreviewFA.update(lstFontAwesomeIcons.value())
+                        break
                     case '2':
                         lstBookmarkIcons.style.display = ''
                         iconPreviewCustom.style.display = ''
                         lstBookmarkIcons.onchange()
-                        break;
+                        break
                     case '3':
                         txtCustomIcon.style.display = ''
                         iconPreviewDefault.style.display = ''
                         txtCustomIcon.onkeyup()
-                        break;
+                        break
                     default:
-                        lstFontAwesomeIcons.style.display = ''
-                        iconPreviewFA.style.display = ''
-                        iconPreviewFA.update(lstFontAwesomeIcons.value())
-                        break;
+                        iconPreviewDefault.style.display = ''
+                        break
                 }
             }
 
-            this.value = '1'
-            if (!isFontAwesomeIcon) {
+            this.value = !folder?.icon ? '0' : '1'
+            if (!isFontAwesomeIcon && folder?.icon) {
                 txtCustomIcon.value = folder.icon
                 this.value = bookmarkIcon ? '2' : '3'
             }
@@ -194,8 +198,8 @@ export default class EditFolderDialog extends BaseDialog {
                 add('span', ' Export')
             }).onclick = async () => {
                 const data = JSON.stringify(folder.export(true, true), null, '  ')
-                const dataUrl = URL.createObjectURL(new Blob([data], { type: 'application/octet-binary' }));
-                chrome.downloads.download({ url: dataUrl, filename: 'booksmart_export.json', conflictAction: 'overwrite', saveAs: true });
+                const dataUrl = URL.createObjectURL(new Blob([data], { type: 'application/octet-binary' }))
+                chrome.downloads.download({ url: dataUrl, filename: 'booksmart_export.json', conflictAction: 'overwrite', saveAs: true })
             }
         })
 
