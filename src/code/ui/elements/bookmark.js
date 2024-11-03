@@ -1,3 +1,5 @@
+import Emojis from "../../common/emojiHelpers.js"
+import FontAwesome from "../../common/faHelpers.js"
 import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
 import { Tabs } from "../../common/tabs.js"
 import Dialogs from '../dialogs.js'
@@ -30,10 +32,29 @@ export class BookmarkElement extends BaseHTMLElement {
     set folder(value) { this.#bookmark.folder = value } // TEMP
     get url() { return this.#bookmark.url }
 
+    get iconType() {
+        return !this.#bookmark.icon
+            ? 'default'
+            : FontAwesome.isFacon(this.#bookmark.icon)
+            ? 'facon'
+            : Emojis.isEmoji(this.#bookmark.icon)
+            ? 'emoji'
+            : 'custom'
+    }
+    get facon() { return this.iconType === 'facon' ? this.#bookmark.icon : null }
+    get emoji() { return this.iconType === 'emoji' ? this.#bookmark.icon : null }
+    get icon() { return this.#bookmark.icon }
+
     constructor(bookmark) {
         super(template, ['/code/styles/common.css', '/code/styles/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
         this.#bookmark = bookmark
         this.id = 'bookmark-' + bookmark.id
+
+        if (bookmark.icon) {
+            if (bookmark.icon.includes(' fa-')) {
+
+            }
+        }
     }
 
     async _ondisplay(root, host) {
@@ -151,11 +172,11 @@ export class BookmarkElement extends BaseHTMLElement {
 
             ev.dataTransfer.effectAllowed = bookmark.readonly ? 'copy' : 'copyMove'
             this.classList.add('dragging')
-            MainView.elTrash.classList.toggle('active', !bookmark.isTab) // TODO: through global style?
+            MainView.elTrash.classList.toggle('active', !bookmark.readonly) // TODO: through global style?
 
             return { bookmark: bookmark, element: this, origin: this.nextSibling }
         }
-        drag.ondragend = (ev, state) => {
+        drag.ondragend = (_, state) => {
             this.classList.remove('dragging')
             MainView.elTrash.classList.remove('active') // TODO: through global style?
 
@@ -167,7 +188,7 @@ export class BookmarkElement extends BaseHTMLElement {
         if (!bookmark.readonly) {
             drag.ondragenter = (_, state) => {
                 const dragging = state?.bookmark
-                if (dragging && dragging !== bookmark && !bookmark.isTab) {
+                if (dragging && dragging !== bookmark && !bookmark.readonly) {
                     if (dragging.folderId === folder.id && folder.sortOrder !== 0) {
                         return // Cannot reorder non-manual folder
                     }

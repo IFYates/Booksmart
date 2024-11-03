@@ -1,6 +1,8 @@
 import BaseDialog from './base.js'
 import FontAwesome from '../../common/faHelpers.js'
 import { FaconSelectorElement } from '../elements/faconSelector.js'
+import { EmojiSelectorElement } from '../elements/emojiSelector.js'
+import Emojis from '../../common/emojiHelpers.js'
 
 export default class EditBookmarkDialog extends BaseDialog {
     constructor(title) {
@@ -41,17 +43,29 @@ export default class EditBookmarkDialog extends BaseDialog {
                 iconPreviewDefault.style.display = 'none'
             }
         })
+
+        const isFacon = FontAwesome.isFacon(bookmark?.icon)
         const faconSelector = new FaconSelectorElement(bookmark?.icon || '')
         const iconPreviewFA = create('i', { className: 'fa-fw fa-3x far fa-bookmark centred' }, function () {
             var _lastValue = ['far', 'fa-bookmark']
             this.update = () => {
-                if (lstIconType.value === '1' && faconSelector.icon?.includes('fa-')) {
-                    iconPreviewFA.classList.remove(..._lastValue)
-                    _lastValue = faconSelector.icon.split(' ')
+                iconPreviewFA.classList.remove(..._lastValue)
+                if (faconSelector.value) {
+                    _lastValue = faconSelector.value?.split(' ') || []
                     iconPreviewFA.classList.add(..._lastValue)
                 }
             }
         })
+        faconSelector.addEventListener('change', iconPreviewFA.update)
+
+        const isEmoji = Emojis.isEmoji(bookmark?.icon)
+        const emojiSelector = new EmojiSelectorElement(bookmark?.icon || '')
+        const iconPreviewEmoji = create('i', { className: 'fa-fw fa-3x centred' }, function () {
+            this.update = () => {
+                iconPreviewEmoji.innerText = emojiSelector.value || ''
+            }
+        })
+        emojiSelector.addEventListener('change', iconPreviewEmoji.update)
 
         const txtCustomIcon = create('input', {
             type: 'textbox',
@@ -60,38 +74,45 @@ export default class EditBookmarkDialog extends BaseDialog {
             this.onkeyup = () => {
                 iconPreviewCustom.show(this.value)
             }
-            this.value = bookmark?.icon && !bookmark?.icon.includes('fa-') ? bookmark?.icon : ''
+            this.value = !isFacon && !isEmoji ? bookmark?.icon : ''
             this.onkeyup()
         })
 
         const lstIconType = create('select', function () {
             add('option', 'Favicon', { value: 0 })
+            add('option', 'Emoji', { value: 4 })
             add('option', 'Font Awesome', { value: 1 })
-            add('option', 'Custom', { value: 2 })
+            add('option', 'Custom', { value: 3 })
             this.onchange = () => {
-                iconPreviewDefault.style.display = 'none'
-                iconPreviewFA.style.display = 'none'
-                iconPreviewCustom.style.display = 'none'
-                faconSelector.style.display = 'none'
-                txtCustomIcon.style.display = 'none'
+                iconPreviewDefault.style.display = '03'.includes(this.value) ? '' : 'none'
+                iconPreviewFA.style.display = this.value === '1' ? '' : 'none'
+                faconSelector.style.display = this.value === '1' ? '' : 'none'
+                iconPreviewCustom.style.display = this.value === '2' ? '' : 'none'
+                iconPreviewEmoji.style.display = this.value === '4' ? '' : 'none'
+                emojiSelector.style.display = this.value === '4' ? '' : 'none'
+                txtCustomIcon.style.display = this.value === '3' ? '' : 'none'
 
                 switch (this.value) {
                     case '1':
-                        faconSelector.style.display = ''
-                        iconPreviewFA.style.display = ''
-                        iconPreviewFA.update(faconSelector.icon)
-                        break;
-                    case '2':
-                        txtCustomIcon.style.display = ''
-                        iconPreviewDefault.style.display = ''
+                        iconPreviewFA.update()
+                        break
+                    case '3':
                         txtCustomIcon.onkeyup()
-                        break;
+                        break
+                    case '4':
+                        iconPreviewEmoji.update()
+                        break
                     default:
                         iconPreviewCustom.show(bookmark?.domain ? `${bookmark?.domain}/favicon.ico` : null)
-                        break;
+                        break
                 }
             }
-            this.value = !bookmark?.icon ? '0' : bookmark?.icon.includes('fa-') ? '1' : '2'
+
+            this.value = !folder?.icon ? '0'
+                : isFacon ? '1'
+                    : isBookmarkIcon ? '2'
+                        : isEmoji ? '4'
+                            : '3'
         })
         faconSelector.addEventListener('change', iconPreviewFA.update)
 
@@ -110,10 +131,12 @@ export default class EditBookmarkDialog extends BaseDialog {
         add('label', 'Icon')
         add(iconPreviewDefault, { classes: 'spanRows2' })
         add(iconPreviewFA, { classes: 'spanRows2' })
+        add(iconPreviewEmoji, { classes: 'spanRows2' })
         add(iconPreviewCustom, { classes: 'spanRows2' })
         add(lstIconType, { classes: 'spanCols2' })
         add('div')
         add(faconSelector, { classes: 'spanCols2' })
+        add(emojiSelector, { classes: 'spanCols2' })
         add(txtCustomIcon, { classes: 'spanCols2' })
         lstIconType.onchange()
 
@@ -122,7 +145,7 @@ export default class EditBookmarkDialog extends BaseDialog {
         add('div', { classes: 'spanCols2', style: 'white-space:nowrap' }, () => {
             if (bookmark) {
                 add('button', { type: 'button' }, () => {
-                    add('i', { className: 'fa-fw fas fa-trash danger', title: 'Delete bookmark' })
+                    add('i', { className: 'fa-fw fas fa-trash-can danger', title: 'Delete bookmark' })
                     add('span', ' Delete')
                 }).onclick = async () => {
                     await bookmark.delete()
@@ -148,15 +171,21 @@ export default class EditBookmarkDialog extends BaseDialog {
 
                 var newIcon = null
                 if (lstIconType.value === '1') {
-                    newIcon = faconSelector.icon
+                    newIcon = faconSelector.value
                     if (!newIcon?.includes('fa-')) {
                         elError.textContent = 'Font Awesome icon is required'
                         return
                     }
-                } else if (lstIconType.value === '2') {
+                } else if (lstIconType.value === '3') {
                     newIcon = txtCustomIcon.value
                     if (!newIcon) {
                         elError.textContent = 'Custom icon is required'
+                        return
+                    }
+                } else if (lstIconType.value === '4') {
+                    newIcon = emojiSelector.value
+                    if (!newIcon) {
+                        elError.textContent = 'Emoji selection is required'
                         return
                     }
                 }

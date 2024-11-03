@@ -2,6 +2,8 @@ import { BaseHTMLElement, DropHandler, DragDropHandler } from "../../common/html
 import { BookmarkAddElement } from './bookmarkAdd.js'
 import { BookmarkElement, } from './bookmark.js'
 import Dialogs from '../dialogs.js'
+import FontAwesome from "../../common/faHelpers.js"
+import Emojis from "../../common/emojiHelpers.js"
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -28,7 +30,12 @@ export class FolderElement extends BaseHTMLElement {
     #folder
     get folder() { return this.#folder }
 
-    #data
+    get iconType() {
+        return !this.#folder.icon || this.#folder.icon.startsWith('chrome:') ? 'none'
+            : FontAwesome.isFacon(this.#folder.icon) ? 'facon'
+            : Emojis.isEmoji(this.#folder.icon) ? 'emoji'
+            : 'custom'
+    }
 
     constructor(folder) {
         super(template, ['/code/styles/common.css', '/code/styles/folder.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
@@ -62,16 +69,22 @@ export class FolderElement extends BaseHTMLElement {
 
         // Icon
         const faIcon = root.querySelector('i.icon')
-        if (folder.icon?.includes('fa-')) {
-            faIcon.classList.add(...folder.icon.split(' '))
-        } else if (folder.icon && !folder.icon.startsWith('chrome:')) {
-            this._apply('img.icon', function () {
-                this.onload = () => {
-                    faIcon.replaceWith(this)
-                    this.style.display = ''
-                }
-                this.src = folder.icon
-            })
+        switch (this.iconType) {
+            case 'custom':
+                this._apply('img.icon', function () {
+                    this.onload = () => {
+                        faIcon.replaceWith(this)
+                        this.style.display = ''
+                    }
+                    this.src = folder.icon
+                })
+                break;
+            case 'emoji':
+                faIcon.innerText = folder.icon
+                break;
+            case 'facon':
+                faIcon.classList.add(...folder.icon.split(' '))
+                break;
         }
 
         // Move

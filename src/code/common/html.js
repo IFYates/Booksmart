@@ -181,7 +181,7 @@ export class BaseHTMLElement extends HTMLElement {
     //onclick(ev) // optional
     //onmouseenter(ev) // optional
 
-    // Apply changes to matching elements
+    /** Apply changes to matching elements */
     _apply(selector, logic) {
         for (const el of this.shadowRoot.querySelectorAll(selector)) {
             logic.call(el, el)

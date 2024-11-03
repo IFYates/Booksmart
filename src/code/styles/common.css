@@ -32,6 +32,10 @@ h1 {
     margin: 0;
 }
 
+i.fa-fw {
+    font-style: normal;
+}
+
 .danger,
 .danger * {
     color: darkred !important;

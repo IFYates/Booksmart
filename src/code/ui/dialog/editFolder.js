@@ -2,6 +2,8 @@ import BaseDialog from './base.js'
 import FontAwesome from '../../common/faHelpers.js'
 import Dialogs from '../dialogs.js'
 import { FaconSelectorElement } from '../elements/faconSelector.js'
+import { EmojiSelectorElement } from '../elements/emojiSelector.js'
+import Emojis from '../../common/emojiHelpers.js'
 
 export default class EditFolderDialog extends BaseDialog {
     constructor(title) {
@@ -61,24 +63,34 @@ export default class EditFolderDialog extends BaseDialog {
             }
         })
 
+        const isFacon = FontAwesome.isFacon(folder.icon)
         const faconSelector = new FaconSelectorElement(folder?.icon || '')
         const iconPreviewFA = create('i', { className: 'fa-fw fa-3x centred' }, function () {
             var _lastValue = []
             this.update = () => {
-                if (lstIconType.value === '1' && faconSelector.icon?.includes('fa-')) {
-                    iconPreviewFA.classList.remove(..._lastValue)
-                    _lastValue = faconSelector.icon.split(' ')
+                iconPreviewFA.classList.remove(..._lastValue)
+                if (faconSelector.value) {
+                    _lastValue = faconSelector.value?.split(' ') || []
                     iconPreviewFA.classList.add(..._lastValue)
                 }
             }
         })
+        faconSelector.addEventListener('change', iconPreviewFA.update)
 
-        const isFontAwesomeIcon = folder?.icon?.includes('fa-') && !folder.icon.startsWith('data:image/') && !folder.icon.includes('://')
-        const bookmarkIcon = !isFontAwesomeIcon ? folder?.bookmarks?.list().find(b => b.icon && b.icon === folder.icon) : null
+        const isEmoji = Emojis.isEmoji(folder?.icon)
+        const emojiSelector = new EmojiSelectorElement(folder?.icon || '')
+        const iconPreviewEmoji = create('i', { className: 'fa-fw fa-3x centred' }, function () {
+            this.update = () => {
+                iconPreviewEmoji.innerText = emojiSelector.value || ''
+            }
+        })
+        emojiSelector.addEventListener('change', iconPreviewEmoji.update)
+
+        const isBookmarkIcon = !isEmoji && !isFacon ? folder?.bookmarks?.list().find(b => b.icon && b.icon === folder.icon) : null
         const lstBookmarkIcons = create('select', function () {
             folder?.bookmarks.list().forEach(b => {
                 add('option', b.title, { value: b.icon || '(none)' }, function () {
-                    this.selected = bookmarkIcon === b
+                    this.selected = isBookmarkIcon === b
                     this.disabled = !b.icon?.startsWith('data:image/') && !b.icon?.includes('://')
                 })
             })
@@ -88,6 +100,7 @@ export default class EditFolderDialog extends BaseDialog {
             this.value = folder?.icon
             this.onchange()
         })
+
         const txtCustomIcon = create('input', {
             type: 'textbox',
             value: !folder?.icon?.includes('fa-') ? folder?.icon || '' : ''
@@ -95,54 +108,50 @@ export default class EditFolderDialog extends BaseDialog {
             this.onkeyup = () => {
                 iconPreviewCustom.show(this.value)
             }
-            this.value = folder?.icon && !folder?.icon.includes('fa-') ? folder?.icon : ''
+            this.value = !isFacon && !isEmoji ? folder?.icon : ''
             this.onkeyup()
         })
 
         const lstIconType = create('select', function () {
             add('option', 'None', { value: 0 })
+            add('option', 'Emoji', { value: 4 })
             add('option', 'Font Awesome', { value: 1 })
             if (folder?.bookmarks?.count() > 0) {
                 add('option', 'From bookmark', { value: 2 })
             }
             add('option', 'Custom', { value: 3 })
             this.onchange = () => {
-                iconPreviewDefault.style.display = 'none'
-                iconPreviewFA.style.display = 'none'
-                iconPreviewCustom.style.display = 'none'
-                faconSelector.style.display = 'none'
-                lstBookmarkIcons.style.display = 'none'
-                txtCustomIcon.style.display = 'none'
+                iconPreviewDefault.style.display = '03'.includes(this.value) ? '' : 'none'
+                iconPreviewFA.style.display = this.value === '1' ? '' : 'none'
+                faconSelector.style.display = this.value === '1' ? '' : 'none'
+                iconPreviewCustom.style.display = this.value === '2' ? '' : 'none'
+                lstBookmarkIcons.style.display = this.value === '2' ? '' : 'none'
+                iconPreviewEmoji.style.display = this.value === '4' ? '' : 'none'
+                emojiSelector.style.display = this.value === '4' ? '' : 'none'
+                txtCustomIcon.style.display = this.value === '3' ? '' : 'none'
 
                 switch (this.value) {
                     case '1':
-                        faconSelector.style.display = ''
-                        iconPreviewFA.style.display = ''
-                        iconPreviewFA.update(faconSelector.icon)
+                        iconPreviewFA.update()
                         break
                     case '2':
-                        lstBookmarkIcons.style.display = ''
-                        iconPreviewCustom.style.display = ''
                         lstBookmarkIcons.onchange()
                         break
                     case '3':
-                        txtCustomIcon.style.display = ''
-                        iconPreviewDefault.style.display = ''
                         txtCustomIcon.onkeyup()
                         break
-                    default:
-                        iconPreviewDefault.style.display = ''
+                    case '4':
+                        iconPreviewEmoji.update()
                         break
                 }
             }
 
-            this.value = !folder?.icon ? '0' : '1'
-            if (!isFontAwesomeIcon && folder?.icon) {
-                txtCustomIcon.value = folder.icon
-                this.value = bookmarkIcon ? '2' : '3'
-            }
+            this.value = !folder?.icon ? '0'
+                : isFacon ? '1'
+                    : isBookmarkIcon ? '2'
+                        : isEmoji ? '4'
+                            : '3'
         })
-        faconSelector.addEventListener('change', iconPreviewFA.update)
 
         add('label', 'Title')
         add(txtTitle, { classes: 'spanCols3' })
@@ -155,10 +164,12 @@ export default class EditFolderDialog extends BaseDialog {
         add('label', 'Icon')
         add(iconPreviewDefault, { classes: 'spanRows2' })
         add(iconPreviewFA, { classes: 'spanRows2' })
+        add(iconPreviewEmoji, { classes: 'spanRows2' })
         add(iconPreviewCustom, { classes: 'spanRows2' })
         add(lstIconType, { classes: 'spanCols2' })
         add('div')
         add(faconSelector, { classes: 'spanCols2' })
+        add(emojiSelector, { classes: 'spanCols2' })
         add(lstBookmarkIcons, { classes: 'spanCols2' })
         add(txtCustomIcon, { classes: 'spanCols2' })
         lstIconType.onchange()
@@ -216,7 +227,7 @@ export default class EditFolderDialog extends BaseDialog {
 
                 var newIcon = null
                 if (lstIconType.value === '1') {
-                    newIcon = faconSelector.icon
+                    newIcon = faconSelector.value
                     if (!newIcon?.includes('fa-')) {
                         elError.textContent = 'Font Awesome icon is required'
                         return
@@ -233,11 +244,17 @@ export default class EditFolderDialog extends BaseDialog {
                         elError.textContent = 'Custom icon is required'
                         return
                     }
+                } else if (lstIconType.value === '4') {
+                    newIcon = emojiSelector.value
+                    if (!newIcon) {
+                        elError.textContent = 'Emoji selection is required'
+                        return
+                    }
                 }
 
                 // Create / update folder
                 if (!folder) {
-                    folder = await layout.folders.create(txtTitle.value)
+                    folder = await layout.folders.create(txtTitle.value.trim())
                 } else {
                     folder.title = txtTitle.value
                 }

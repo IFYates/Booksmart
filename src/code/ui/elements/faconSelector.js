@@ -17,12 +17,12 @@ list {
 list .facon {
     padding: 2.5px 1px;
     border: 1px solid transparent;
+    border-radius: 3px;
     user-select: none;
 }
 
 .facon.selected {
     border-color: var(--text-colour);
-    border-radius: 3px;
     background-color: rgba(255, 255, 255, 0.2);
 }
 </style>
@@ -34,16 +34,16 @@ list .facon {
 `
 
 export class FaconSelectorElement extends BaseHTMLElement {
-    #icon
-    get icon() { return this.#icon }
+    #value
+    get value() { return this.#value }
 
     constructor(currentIcon) {
         super(template, ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
-        this.#icon = currentIcon
+        this.#value = currentIcon
     }
 
-    update(value, scrollTo) {
-        if (this.#icon !== value) {
+    update(value, scrollTo, force) {
+        if (force || this.#value !== value) {
             for (const el of this.shadowRoot.querySelectorAll('.selected')) {
                 el.classList.remove('selected')
             }
@@ -55,7 +55,7 @@ export class FaconSelectorElement extends BaseHTMLElement {
                 }
             }
 
-            this.#icon = value
+            this.#value = value
             this.dispatchEvent(new Event('change'))
         }
 
@@ -91,7 +91,7 @@ export class FaconSelectorElement extends BaseHTMLElement {
                     }
                 }
                 facon.onmouseup = () => {
-                    if (this.#icon === value) {
+                    if (this.#value === value) {
                         this.update(value, true)
                         this.dispatchEvent(new Event('change'))
                     }
@@ -99,7 +99,7 @@ export class FaconSelectorElement extends BaseHTMLElement {
             }
         }
         faconTemplate.remove()
-        this.update(this.#icon, true)
+        this.update(this.#value, true, true)
     }
 }
 customElements.define('facon-selector', FaconSelectorElement)
