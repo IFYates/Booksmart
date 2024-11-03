@@ -129,7 +129,7 @@ export class BaseHTMLElement extends HTMLElement {
         this.attachShadow({ mode: 'open' })
 
         this.#template = template
-        this.#styles = styles
+        this.#styles = styles || []
         this._reset()
     }
 
@@ -158,12 +158,14 @@ export class BaseHTMLElement extends HTMLElement {
         this.#displayed = true
         const self = this
 
-        this.shadowRoot.host.style.display = 'none'
+        this.shadowRoot.host.style.display = 'none !important'
         await Promise.allSettled([
             this._ondisplay(this.shadowRoot, this.shadowRoot.host),
             StyleManager.wait()
         ])
-        this.shadowRoot.host.style.display = null
+        if (this.shadowRoot.host.style.display === 'none !important') {
+            this.shadowRoot.host.style.display = null
+        }
 
         if (typeof this.onclick === 'function') {
             this.shadowRoot.host.addEventListener('click', (ev) => this.onclick.call(self, ev))

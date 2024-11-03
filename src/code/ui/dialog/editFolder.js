@@ -1,6 +1,7 @@
 import BaseDialog from './base.js'
-import FontAwesome from '../faHelpers.js'
+import FontAwesome from '../../common/faHelpers.js'
 import Dialogs from '../dialogs.js'
+import { FaconSelectorElement } from '../elements/faconSelector.js'
 
 export default class EditFolderDialog extends BaseDialog {
     constructor(title) {
@@ -60,15 +61,14 @@ export default class EditFolderDialog extends BaseDialog {
             }
         })
 
-        const lstFontAwesomeIcons = FontAwesome.getSelectionList(folder?.icon || '')
-        lstFontAwesomeIcons.classList.add('faIconList')
+        const faconSelector = new FaconSelectorElement(folder?.icon || '')
         const iconPreviewFA = create('i', { className: 'fa-fw fa-3x centred' }, function () {
-            var _lastValue = ''
-            this.update = (icon) => {
-                if (lstIconType.value === '1' && icon?.includes('fa-')) {
-                    if (_lastValue) iconPreviewFA.classList.remove(..._lastValue.split(' '))
-                    iconPreviewFA.classList.add(...icon.split(' '))
-                    _lastValue = icon
+            var _lastValue = []
+            this.update = () => {
+                if (lstIconType.value === '1' && faconSelector.icon?.includes('fa-')) {
+                    iconPreviewFA.classList.remove(..._lastValue)
+                    _lastValue = faconSelector.icon.split(' ')
+                    iconPreviewFA.classList.add(..._lastValue)
                 }
             }
         })
@@ -110,15 +110,15 @@ export default class EditFolderDialog extends BaseDialog {
                 iconPreviewDefault.style.display = 'none'
                 iconPreviewFA.style.display = 'none'
                 iconPreviewCustom.style.display = 'none'
-                lstFontAwesomeIcons.style.display = 'none'
+                faconSelector.style.display = 'none'
                 lstBookmarkIcons.style.display = 'none'
                 txtCustomIcon.style.display = 'none'
 
                 switch (this.value) {
                     case '1':
-                        lstFontAwesomeIcons.style.display = ''
+                        faconSelector.style.display = ''
                         iconPreviewFA.style.display = ''
-                        iconPreviewFA.update(lstFontAwesomeIcons.value())
+                        iconPreviewFA.update(faconSelector.icon)
                         break
                     case '2':
                         lstBookmarkIcons.style.display = ''
@@ -142,7 +142,7 @@ export default class EditFolderDialog extends BaseDialog {
                 this.value = bookmarkIcon ? '2' : '3'
             }
         })
-        lstFontAwesomeIcons.subscribe(iconPreviewFA.update)
+        faconSelector.addEventListener('change', iconPreviewFA.update)
 
         add('label', 'Title')
         add(txtTitle, { classes: 'spanCols3' })
@@ -158,7 +158,7 @@ export default class EditFolderDialog extends BaseDialog {
         add(iconPreviewCustom, { classes: 'spanRows2' })
         add(lstIconType, { classes: 'spanCols2' })
         add('div')
-        add(lstFontAwesomeIcons, { classes: 'spanCols2' })
+        add(faconSelector, { classes: 'spanCols2' })
         add(lstBookmarkIcons, { classes: 'spanCols2' })
         add(txtCustomIcon, { classes: 'spanCols2' })
         lstIconType.onchange()
@@ -216,23 +216,23 @@ export default class EditFolderDialog extends BaseDialog {
 
                 var newIcon = null
                 if (lstIconType.value === '1') {
-                    if (!lstFontAwesomeIcons.value()?.includes('fa-')) {
+                    newIcon = faconSelector.icon
+                    if (!newIcon?.includes('fa-')) {
                         elError.textContent = 'Font Awesome icon is required'
                         return
                     }
-                    newIcon = lstFontAwesomeIcons.value()
                 } else if (lstIconType.value === '2') {
-                    if (!lstBookmarkIcons.value) {
+                    newIcon = lstBookmarkIcons.value
+                    if (!newIcon) {
                         elError.textContent = 'Bookmark selection is required'
                         return
                     }
-                    newIcon = lstBookmarkIcons.value
                 } else if (lstIconType.value === '3') {
-                    if (!txtCustomIcon.value) {
+                    newIcon = txtCustomIcon.value
+                    if (!newIcon) {
                         elError.textContent = 'Custom icon is required'
                         return
                     }
-                    newIcon = txtCustomIcon.value
                 }
 
                 // Create / update folder

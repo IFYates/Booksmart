@@ -1,5 +1,6 @@
 import BaseDialog from './base.js'
-import FontAwesome from '../faHelpers.js'
+import FontAwesome from '../../common/faHelpers.js'
+import { FaconSelectorElement } from '../elements/faconSelector.js'
 
 export default class EditBookmarkDialog extends BaseDialog {
     constructor(title) {
@@ -18,7 +19,7 @@ export default class EditBookmarkDialog extends BaseDialog {
         })
         const txtNotes = document.createElement('textarea')
 
-        const iconPreviewDefault = create('i', { className: 'fa-fw fa-3x fas fa-bookmark centred' })
+        const iconPreviewDefault = create('i', { className: 'fa-fw fa-3x far fa-bookmark centred' })
         const iconPreviewCustom = create('img', { className: 'iconPreview centred' }, function () {
             this.show = (url) => {
                 if (!url || (!url?.startsWith('data:image/') && !url?.includes('://'))) {
@@ -40,16 +41,14 @@ export default class EditBookmarkDialog extends BaseDialog {
                 iconPreviewDefault.style.display = 'none'
             }
         })
-
-        const lstFontAwesomeIcons = FontAwesome.getSelectionList(bookmark?.icon || 'fas fa-bookmark')
-        lstFontAwesomeIcons.classList.add('faIconList')
-        const iconPreviewFA = create('i', { className: 'fa-fw fa-3x fas fa-bookmark centred' }, function () {
-            var _lastValue = 'fas fa-bookmark'
-            this.update = (icon) => {
-                if (lstIconType.value === '1' && icon?.includes('fa-')) {
-                    iconPreviewFA.classList.remove(..._lastValue.split(' '))
-                    iconPreviewFA.classList.add(...icon.split(' '))
-                    _lastValue = icon
+        const faconSelector = new FaconSelectorElement(bookmark?.icon || '')
+        const iconPreviewFA = create('i', { className: 'fa-fw fa-3x far fa-bookmark centred' }, function () {
+            var _lastValue = ['far', 'fa-bookmark']
+            this.update = () => {
+                if (lstIconType.value === '1' && faconSelector.icon?.includes('fa-')) {
+                    iconPreviewFA.classList.remove(..._lastValue)
+                    _lastValue = faconSelector.icon.split(' ')
+                    iconPreviewFA.classList.add(..._lastValue)
                 }
             }
         })
@@ -73,14 +72,14 @@ export default class EditBookmarkDialog extends BaseDialog {
                 iconPreviewDefault.style.display = 'none'
                 iconPreviewFA.style.display = 'none'
                 iconPreviewCustom.style.display = 'none'
-                lstFontAwesomeIcons.style.display = 'none'
+                faconSelector.style.display = 'none'
                 txtCustomIcon.style.display = 'none'
 
                 switch (this.value) {
                     case '1':
-                        lstFontAwesomeIcons.style.display = ''
+                        faconSelector.style.display = ''
                         iconPreviewFA.style.display = ''
-                        iconPreviewFA.update(lstFontAwesomeIcons.value())
+                        iconPreviewFA.update(faconSelector.icon)
                         break;
                     case '2':
                         txtCustomIcon.style.display = ''
@@ -94,7 +93,7 @@ export default class EditBookmarkDialog extends BaseDialog {
             }
             this.value = !bookmark?.icon ? '0' : bookmark?.icon.includes('fa-') ? '1' : '2'
         })
-        lstFontAwesomeIcons.subscribe(iconPreviewFA.update)
+        faconSelector.addEventListener('change', iconPreviewFA.update)
 
         add('label', 'Title')
         add(txtTitle, { classes: 'spanCols3' })
@@ -114,7 +113,7 @@ export default class EditBookmarkDialog extends BaseDialog {
         add(iconPreviewCustom, { classes: 'spanRows2' })
         add(lstIconType, { classes: 'spanCols2' })
         add('div')
-        add(lstFontAwesomeIcons, { classes: 'spanCols2' })
+        add(faconSelector, { classes: 'spanCols2' })
         add(txtCustomIcon, { classes: 'spanCols2' })
         lstIconType.onchange()
 
@@ -149,17 +148,17 @@ export default class EditBookmarkDialog extends BaseDialog {
 
                 var newIcon = null
                 if (lstIconType.value === '1') {
-                    if (!lstFontAwesomeIcons.value()?.includes('fa-')) {
+                    newIcon = faconSelector.icon
+                    if (!newIcon?.includes('fa-')) {
                         elError.textContent = 'Font Awesome icon is required'
                         return
                     }
-                    newIcon = lstFontAwesomeIcons.value()
                 } else if (lstIconType.value === '2') {
-                    if (!txtCustomIcon.value) {
+                    newIcon = txtCustomIcon.value
+                    if (!newIcon) {
                         elError.textContent = 'Custom icon is required'
                         return
                     }
-                    newIcon = txtCustomIcon.value
                 }
 
                 // Create / update bookmark
