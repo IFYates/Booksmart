@@ -66,47 +66,15 @@ export default class OptionsDialog extends BaseDialog {
 
         // Theme
         add('div', { classes: 'spanCols4', style: 'display: grid; grid-column-gap: 1em; grid-template-columns: 1fr 1fr 1fr 1fr' }, () => {
-            add('label', 'Theme', { classes: 'spanCols4' })
-            const accent = layout.themeAccent
-            const rangeInputs = []
-            function updateRangeInputs() {
-                for (const input of rangeInputs) {
-                    input.style.accentColor = `hsl(${accent[0]}, ${accent[1]}%, 50%)`
-                }
-            }
+            add('div', { className: 'spanCols4', style: 'height: 1em' })
 
-            add('label', 'Colour', { style: 'text-align:right' })
-            add('input', { type: 'color', classes: 'spanCols3', value: `hsl(${accent[0]}, ${accent[1]}%, 24%)` }, function () { // TODO
-                // this.onchange = () => {
-                //     accent[2] = this.value
-                //     layout.themeAccent = accent
-                //     MainView.setTheme()
-                // }
-            })
-            add('input', { classes: 'spanCols3', type: 'range', min: 0, max: 360, value: accent[0] }, function () {
-                rangeInputs.push(this)
-                this.oninput = () => {
-                    accent[0] = this.value
-                    updateRangeInputs()
-                }
+            const colour = layout.accentColour
+            add('label', 'Accent colour', { style: 'text-align:right' })
+            add('input', { type: 'color', classes: 'spanCols3', value: colour }, function () { // TODO
                 this.onchange = () => {
-                    layout.themeAccent = accent
+                    layout.accentColour = this.value
                     MainView.setTheme()
                 }
-                this.oninput()
-            })
-            add('label', 'Saturation', { style: 'text-align:right' })
-            add('input', { classes: 'spanCols3', type: 'range', min: 0, max: 100, value: accent[1] }, function () {
-                rangeInputs.push(this)
-                this.oninput = () => {
-                    accent[1] = this.value
-                    updateRangeInputs()
-                }
-                this.onchange = () => {
-                    layout.themeAccent = accent
-                    MainView.setTheme()
-                }
-                this.oninput()
             })
 
             add('label', 'Background image URL', { style: 'text-align:right' })

@@ -28,7 +28,7 @@ export default class Layout {
             showFavicons: data.showFavicons !== false,
             showTabList: !!data.showTabList,
             showTopSites: !!data.showTopSites,
-            themeAccent: data.themeAccent ?? [240, 14],
+            accentColour: data.accentColour?.length === 7 ? data.accentColour.toString() : '#4F4F78',
             wrapTitles: data.wrapTitles !== false
         }
     }
@@ -53,8 +53,14 @@ export default class Layout {
     set showTabList(value) { this.#data.showTabList = !!value }
     get showTopSites() { return this.#data.showTopSites }
     set showTopSites(value) { this.#data.showTopSites = !!value }
-    get themeAccent() { return [...this.#data.themeAccent] }
-    set themeAccent(value) {
+    get accentColour() { return this.#data.accentColour }
+    set accentColour(value) {
+        if (/^#[0-9A-F]{6}$/i.test(value)) {
+            this.#data.accentColour = value
+        }
+    }
+    get themeAccent() { return [0, 0] } // TODO: DROP
+    set themeAccent(value) { // DROP
         if (value instanceof Array && value.length == 2 && num(value[0], -1) > -1 && num(value[1], -1) > -1) {
             this.#data.themeAccent = value
         }
@@ -152,7 +158,7 @@ export default class Layout {
             showFavicons: true,
             showTabList: false,
             showTopSites: false,
-            themeAccent: [240, 14],
+            accentColour: '#4F4F78',
             wrapTitles: true,
             bookmarks: null,
             folders: null

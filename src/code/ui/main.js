@@ -16,7 +16,7 @@ export default class MainView {
             drag.ondragover = (ev, state) => {
                 const bookmark = state?.bookmark
                 const folder = state?.folder
-                if ((bookmark && !bookmark.isTab) || folder) {
+                if ((bookmark && !bookmark.readonly) || folder) {
                     ev.preventDefault()
                     ev.dataTransfer.dropEffect = 'move'
                     this.classList.replace('fa-dumpster', 'fa-dumpster-fire')
@@ -29,7 +29,7 @@ export default class MainView {
                 drag.ondragleave()
 
                 const bookmark = state?.bookmark
-                if (bookmark && !bookmark.isTab) {
+                if (bookmark && !bookmark.readonly) {
                     return bookmark.delete().then(MainView.fullRefresh)
                 }
 
@@ -55,10 +55,14 @@ export default class MainView {
     }
 
     static setTheme() {
-        document.documentElement.style.setProperty('--accent-colour-hue', MainView.layout.themeAccent[0])
-        document.documentElement.style.setProperty('--accent-colour-saturation', `${MainView.layout.themeAccent[1]}%`)
-        document.documentElement.style.setProperty('--accent-colour-lightness', '24%')
-        document.documentElement.style.setProperty('--text-colour', '#eee')
+        document.documentElement.style.setProperty('--accent-colour', MainView.layout.accentColour)
+        document.documentElement.style.setProperty('--accent-colour-r', MainView.layout.accentColour.substring(1, 3).fromHex())
+        document.documentElement.style.setProperty('--accent-colour-g', MainView.layout.accentColour.substring(3, 5).fromHex())
+        document.documentElement.style.setProperty('--accent-colour-b', MainView.layout.accentColour.substring(5, 7).fromHex())
+        // document.documentElement.style.setProperty('--accent-colour-hue', MainView.layout.themeAccent[0])
+        // document.documentElement.style.setProperty('--accent-colour-saturation', `${MainView.layout.themeAccent[1]}%`)
+        // document.documentElement.style.setProperty('--accent-colour-lightness', '24%')
+        document.documentElement.style.setProperty('--text-colour', '#eee') // TODO
         document.documentElement.style.setProperty('--layout-columns', MainView.layout.columns === -1 ? '100%' : MainView.layout.columns + 'px')
         document.body.style.backgroundImage = MainView.layout.backgroundImage ? `url(${MainView.layout.backgroundImage})` : null
     }

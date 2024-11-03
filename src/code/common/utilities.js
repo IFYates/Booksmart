@@ -134,3 +134,22 @@ globalThis.tryParse = function (json, alt) {
         return typeof (alt) === 'function' ? alt() : alt
     }
 }
+
+/// TEMP
+Number.prototype.toHex = function () {
+    var num = this, res = ''
+    while (num > 0) {
+        const rem = num % 16
+        res = '0123456789ABCDEF'.substring(rem, rem + 1) + res
+        num = (num - rem) / 16
+    }
+    return res.length < 2 ? '0' + res : res
+}
+String.prototype.fromHex = function () {
+    var res = 0
+    for (var i = 0; i < this.length; ++i) {
+        res *= 16
+        res += '0123456789ABCDEF'.indexOf(this[i])
+    }
+    return res
+}

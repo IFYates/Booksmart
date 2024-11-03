@@ -69,11 +69,10 @@ export class TabElement extends BookmarkElement {
             id: tab.id,
             title: tab.title,
             url: tab.url,
+            readonly: true,
             domain: isURL(tab.url) ? new URL(tab.url).origin : null,
             altIcon: 'fas fa-window-maximize',
-            readonly: true,
-            hasOpenTab: () => true,
-            isTab: true
+            hasOpenTab: () => true
         })
         this.#tab = tab
         this.id = 'tab-' + tab.id
