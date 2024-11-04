@@ -67,14 +67,11 @@ export default class EditBookmarkDialog extends BaseDialog {
         })
         emojiSelector.addEventListener('change', iconPreviewEmoji.update)
 
-        const txtCustomIcon = create('input', {
-            type: 'textbox',
-            value: !bookmark?.icon?.includes('fa-') ? bookmark?.icon || '' : ''
-        }, function () {
+        const txtCustomIcon = create('input', { type: 'textbox' }, function () {
             this.onkeyup = () => {
                 iconPreviewCustom.show(this.value)
             }
-            this.value = !isFacon && !isEmoji ? bookmark?.icon : ''
+            this.value = !isFacon && !isEmoji ? (bookmark?.icon || '') : ''
             this.onkeyup()
         })
 
@@ -108,11 +105,10 @@ export default class EditBookmarkDialog extends BaseDialog {
                 }
             }
 
-            this.value = !folder?.icon ? '0'
+            this.value = !bookmark?.icon ? '0'
                 : isFacon ? '1'
-                    : isBookmarkIcon ? '2'
-                        : isEmoji ? '4'
-                            : '3'
+                    : isEmoji ? '4'
+                        : '3'
         })
         faconSelector.addEventListener('change', iconPreviewFA.update)
 

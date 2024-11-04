@@ -17,8 +17,7 @@ export default class Layout {
         this.#storage = await Storage.load()
         this.#applyData(this.#storage.data)
     }
-    #applyData(data)
-    {
+    #applyData(data) {
         this.#data = {
             allowEdits: data.allowEdits !== false,
             backgroundImage: data.backgroundImage,
@@ -34,9 +33,15 @@ export default class Layout {
     }
 
     get folders() { return this.#storage.folders }
-
     get id() { return this.#storage.rootId }
     get dataId() { return this.#storage.dataId }
+
+    get accentColour() { return this.#data.accentColour }
+    set accentColour(value) {
+        if (/^#[0-9A-F]{6}$/i.test(value)) {
+            this.#data.accentColour = value
+        }
+    }
     get allowEdits() { return this.#data.allowEdits }
     set allowEdits(value) { this.#data.allowEdits = !!value }
     get backgroundImage() { return this.#data.backgroundImage }
@@ -53,12 +58,6 @@ export default class Layout {
     set showTabList(value) { this.#data.showTabList = !!value }
     get showTopSites() { return this.#data.showTopSites }
     set showTopSites(value) { this.#data.showTopSites = !!value }
-    get accentColour() { return this.#data.accentColour }
-    set accentColour(value) {
-        if (/^#[0-9A-F]{6}$/i.test(value)) {
-            this.#data.accentColour = value
-        }
-    }
     get themeAccent() { return [0, 0] } // TODO: DROP
     set themeAccent(value) { // DROP
         if (value instanceof Array && value.length == 2 && num(value[0], -1) > -1 && num(value[1], -1) > -1) {

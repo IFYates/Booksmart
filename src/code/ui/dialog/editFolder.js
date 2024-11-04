@@ -174,6 +174,22 @@ export default class EditFolderDialog extends BaseDialog {
         add(txtCustomIcon, { classes: 'spanCols2' })
         lstIconType.onchange()
 
+        add('label', 'Accent colour', { style: 'text-align:right' })
+        const accountColourPicker = add('input', { type: 'color', classes: 'spanCols2', value: folder.accentColour }, function () { // TODO
+            this.onchange = () => {
+                folder.accentColour = this.value !== '#000000' ? this.value : null
+                BaseDialog.setTheme(folder.accentColour)
+            }
+            this.onchange()
+        })
+        add('button', { type: 'button' }, () => {
+            add('i', { className: 'fa-fw fas fa-xmark' })
+            add('span', ' Clear')
+        }).onclick = async () => {
+            accountColourPicker.value = '#000000'
+            BaseDialog.setTheme(null)
+        }
+
         const elError = add('div', { classes: ['error', 'spanCols4'] })
 
         add('div', { classes: 'spanCols2', style: 'white-space:nowrap' }, () => {
@@ -262,6 +278,7 @@ export default class EditFolderDialog extends BaseDialog {
                 folder.sortOrder = num(lstSort.value) * (chkSortAsc.checked ? 1 : -1)
                 folder.icon = newIcon
 
+                MainView.setTheme()
                 await folder.save()
                 dialog.close()
             }

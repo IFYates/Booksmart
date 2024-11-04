@@ -33,14 +33,33 @@ export class FolderElement extends BaseHTMLElement {
     get iconType() {
         return !this.#folder.icon || this.#folder.icon.startsWith('chrome:') ? 'none'
             : FontAwesome.isFacon(this.#folder.icon) ? 'facon'
-            : Emojis.isEmoji(this.#folder.icon) ? 'emoji'
-            : 'custom'
+                : Emojis.isEmoji(this.#folder.icon) ? 'emoji'
+                    : 'custom'
     }
 
     constructor(folder) {
         super(template, ['/code/styles/common.css', '/code/styles/folder.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
         this.#folder = folder
         this.id = 'folder-' + folder.id
+    }
+
+    setTheme() {
+        const accentColour = this.#folder.accentColour
+        if (accentColour) {
+            this.shadowRoot.host.style.setProperty('--accent-colour', accentColour)
+            this.shadowRoot.host.style.setProperty('--accent-colour-r', accentColour.substring(1, 3).fromHex())
+            this.shadowRoot.host.style.setProperty('--accent-colour-g', accentColour.substring(3, 5).fromHex())
+            this.shadowRoot.host.style.setProperty('--accent-colour-b', accentColour.substring(5, 7).fromHex())
+            // this.shadowRoot.host.style.setProperty('--accent-colour-hue', this.#folder.themeAccent[0])
+            // this.shadowRoot.host.style.setProperty('--accent-colour-saturation', `${this.#folder.themeAccent[1]}%`)
+            // this.shadowRoot.host.style.setProperty('--accent-colour-lightness', '24%')
+            // this.shadowRoot.host.style.setProperty('--text-colour', '#eee') // TODO
+            this.shadowRoot.host.style.backgroundImage = this.#folder.backgroundImage ? `url(${this.#folder.backgroundImage})` : null
+
+            this.shadowRoot.host.style.setProperty('--theme-colour-darkest', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585))')
+            this.shadowRoot.host.style.setProperty('--theme-colour-lighter', 'rgb(calc(var(--accent-colour-r) * 1.5), calc(var(--accent-colour-g) * 1.5), calc(var(--accent-colour-b) * 1.5))')
+            this.shadowRoot.host.style.backgroundColor = 'var(--theme-colour-darkest)'
+        }
     }
 
     async _ondisplay(root, host) {
@@ -53,6 +72,7 @@ export class FolderElement extends BaseHTMLElement {
         while (m = BaseHTMLElement.TemplateRE.exec(root.innerHTML)) {
             root.innerHTML = String(root.innerHTML).replaceAll(m[0], folder[m[1]])
         }
+        this.setTheme()
 
         // Show/hide
         this._apply('i.showHide', function () {

@@ -149,7 +149,7 @@ String.prototype.fromHex = function () {
     var res = 0
     for (var i = 0; i < this.length; ++i) {
         res *= 16
-        res += '0123456789ABCDEF'.indexOf(this[i])
+        res += '0123456789ABCDEF'.indexOf(this[i].toUpperCase())
     }
     return res
 }

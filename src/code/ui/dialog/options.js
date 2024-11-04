@@ -68,9 +68,8 @@ export default class OptionsDialog extends BaseDialog {
         add('div', { classes: 'spanCols4', style: 'display: grid; grid-column-gap: 1em; grid-template-columns: 1fr 1fr 1fr 1fr' }, () => {
             add('div', { className: 'spanCols4', style: 'height: 1em' })
 
-            const colour = layout.accentColour
             add('label', 'Accent colour', { style: 'text-align:right' })
-            add('input', { type: 'color', classes: 'spanCols3', value: colour }, function () { // TODO
+            add('input', { type: 'color', classes: 'spanCols3', value: layout.accentColour }, function () { // TODO
                 this.onchange = () => {
                     layout.accentColour = this.value
                     MainView.setTheme()

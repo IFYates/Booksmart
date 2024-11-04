@@ -54,11 +54,12 @@ export default class MainView {
         }
     }
 
-    static setTheme() {
-        document.documentElement.style.setProperty('--accent-colour', MainView.layout.accentColour)
-        document.documentElement.style.setProperty('--accent-colour-r', MainView.layout.accentColour.substring(1, 3).fromHex())
-        document.documentElement.style.setProperty('--accent-colour-g', MainView.layout.accentColour.substring(3, 5).fromHex())
-        document.documentElement.style.setProperty('--accent-colour-b', MainView.layout.accentColour.substring(5, 7).fromHex())
+    static setTheme(accentColour = null) {
+        accentColour ??= MainView.layout.accentColour
+        document.documentElement.style.setProperty('--accent-colour', accentColour)
+        document.documentElement.style.setProperty('--accent-colour-r', accentColour.substring(1, 3).fromHex())
+        document.documentElement.style.setProperty('--accent-colour-g', accentColour.substring(3, 5).fromHex())
+        document.documentElement.style.setProperty('--accent-colour-b', accentColour.substring(5, 7).fromHex())
         // document.documentElement.style.setProperty('--accent-colour-hue', MainView.layout.themeAccent[0])
         // document.documentElement.style.setProperty('--accent-colour-saturation', `${MainView.layout.themeAccent[1]}%`)
         // document.documentElement.style.setProperty('--accent-colour-lightness', '24%')
