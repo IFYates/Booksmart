@@ -3,6 +3,7 @@ import FontAwesome from '../../common/faHelpers.js'
 import { FaconSelectorElement } from '../elements/faconSelector.js'
 import { EmojiSelectorElement } from '../elements/emojiSelector.js'
 import Emojis from '../../common/emojiHelpers.js'
+import State from '../../models/state.js'
 
 export default class EditBookmarkDialog extends BaseDialog {
     constructor(title) {
@@ -197,7 +198,8 @@ export default class EditBookmarkDialog extends BaseDialog {
                 bookmark.notes = txtNotes.value
                 bookmark.icon = newIcon
 
-                await bookmark.save()
+                await State.updateBookmark(bookmark)
+                await State.save()
                 dialog.close()
             }
             add('button', { type: 'button' }, () => {

@@ -57,15 +57,15 @@ export default class Storage {
         }
     }
     #cacheAdd(item) {
-        if (!this.#cache[item.id]) {
-            if (item.url) {
-                item.folder = this.#cache[item.parentId]
-                return this.#cache[item.id] = new BookmarkElement(item)
-                //? new Bookmark(this.bookmarks, item, this.#data.bookmarks[item.id] ??= {})
-            }
-            return this.#cache[item.id] = new Folder(this.folders, item, this.#data.folders[item.id] ??= {}, item.parentId === this.#booksmartRootId)
-        }
-        return this.#cache[item.id]
+        // if (!this.#cache[item.id]) {
+        //     if (item.url) {
+        //         item.folder = this.#cache[item.parentId]
+        //         return this.#cache[item.id] = new BookmarkElement(item)
+        //         //? new Bookmark(this.bookmarks, item, this.#data.bookmarks[item.id] ??= {})
+        //     }
+        //     return this.#cache[item.id] = new Folder(this.folders, item, this.#data.folders[item.id] ??= {}, item.parentId === this.#booksmartRootId)
+        // }
+        // return this.#cache[item.id]
     }
     async #cacheGet(id) {
         try {
@@ -251,22 +251,7 @@ export default class Storage {
             await this.save()
         }
     }
-
-    async save(data) {
-        // TEMP
-        console.log('save')
-        if (data) {
-            data = { ...data }
-            data.bookmarks = this.#data.bookmarks
-            data.folders = this.#data.folders
-            this.#data = data
-        }
-        await chrome.bookmarks.update(this.#dataId, {
-            title: Storage.Title + JSON.stringify(this.#data)
-        })
-    }
 }
 
 import { BookmarkElement } from '../ui/elements/bookmark.js'
-import Bookmark from './bookmark.js'
 import Folder from './folder.js'

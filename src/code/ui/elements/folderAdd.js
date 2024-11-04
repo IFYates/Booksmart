@@ -15,7 +15,7 @@ export class FolderAddElement extends BaseHTMLElement {
     }
 
     onclick() {
-        Dialogs.newFolder(MainView.layout).then(MainView.fullRefresh)
+        Dialogs.newFolder().then(MainView.fullRefresh)
     }
 }
 customElements.define('bs-folder-add', FolderAddElement)

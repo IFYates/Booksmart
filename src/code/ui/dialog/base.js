@@ -43,6 +43,7 @@ export default class BaseDialog {
         })
         await promise
         dialog.remove()
+        return dialog.returnValue
     }
 
     static setTheme(accentColour) {

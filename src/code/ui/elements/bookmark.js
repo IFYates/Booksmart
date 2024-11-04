@@ -2,6 +2,7 @@ import Emojis from "../../common/emojiHelpers.js"
 import FontAwesome from "../../common/faHelpers.js"
 import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
 import { Tabs } from "../../common/tabs.js"
+import State from "../../models/state.js"
 import Dialogs from '../dialogs.js'
 
 const template = document.createElement('template')
@@ -17,8 +18,8 @@ template.innerHTML = `
     <span class="title"><!--$ title $--></span>
 
     <div class="actions">
-        <i class="fa-fw fas fa-arrow-up" title="Move up"></i>
-        <i class="fa-fw fas fa-arrow-down" title="Move down"></i>
+        <i class="move fa-fw fas fa-arrow-up" title="Move up"></i>
+        <i class="move fa-fw fas fa-arrow-down" title="Move down"></i>
         <i class="fa-fw fas fa-pen" title="Edit bookmark"></i>
     </div>
 </a>
@@ -27,41 +28,33 @@ template.innerHTML = `
 export class BookmarkElement extends BaseHTMLElement {
     #bookmark
     get bookmark() { return this.#bookmark }
-    //get folder() { return this.parentNode?.host.folder || this.#bookmark.folder }
-    get folder() { return this.#bookmark.folder }
-    set folder(value) { this.#bookmark.folder = value } // TEMP
-    get url() { return this.#bookmark.url }
+    get folder() { return this.parentNode?.host.folder || this.#bookmark.folder }
+    get parent() { return this.parentNode?.host }
+
+    get index() { return this.#bookmark.index }
+    set index(value) { this.#bookmark.index = num(value) }
 
     get iconType() {
-        return !this.#bookmark.icon
+        return !this.#bookmark.icon || this.#bookmark.icon.startsWith('chrome:')
             ? 'default'
             : FontAwesome.isFacon(this.#bookmark.icon)
-            ? 'facon'
-            : Emojis.isEmoji(this.#bookmark.icon)
-            ? 'emoji'
-            : 'custom'
+                ? 'facon'
+                : Emojis.isEmoji(this.#bookmark.icon)
+                    ? 'emoji'
+                    : 'custom'
     }
-    get facon() { return this.iconType === 'facon' ? this.#bookmark.icon : null }
-    get emoji() { return this.iconType === 'emoji' ? this.#bookmark.icon : null }
-    get icon() { return this.#bookmark.icon }
 
     constructor(bookmark) {
         super(template, ['/code/styles/common.css', '/code/styles/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
         this.#bookmark = bookmark
         this.id = 'bookmark-' + bookmark.id
-
-        if (bookmark.icon) {
-            if (bookmark.icon.includes(' fa-')) {
-
-            }
-        }
     }
 
     async _ondisplay(root, host) {
         const self = this
         const bookmark = this.#bookmark
         const folder = this.parentNode.host.folder
-        bookmark.readonly = bookmark.readonly || !MainView.layout.allowEdits || folder.readonly
+        bookmark.readonly = bookmark.readonly || !State.options.allowEdits || folder.readonly
 
         // Replace templates
         var m
@@ -70,17 +63,13 @@ export class BookmarkElement extends BaseHTMLElement {
         }
 
         // Icon
-        const icon = bookmark.icon || (bookmark.domain ? `${bookmark.domain}/favicon.ico` : '')
         const faIcon = root.querySelector('i.icon')
         if (bookmark.altIcon?.includes('fa-')) {
             faIcon.classList.remove('far', 'fa-bookmark')
             faIcon.classList.add(...bookmark.altIcon.split(' '))
         }
-        if (icon.includes('fa-')) {
-            faIcon.classList.remove('far', 'fa-bookmark')
-            faIcon.classList.add(...bookmark.icon.split(' '))
-        } else if (icon && !icon.startsWith('chrome:') /* TODO && layout.showFavicons*/) {
-            this._apply('img.icon', function () {
+        function showIcon(icon) {
+            self._apply('img.icon', function () {
                 this.onload = () => {
                     faIcon.replaceWith(this)
                     this.style.display = ''
@@ -88,12 +77,27 @@ export class BookmarkElement extends BaseHTMLElement {
                 this.src = icon
             })
         }
+        switch (this.iconType) {
+            case 'emoji':
+                // TODO
+                break
+            case 'facon':
+                faIcon.classList.remove('far', 'fa-bookmark')
+                faIcon.classList.add(...bookmark.icon.split(' '))
+                break
+            case 'custom':
+                showIcon(bookmark.icon)
+                break
+            default:
+                showIcon(bookmark.domain ? `${bookmark.domain}/favicon.ico` : '')
+                break
+        }
 
         // Link
         this._apply('a', function () {
-            this.target = MainView.layout.openNewTab ? '_blank' : ''
+            this.target = State.options.openNewTab ? '_blank' : ''
             this.onclick = (ev) => {
-                if (!ev.ctrlKey && !ev.shiftKey && MainView.layout.openExistingTab && self.#lastTab) {
+                if (!ev.ctrlKey && !ev.shiftKey && State.options.openExistingTab && self.#lastTab) {
                     ev.preventDefault()
                     self.#lastTab.focus()
                 }
@@ -105,7 +109,7 @@ export class BookmarkElement extends BaseHTMLElement {
             }
         })
         this._apply('span.title', function () {
-            this.classList.toggle('nowrap', !MainView.layout.wrapTitles)
+            this.classList.toggle('nowrap', !State.options.wrapTitles)
         })
 
         // Style
@@ -118,40 +122,34 @@ export class BookmarkElement extends BaseHTMLElement {
         root.querySelector('.favourite').onclick = (ev) => {
             ev.stopPropagation()
             bookmark.favourite = !bookmark.favourite
-            bookmark.save().then(() => host.refresh())
+            State.save().then(() => host.parentNode.host.refresh())
             return false
         }
 
         // Move
-        this._apply('.actions>i[title="Move up"]', function () {
-            this.style.display = bookmark.readonly || bookmark.isFirst ? 'none' : ''
-            this.onclick = (ev) => {
-                ev.stopPropagation()
-                const [newIndex, oldIndex] = [bookmark.previous.index, bookmark.index]
-                Promise.allSettled([
-                    bookmark.setIndex(newIndex),
-                    bookmark.previous.setIndex(oldIndex)
-                ]).then(() => host.parentNode.host.refresh())
-                return false
-            }
-        })
-        this._apply('.actions>i[title="Move down"]', function () {
-            this.style.display = bookmark.readonly || bookmark.isLast ? 'none' : ''
-            this.onclick = (ev) => {
-                ev.stopPropagation()
-                const [newIndex, oldIndex] = [bookmark.next.index, bookmark.index]
-                Promise.allSettled([
-                    bookmark.setIndex(newIndex),
-                    bookmark.next.setIndex(oldIndex)
-                ]).then(() => host.parentNode.host.refresh())
-                return false
-            }
-        })
-        if (bookmark.favourite) {
-            this._apply('.actions>i[title="Move up"],.actions>i[title="Move down"]', (el) => {
-                el.style.display = 'none'
-            })
+        const attach = () => {
+            const isFirst = !(self.previousElementSibling instanceof BookmarkElement)
+            const isLast = !(self.nextElementSibling instanceof BookmarkElement)
+            root.querySelector('.actions>.move[title="Move up"]').style.display = bookmark.readonly || isFirst ? 'none' : ''
+            root.querySelector('.actions>.move[title="Move down"]').style.display = bookmark.readonly || isLast ? 'none' : ''
+            self.removeEventListener('mouseenter', attach)
         }
+        self.addEventListener('mouseenter', attach)
+        this._apply('.actions>.move', function () {
+            this.onclick = (ev) => {
+                ev.stopPropagation()
+
+                const down = this.title === 'Move down'
+                const [first, second] = !down ? [self, self.previousElementSibling] : [self.nextElementSibling, self]
+                self.parentNode.insertBefore(first, second)
+                first.refresh()
+                second.refresh()
+
+                self.reindexSiblings()
+                State.save()
+                return false
+            }
+        })
 
         // Edit
         this._apply('i[title="Edit bookmark"]', function () {
@@ -211,15 +209,32 @@ export class BookmarkElement extends BaseHTMLElement {
         Tabs.find(this.url).then(t => this.#lastTab = t)
     }
 
-    async moveTo(folder) {
-        if (this.readonly) return
-        if (this.folder.id !== folder.id) {
-            this.#bookmark.index = null
-            this.folder = folder
-            await folder.bookmarks.add(this)
-            this.#bookmark.parentId = folder.id
-            await this.save()
+    async moveTo(folder, origin, doCopy) {
+        if (doCopy || this.readonly) {
+            const element = new BookmarkElement(await this.bookmark.duplicate())
+            await element.bookmark.moveTo(folder.folder)
+            this.parentNode.insertBefore(element, this)
+            origin?.parentNode.insertBefore(this, origin)
         }
+        else {
+            const startParent = this.parent
+            await this.bookmark.moveTo(folder.folder)
+            startParent.reindexBookmarks()
+        }
+        folder.reindexBookmarks()
+    }
+
+    static #defaults = {
+        index: null, // TODO?
+        dateAdded: 0,
+        icon: '',
+        favourite: false,
+        clicks: 0,
+        lastClick: 0,
+        notes: ''
+    }
+    static export(data) {
+        return data.pick(BookmarkElement.#defaults)
     }
 }
 customElements.define('bs-bookmark', BookmarkElement)

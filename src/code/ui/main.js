@@ -1,6 +1,6 @@
 // TODO: obsolete / reduce
 export default class MainView {
-    static layout
+    static layoutX
 
     static elLayout
     static elEditLock = document.getElementById('editLock')
@@ -8,7 +8,7 @@ export default class MainView {
 
     static async init() {
         MainView.setTheme()        
-        const layout = MainView.layout
+        const layout = MainView.layoutX
         layout.onchange = () => MainView.fullRefresh()
 
         MainView.elTrash.display(function () {
@@ -27,15 +27,18 @@ export default class MainView {
             }
             drag.ondrop = (ev, state) => {
                 drag.ondragleave()
+                state.dropped = true
 
                 const bookmark = state?.bookmark
                 if (bookmark && !bookmark.readonly) {
-                    return bookmark.delete().then(MainView.fullRefresh)
+                    state.element.remove()
+                    return State.deleteBookmark(bookmark)
                 }
 
                 const folder = state?.folder
                 if (folder) {
-                    return folder.delete().then(MainView.fullRefresh)
+                    state.element.remove()
+                    return State.deleteFolder(folder)
                 }
             }
         })
@@ -47,57 +50,60 @@ export default class MainView {
             .onclick = () => Dialogs.options(layout).then(() => layout.reload().then(MainView.fullRefresh))
 
         MainView.elEditLock.onclick = () => {
-            layout.allowEdits = !layout.allowEdits
-            layout.save().then(MainView.fullRefresh)
+            State.options.allowEdits = !State.options.allowEdits
+            State.save()
+            MainView.fullRefresh()
 
             document.getElementsByTagName(customElements.getName(FolderAddElement))[0].style.visibility = !layout.allowEdits ? 'hidden' : null
         }
     }
 
     static setTheme(accentColour = null) {
-        accentColour ??= MainView.layout.accentColour
+        accentColour ??= State.options.accentColour
         document.documentElement.style.setProperty('--accent-colour', accentColour)
         document.documentElement.style.setProperty('--accent-colour-r', accentColour.substring(1, 3).fromHex())
         document.documentElement.style.setProperty('--accent-colour-g', accentColour.substring(3, 5).fromHex())
         document.documentElement.style.setProperty('--accent-colour-b', accentColour.substring(5, 7).fromHex())
-        // document.documentElement.style.setProperty('--accent-colour-hue', MainView.layout.themeAccent[0])
-        // document.documentElement.style.setProperty('--accent-colour-saturation', `${MainView.layout.themeAccent[1]}%`)
+        // document.documentElement.style.setProperty('--accent-colour-hue', State.options.themeAccent[0])
+        // document.documentElement.style.setProperty('--accent-colour-saturation', `${State.options.themeAccent[1]}%`)
         // document.documentElement.style.setProperty('--accent-colour-lightness', '24%')
         document.documentElement.style.setProperty('--text-colour', '#eee') // TODO
-        document.documentElement.style.setProperty('--layout-columns', MainView.layout.columns === -1 ? '100%' : MainView.layout.columns + 'px')
-        document.body.style.backgroundImage = MainView.layout.backgroundImage ? `url(${MainView.layout.backgroundImage})` : null
+        document.documentElement.style.setProperty('--layout-columns', State.options.columns === -1 ? '100%' : State.options.columns + 'px')
+        document.body.style.backgroundImage = State.options.backgroundImage ? `url(${State.options.backgroundImage})` : null
+
+        if (State.options.scale && State.options.scale != 100) {
+            document.getElementsByTagName('layout')[0].style.zoom = `${State.options.scale}%`
+        }
     }
 
     static async fullRefresh() {
-        MainView.setTheme()
-
-        MainView.elTrash.style.visibility = MainView.layout.allowEdits ? null : 'hidden'
-        MainView.elEditLock.classList.toggle('fa-lock', !MainView.layout.allowEdits)
-        MainView.elEditLock.classList.toggle('fa-unlock', !!MainView.layout.allowEdits)
-        MainView.elEditLock.title = MainView.layout.allowEdits ? 'Lock for edits' : 'Allow edits'
-
-        const folders = await MainView.layout.folders.entries()
+        MainView.elTrash.style.visibility = State.options.allowEdits ? null : 'hidden'
+        MainView.elEditLock.classList.toggle('fa-lock', !State.options.allowEdits)
+        MainView.elEditLock.classList.toggle('fa-unlock', State.options.allowEdits)
+        MainView.elEditLock.title = State.options.allowEdits ? 'Lock for edits' : 'Allow edits'
 
         document.body.display(() => {
             add('layout', function () {
                 MainView.elLayout = this
-                if (!folders.length) {
+                if (!State.folderCount) {
                     this.appendChild(new NoFoldersElement())
                 }
-                for (const folder of folders) {
+                for (const folder of Object.values(State.folders).sort((a, b) => a.index - b.index)) {
                     this.appendChild(new FolderElement(folder))
                 }
-                if (MainView.layout.showTopSites) {
+                if (State.options.showTopSites) {
                     this.appendChild(SiteListElement.instance)
                 }
                 this.appendChild(TabListElement.instance)
-                this.classList.toggle('editable', !!MainView.layout.allowEdits)
+                this.classList.toggle('editable', State.options.allowEdits)
             })
 
             // Swap
             const oldLayout = document.getElementsByTagName('layout')[0]
             oldLayout.replaceWith(MainView.elLayout)
         })
+
+        MainView.setTheme()
 
         const drag = new DropHandler(MainView.elLayout)
         drag.ondragover = (ev, state) => {
@@ -114,15 +120,9 @@ export default class MainView {
             }
             state.dropped = true
 
-            // Place folder
-            if (folder.previous) folder.previous.next = folder.next
-            if (folder.next) folder.next.previous = folder.previous
-            folder.previous = state.element.previousSibling?.folder
-            if (folder.previous) folder.previous.next = folder
-            folder.next = state.element.nextSibling?.folder
-            if (folder.next) folder.next.previous = folder
-            await folder.reindexAll()
-            MainView.fullRefresh()
+            const folderEl = document.getElementsByTagName(customElements.getName(FolderElement))[0]
+            await folderEl.reindexSiblings()
+            await State.save()
         }
     }
 
@@ -155,5 +155,6 @@ import { FolderElement } from './elements/folder.js'
 import { FolderAddElement } from './elements/folderAdd.js'
 import { NoFoldersElement } from './elements/noFolders.js'
 import { SiteListElement } from './elements/sites.js'
-import { TabListElement } from './elements/tabs.js'
+import { TabListElement } from './elements/TabListElement.js'
+import State from '../models/state.js'
 globalThis.MainView = MainView // TODO: drop

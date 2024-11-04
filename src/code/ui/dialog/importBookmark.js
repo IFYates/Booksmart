@@ -1,3 +1,5 @@
+import Folder from '../../models/folder.js'
+import State from '../../models/state.js'
 import BaseDialog from './base.js'
 
 export default class ImportBookmarkDialog extends BaseDialog {
@@ -7,15 +9,15 @@ export default class ImportBookmarkDialog extends BaseDialog {
 
     #tree
     #folders
-    async _prepare(layout) {
+    async _prepare() {
         this.#tree = (await chrome.bookmarks.getTree())[0].children[0]
-        this.#folders = await layout.folders.entries()
+        this.#folders = Object.values(State.folders)
     }
 
-    _display(dialog, layout) {
+    _display(dialog) {
         const items = []
         function showFolder(folder, parentShowHide, depth = 0) {
-            if (folder.id === layout.id) {
+            if (folder.id === State.booksmartRootId) {
                 return // Hide Booksmart root
             }
 
@@ -76,18 +78,18 @@ export default class ImportBookmarkDialog extends BaseDialog {
                 add('span', ' Save')
             }).onclick = async () => {
                 for (const item of items) {
-                    var folder = this.#folders.find(c => c.id === item.id)
+                    const folder = this.#folders.find(c => c.id === item.id)
                     if (item.showFolder) {
                         if (!folder) {
-                            folder = await layout.folders.add(item)
-                            folder.index = NaN
-                            await folder.save()
+                            State.importFolder(item, { index: State.folderCount })
                         }
-                    } else if (folder) {
-                        await layout.folders.remove(folder)
+                    }
+                    else if (folder) {
+                        delete State.folders[folder.id]
                     }
                 }
-                await layout.reload()
+                await State.save()
+                dialog.returnValue = true
                 dialog.close()
             }
 

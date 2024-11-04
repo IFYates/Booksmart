@@ -79,7 +79,7 @@ Object.prototype.pick = function (defaults, excludeOtherPredicate = null) {
     }
 
     const result = {}
-    for (var [key, value] of this.allKeys().map(k => [k, this[k]])) {
+    for (const [key, value] of this.allKeys().map(k => [k, this[k]])) {
         if ((defaults.hasOwnProperty(key) && !(typeof defaults[key] !== 'function' ? defaults[key]?.areEquivalent(value) : defaults[key](value, key)))
             || (!defaults.hasOwnProperty(key) && excludeOtherPredicate?.call(this, value, key) === false)) {
             result[key] = value
@@ -88,6 +88,17 @@ Object.prototype.pick = function (defaults, excludeOtherPredicate = null) {
     return result
 }
 Object.defineProperty(Object.prototype, 'pick', { enumerable: false, writable: false, configurable: false })
+
+Object.prototype.strip = function (keys) {
+    const obj = { ...this }
+    for (const key of keys) {
+        if (this.hasOwnProperty(key)) {
+            delete obj[key]
+        }
+    }
+    return obj
+}
+Object.defineProperty(Object.prototype, 'strip', { enumerable: false, writable: false, configurable: false })
 
 /**
  * Removes all keys from the object that don't match the given key list or
@@ -108,7 +119,7 @@ Object.prototype.tidy = function (defaults, excludeOtherPredicate = null) {
         }, {})
     }
 
-    for (var [key, value] of Object.entries(this)) {
+    for (const [key, value] of Object.entries(this)) {
         if ((!defaults.hasOwnProperty(key) && excludeOtherPredicate?.call(this, value, key) === true)
             || defaults[key]?.areEquivalent(value)
             || (typeof defaults[key] === 'function' && defaults[key](value, key) === true)) {

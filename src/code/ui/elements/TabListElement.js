@@ -1,6 +1,7 @@
-import { BookmarkElement } from './bookmark.js'
 import { FolderElement } from './folder.js'
 import { Tabs } from '../../common/tabs.js'
+import State from '../../models/state.js'
+import { TabElement } from './TabElement.js'
 
 export class TabListElement extends FolderElement {
     static #tabsFolder = {
@@ -22,14 +23,8 @@ export class TabListElement extends FolderElement {
             throw new Error('Only one instance of SitesElement allowed')
         }
 
+        TabListElement.#tabsFolder.collapsed = !State.options.showTabList
         super(TabListElement.#tabsFolder)
-
-        TabListElement.#tabsFolder.collapsed = !MainView.layout.showTabList // TODO: wrong place
-        TabListElement.#tabsFolder.bookmarks.list = () => [...TabListElement.#tabsFolder.bookmarks]
-        TabListElement.#tabsFolder.save = (async function () {
-            MainView.layout.showTabList = !TabListElement.#tabsFolder.collapsed // TODO: wrong place
-            await MainView.layout.save()
-        }).bind(this)
 
         this.refresh()
         Tabs.subscribe(this.refresh.bind(this))
@@ -57,35 +52,9 @@ export class TabListElement extends FolderElement {
             this.#refreshing = false
         })
     }
+
+    onShowOrHide() {
+        State.options.showTabList = !TabListElement.#tabsFolder.collapsed
+    }
 }
 customElements.define('bs-tab-list', TabListElement)
-
-export class TabElement extends BookmarkElement {
-    #tab
-    get tab() { return this.#tab }
-
-    constructor(tab) {
-        super({
-            id: tab.id,
-            title: tab.title,
-            url: tab.url,
-            readonly: true,
-            domain: isURL(tab.url) ? new URL(tab.url).origin : null,
-            altIcon: 'fas fa-window-maximize',
-            hasOpenTab: () => true
-        })
-        this.#tab = tab
-        this.id = 'tab-' + tab.id
-    }
-
-    onclick(ev) {
-        ev.stopPropagation()
-        this.focus()
-        return false
-    }
-
-    async focus() {
-        await this.#tab.focus()
-    }
-}
-customElements.define('bs-tab', TabElement)

@@ -1,14 +1,14 @@
 /*
 The Booksmart layout.
 */
-export default class Layout {
+export class LayoutX {
     #storage
     #data
 
     onchange = () => { }
 
     static async load() {
-        const layout = new Layout()
+        const layout = new LayoutX()
         await layout.reload()
         return layout
     }
@@ -32,7 +32,7 @@ export default class Layout {
         }
     }
 
-    get folders() { return this.#storage.folders }
+    get folders() { return Object.entries(State.folders).map(e => { e[1].id = e[0]; return e[1] }) }
     get id() { return this.#storage.rootId }
     get dataId() { return this.#storage.dataId }
 
@@ -163,4 +163,5 @@ export default class Layout {
     // TODO: subscribe to tab events to keep bookmarks up-to-date
 }
 
+import State from './state.js'
 import Storage from './storage.js'

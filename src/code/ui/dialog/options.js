@@ -1,4 +1,5 @@
 //import MainView from '../main.js'
+import State from '../../models/state.js'
 import BaseDialog from './base.js'
 
 export default class OptionsDialog extends BaseDialog {
@@ -6,95 +7,105 @@ export default class OptionsDialog extends BaseDialog {
         super('fas fa-gear', 'Options')
     }
 
-    _display(dialog, layout) {
+    _display(dialog) {
         // Column count
-        add('div', { classes: 'spanCols4' }, () => {
-            const sizes = { '200': 'Tiny', '350': 'Narrow', '500': 'Medium', '750': 'Wide', '-1': 'Full' }
-            const values = Object.keys(sizes)
-            if (!sizes.hasOwnProperty(layout.columns)) {
-                layout.columns = 500
-            }
+        const sizes = { '200': 'Tiny', '350': 'Narrow', '500': 'Medium', '750': 'Wide', '-1': 'Full' }
+        const values = Object.keys(sizes)
+        if (!sizes.hasOwnProperty(State.options.columns)) {
+            State.options.columns = 500
+        }
 
-            const columnCount = add('label', 'Columns ').add('span')
-            add('input', { type: 'range', min: 0, max: values.length - 1, value: values.indexOf('' + layout.columns) }, function () {
-                this.oninput = () => {
-                    layout.columns = values[this.value]
-                    layout.onchange() // MainView.setTheme() doesn't work for changing grid column
-                    columnCount.innerText = `(${sizes[layout.columns]})`
+        const columnCount = add('label', 'Columns ').add('span')
+        add('input', { classes: 'spanCols5', type: 'range', min: 0, max: values.length - 1, value: values.indexOf('' + State.options.columns) }, function () {
+            this.oninput = () => {
+                if (State.options.columns != values[this.value]) {
+                    State.options.columns = values[this.value]
+                    MainView.fullRefresh() // MainView.setTheme() doesn't work for changing grid column
                 }
-                this.oninput()
-            })
+                columnCount.innerText = `(${sizes[State.options.columns]})`
+            }
+            this.oninput()
         })
 
         // Show favicons
         add('label', 'Show favicons', { style: 'text-align:right' })
-        add('input', { type: 'checkbox', checked: layout.showFavicons })
+        add('input', { type: 'checkbox', checked: State.options.showFavicons })
             .onclick = function () {
-                layout.showFavicons = this.checked
-                layout.onchange()
+                State.options.showFavicons = this.checked
             }
 
         // Use existing tabs
         add('label', 'Switch to tab, if open', { style: 'text-align:right' })
-        add('input', { type: 'checkbox', checked: layout.openExistingTab })
+        add('input', { type: 'checkbox', checked: State.options.openExistingTab })
             .onclick = function () {
-                layout.openExistingTab = this.checked
+                State.options.openExistingTab = this.checked
             }
 
         // Open in new tab
         add('label', 'Open in new tab', { style: 'text-align:right' })
-        add('input', { type: 'checkbox', checked: layout.openNewTab })
+        add('input', { type: 'checkbox', checked: State.options.openNewTab })
             .onclick = function () {
-                layout.openNewTab = this.checked
+                State.options.openNewTab = this.checked
             }
 
         // Show topSites
         add('label', 'Show most visited sites', { style: 'text-align:right' })
-        add('input', { type: 'checkbox', checked: layout.showTopSites })
+        add('input', { type: 'checkbox', checked: State.options.showTopSites })
             .onclick = function () {
-                layout.showTopSites = this.checked
-                layout.onchange()
+                State.options.showTopSites = this.checked
             }
 
         // Wrap bookmark titles
         add('label', 'Wrap long bookmark titles', { style: 'text-align:right' })
-        add('input', { type: 'checkbox', checked: layout.wrapTitles })
+        add('input', { type: 'checkbox', checked: State.options.wrapTitles })
             .onclick = function () {
-                layout.wrapTitles = this.checked
-                layout.onchange()
+                State.options.wrapTitles = this.checked
             }
 
-        // Theme
-        add('div', { classes: 'spanCols4', style: 'display: grid; grid-column-gap: 1em; grid-template-columns: 1fr 1fr 1fr 1fr' }, () => {
-            add('div', { className: 'spanCols4', style: 'height: 1em' })
+        add('div', { classes: 'spanCols2' })
 
-            add('label', 'Accent colour', { style: 'text-align:right' })
-            add('input', { type: 'color', classes: 'spanCols3', value: layout.accentColour }, function () { // TODO
-                this.onchange = () => {
-                    layout.accentColour = this.value
+        // Scale
+        add('label', 'Scale', { style: 'text-align:right' })
+        add('input', { classes: 'spanCols5', type: 'range', min: 5, max: 50, value: State.options.scale / 10 }, function () {
+            this.oninput = () => {
+                if (State.options.scale != this.value * 10) {
+                    State.options.scale = this.value * 10
                     MainView.setTheme()
                 }
-            })
-
-            add('label', 'Background image URL', { style: 'text-align:right' })
-            const bgImage = create('img', { style: 'max-width:100%;max-height:100%', src: layout.backgroundImage || '' }, function () {
-                this.onload = () => {
-                    MainView.setTheme()
-                }
-            })
-            add('textarea', { classes: 'spanCols2', style: 'width:100%;height:100%;resize:none', value: layout.backgroundImage || '' }, function () {
-                this.onkeyup = () => {
-                    bgImage.src = this.value
-                    layout.backgroundImage = this.value
-                    if (!this.value) {
-                        MainView.setTheme()
-                    }
-                }
-            })
-            add(bgImage)
+                //label.innerText = `(${State.options.scale}%)`
+            }
+            this.oninput()
         })
 
-        add('p', { classes: 'spanCols4' })
+        add('div', { className: 'spanCols6', style: 'height: 1em' })
+
+        // Theme
+        add('label', 'Accent colour', { style: 'text-align:right' })
+        add('input', { type: 'color', classes: 'spanCols5', value: State.options.accentColour }, function () { // TODO
+            this.onchange = () => {
+                State.options.accentColour = this.value
+                MainView.setTheme()
+            }
+        })
+
+        add('label', 'Background image URL', { style: 'text-align:right' })
+        const bgImage = create('img', { style: 'max-width:100%;max-height:100%', src: State.options.backgroundImage || '' }, function () {
+            this.onload = () => {
+                MainView.setTheme()
+            }
+        })
+        add('textarea', { classes: 'spanCols4', style: 'width:100%;height:100%;resize:none', value: State.options.backgroundImage || '' }, function () {
+            this.onkeyup = () => {
+                bgImage.src = this.value
+                State.options.backgroundImage = this.value
+                if (!this.value) {
+                    MainView.setTheme()
+                }
+            }
+        })
+        add(bgImage)
+
+        add('p', { classes: 'spanCols6' })
 
         add('div', { classes: 'actions-left-3' }, () => {
             add('button', { type: 'button' }, function () {
@@ -102,7 +113,7 @@ export default class OptionsDialog extends BaseDialog {
                 add('span', ' Export')
 
                 this.onclick = async () => {
-                    const data = JSON.stringify(await layout.export(), null, '  ')
+                    const data = JSON.stringify(await State.options.export(), null, '  ')
                     const dataUrl = URL.createObjectURL(new Blob([data], { type: 'application/octet-binary' }));
                     chrome.downloads.download({ url: dataUrl, filename: 'booksmart_export.json', conflictAction: 'overwrite', saveAs: true });
                 }
@@ -119,7 +130,7 @@ export default class OptionsDialog extends BaseDialog {
                     const reader = new FileReader()
                     reader.onload = async function () {
                         const data = JSON.parse(this.result)
-                        await layout.import(data)
+                        await State.options.import(data)
                     }
                     reader.readAsText(file)
                 })
@@ -153,23 +164,23 @@ export default class OptionsDialog extends BaseDialog {
                 }
 
                 // Full delete
-                await chrome.bookmarks.removeTree(layout.dataId)
+                await chrome.bookmarks.removeTree(State.options.dataId)
                 document.location.reload()
             }
         })
 
-        add('div', { classes: ['actions', 'spanCols2'] }, () => {
+        add('div', { classes: ['actions', 'spanCols3'] }, () => {
             add('button', () => {
                 add('i', { className: 'fa-fw fas fa-save' })
                 add('span', ' Save')
             }).onclick = async () => {
-                layout.save()
+                State.save()
                 dialog.close()
             }
             add('button', { type: 'button' }, () => {
                 add('i', { className: 'fa-fw far fa-circle-xmark' })
                 add('span', ' Cancel')
-            }).onclick = () => dialog.close()
+            }).onclick = () => dialog.close() // TODO: reapply options
         })
     }
 }

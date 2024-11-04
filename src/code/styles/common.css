@@ -10,6 +10,10 @@
     color: var(--text-colour);
 }
 
+body {
+    overflow-x: hidden;
+}
+
 a,
 button {
     cursor: pointer;
@@ -78,4 +82,12 @@ label {
 
 .spanCols4 {
     grid-column: span 4;
+}
+
+.spanCols5 {
+    grid-column: span 5;
+}
+
+.spanCols6 {
+    grid-column: span 6;
 }

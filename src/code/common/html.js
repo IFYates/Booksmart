@@ -1,3 +1,15 @@
+function eventHandler(self, eventName, handler) {
+    self.addEventListener(eventName, (ev) => handler.call(self, self.value, ev))
+    handler.call(self, self.value, null)
+}
+HTMLElement.prototype.on_change = function (handler) { eventHandler(this, 'change', handler) }
+HTMLElement.prototype.on_click = function (handler) { eventHandler(this, 'click', handler) }
+
+HTMLElement.prototype.show = function (state) {
+    this.style.display = !!state ? '' : 'none'
+    return !!state
+}
+
 HTMLElement.prototype.add = addToElement
 HTMLElement.prototype.and = function (type, text, args, layout) { // Scoped
     const el = createElement(type, text, args, layout)
@@ -64,8 +76,8 @@ HTMLElement.prototype.display = function (layout) {
 
     globalThis.add = addToElement.bind(this)
     globalThis.create = createElement
-    globalThis.refresh = function () {
-        // TODO: re-run 'layout' for element and replace
+    this.layout = function () {
+        this.display(layout)
     }
 
     if (typeof (layout) === 'function') {
