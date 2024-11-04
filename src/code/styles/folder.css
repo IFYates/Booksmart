@@ -9,6 +9,10 @@
     background: rgba(0, 0, 0, 0.3);
     overflow: hidden;
     padding: 5px;
+    
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
 }
 
 :host(#folder-tabs),
@@ -33,13 +37,10 @@ i.action:hover,
     padding-right: 4px;
 }
 
-:host(.collapsable) h1 {
-    cursor: pointer;
-}
-
 :host(.collapsed) {
-    filter: brightness(0.8);
     align-self: unset;
+    filter: brightness(0.8);
+    padding-bottom: 0;
 }
 
 h1 {
@@ -55,6 +56,15 @@ h1 {
     font-size: initial;
     margin: -5px;
     margin-bottom: 5px;
+}
+
+:host(.collapsable) h1 {
+    cursor: pointer;
+}
+
+:host(.collapsed) h1 {
+    border-bottom: 0;
+    margin-bottom: 0;
 }
 
 h1>span {

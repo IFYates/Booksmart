@@ -22,8 +22,8 @@ export default class Folder {
     #applyData(data) {
         this.#data = {
             accentColour: data.accentColour,
+            backgroundImage: data.backgroundImage,
             collapsed: !!data.collapsed,
-            favourite: !!data.favourite,
             icon: data.icon || '',
             index: num(data.index, NaN),
             sortOrder: num(data.sortOrder)
@@ -40,14 +40,14 @@ export default class Folder {
 
     get accentColour() { return this.#data.accentColour }
     set accentColour(value) {
-        if (/^#[0-9A-F]{6}$/i.test(value)) {
+        if (!value || /^#[0-9A-F]{6}$/i.test(value)) {
             this.#data.accentColour = value
         }
     }
+    get backgroundImage() { return this.#data.backgroundImage }
+    set backgroundImage(value) { this.#data.backgroundImage = value }
     get collapsed() { return this.#data.collapsed }
     set collapsed(value) { this.#data.collapsed = !!value }
-    get favourite() { return this.#data.favourite }
-    set favourite(value) { this.#data.favourite = !!value }
     get icon() { return this.#data.icon }
     set icon(value) { this.#data.icon = value?.trim() }
     get index() { return this.#data.index }
@@ -146,7 +146,7 @@ export default class Folder {
 
     export(includeInternals = true, includeVersion = false) {
         const data = { ...this.#data }
-        data.tidy(['accentColour', 'collapsed', 'favourite', 'icon', 'sortOrder'], (v) => !!v)
+        data.tidy(['accentColour', 'backgroundImage', 'collapsed', 'icon', 'sortOrder'], (v) => !!v)
         data.index = this.#data.index
 
         if (includeVersion) {

@@ -58,12 +58,6 @@ export default class Layout {
     set showTabList(value) { this.#data.showTabList = !!value }
     get showTopSites() { return this.#data.showTopSites }
     set showTopSites(value) { this.#data.showTopSites = !!value }
-    get themeAccent() { return [0, 0] } // TODO: DROP
-    set themeAccent(value) { // DROP
-        if (value instanceof Array && value.length == 2 && num(value[0], -1) > -1 && num(value[1], -1) > -1) {
-            this.#data.themeAccent = value
-        }
-    }
     get wrapTitles() { return this.#data.wrapTitles }
     set wrapTitles(value) { this.#data.wrapTitles = !!value }
 

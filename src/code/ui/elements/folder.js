@@ -54,12 +54,13 @@ export class FolderElement extends BaseHTMLElement {
             // this.shadowRoot.host.style.setProperty('--accent-colour-saturation', `${this.#folder.themeAccent[1]}%`)
             // this.shadowRoot.host.style.setProperty('--accent-colour-lightness', '24%')
             // this.shadowRoot.host.style.setProperty('--text-colour', '#eee') // TODO
-            this.shadowRoot.host.style.backgroundImage = this.#folder.backgroundImage ? `url(${this.#folder.backgroundImage})` : null
-
+            
             this.shadowRoot.host.style.setProperty('--theme-colour-darkest', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585))')
             this.shadowRoot.host.style.setProperty('--theme-colour-lighter', 'rgb(calc(var(--accent-colour-r) * 1.5), calc(var(--accent-colour-g) * 1.5), calc(var(--accent-colour-b) * 1.5))')
             this.shadowRoot.host.style.backgroundColor = 'var(--theme-colour-darkest)'
         }
+        
+        this.shadowRoot.host.style.backgroundImage = this.#folder.backgroundImage ? `url(${this.#folder.backgroundImage})` : null
     }
 
     async _ondisplay(root, host) {

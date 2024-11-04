@@ -187,8 +187,26 @@ export default class EditFolderDialog extends BaseDialog {
             add('span', ' Clear')
         }).onclick = async () => {
             accountColourPicker.value = '#000000'
-            BaseDialog.setTheme(null)
+            folder.accentColour = null
+            BaseDialog.setTheme(folder.accentColour)
         }
+
+        add('label', 'Background image URL', { style: 'text-align:right' })
+        const bgImage = create('img', { style: 'max-width:100%;max-height:100%', src: folder.backgroundImage || '' }, function () {
+            this.onload = () => {
+                BaseDialog.setTheme(folder.accentColour)
+            }
+        })
+        add('textarea', { classes: 'spanCols2', style: 'width:100%;height:100%;resize:none', value: folder.backgroundImage || '' }, function () {
+            this.onkeyup = () => {
+                bgImage.src = this.value
+                folder.backgroundImage = this.value
+                if (!this.value) {
+                    BaseDialog.setTheme(folder.accentColour)
+                }
+            }
+        })
+        add(bgImage)
 
         const elError = add('div', { classes: ['error', 'spanCols4'] })
 

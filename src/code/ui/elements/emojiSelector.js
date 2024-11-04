@@ -12,7 +12,7 @@ list {
     display: block;
     overflow-y: scroll;
     padding-top: 5px;
-    height: 200px;
+    height: 100px;
 }
 
 list .emoji {

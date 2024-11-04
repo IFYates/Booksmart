@@ -12,8 +12,7 @@ A bookmark management tool and customisable homepage.
 - Choose to switch to existing tab, if open
 - Open bookmarks in same or new tab
 - Give quick list of most visited sites
-- Select own accent colour
-- Specify background image
+- Style with accent colour and background image
 ???- Export and reimport all settings
 - Lock for edits
 
@@ -21,6 +20,7 @@ A bookmark management tool and customisable homepage.
 - Change title
 - Change icon
 - Create bookmarks
+- Style with accent colour and background image
 - Drag bookmarks, tabs, sites to the folder
 - Remove bookmarks
 - Collapse
@@ -36,7 +36,6 @@ A bookmark management tool and customisable homepage.
 - Add notes
 
 # Future possible features
-- Style folders
 - Style bookmarks by domain (across all folders)
 - Use browser history to suggest URL on bookmark creation
 - Popup
