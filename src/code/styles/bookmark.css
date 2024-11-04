@@ -104,6 +104,7 @@ a .title.nowrap {
 .actions>i {
     cursor: pointer;
     opacity: 0.3;
+    transition: opacity 0.5s ease-in-out;
 }
 
 .actions>i:hover {
@@ -119,7 +120,12 @@ a .title.nowrap {
 }
 
 :host(bs-folder-add) {
-    margin-right: -20px;
     flex-grow: unset;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+    margin-right: 0;
+    transition: margin-right 0.5s ease-in-out;
+}
+
+:host(bs-folder-add:hover) {
+    margin-right: 50px;
 }

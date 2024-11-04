@@ -24,6 +24,7 @@ i.action,
 .actions>i {
     cursor: pointer;
     opacity: 0.3;
+    transition: opacity 0.5s ease-in-out;
 }
 
 i.action:hover,

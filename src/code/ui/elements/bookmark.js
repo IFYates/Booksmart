@@ -96,8 +96,6 @@ export class BookmarkElement extends BaseHTMLElement {
                 if (!ev.ctrlKey && !ev.shiftKey && MainView.layout.openExistingTab && self.#lastTab) {
                     ev.preventDefault()
                     self.#lastTab.focus()
-                } else if (!MainView.layout.openNewTab) {
-                    ev.target.parentNode.classList.add('pulse') // TODO
                 }
 
                 // TODO

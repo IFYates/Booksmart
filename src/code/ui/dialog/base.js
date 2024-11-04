@@ -38,6 +38,7 @@ export default class BaseDialog {
 
         const promise = new Promise(resolve => {
             dialog.showModal()
+            dialog.classList.add('open')
             dialog.onclose = resolve
         })
         await promise
