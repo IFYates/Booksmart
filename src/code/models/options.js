@@ -34,17 +34,7 @@ export default class Options {
     set wrapTitles(value) { this.#wrapTitles = !!value }
 
     constructor(data) {
-        this.accentColour = data.accentColour || '#4F4F78'
-        this.allowEdits = data.allowEdits !== false
-        this.backgroundImage = data.backgroundImage
-        this.columns = data.columns
-        this.openExistingTab = data.openExistingTab !== false
-        this.openNewTab = data.openNewTab
-        this.scale = data.scale || 100
-        this.showFavicons = data.showFavicons
-        this.showTabList = data.showTabList !== false
-        this.showTopSites = data.showTopSites
-        this.wrapTitles = data.wrapTitles
+        this.import(data)
     }
 
     static #defaults = {
@@ -74,5 +64,19 @@ export default class Options {
             showTopSites: this.#showTopSites,
             wrapTitles: this.#wrapTitles
         }.pick(Options.#defaults)
+    }
+
+    import(data) {
+        this.accentColour = data.accentColour || '#4F4F78'
+        this.allowEdits = data.allowEdits !== false
+        this.backgroundImage = data.backgroundImage
+        this.columns = data.columns
+        this.openExistingTab = data.openExistingTab !== false
+        this.openNewTab = data.openNewTab
+        this.scale = data.scale || 100
+        this.showFavicons = data.showFavicons
+        this.showTabList = data.showTabList !== false
+        this.showTopSites = data.showTopSites
+        this.wrapTitles = data.wrapTitles
     }
 }

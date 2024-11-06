@@ -7,14 +7,9 @@ export default class Folder {
     constructor(folder, data = {}) {
         this.#parentId = folder.parentId
         this.#id = folder.id
-        this.#title = folder.title
         this.#dateAdded = folder.dateAdded
-        this.#index = num(data.index)
-        this.#accentColour = data.accentColour
-        this.#backgroundImage = data.backgroundImage
-        this.#collapsed = !!data.collapsed
-        this.#icon = data.icon
-        this.#sortOrder = num(data.sortOrder)
+        this.#title = folder.title
+        this.import(data)
     }
 
     get isOwned() { return this.#parentId == State.booksmartRootId }
@@ -60,39 +55,28 @@ export default class Folder {
         collapsed: false,
         icon: v => !v?.length,
         index: null,
-        sortOrder: 0
+        sortOrder: 0,
+        title: null
     }
-    export() {
+    export(standalone) {
         return {
             accentColour: this.#accentColour,
             backgroundImage: this.#backgroundImage,
             collapsed: this.#collapsed,
             icon: this.#icon,
             index: this.#index,
-            sortOrder: this.#sortOrder
+            sortOrder: this.#sortOrder,
+            title: standalone ? this.#title : null
         }.pick(Folder.#defaults)
     }
-
-    // export(includeInternals = true, includeVersion = false) {
-    //     const data = { ...this.#data }
-    //     data.tidy(['accentColour', 'backgroundImage', 'collapsed', 'icon', 'sortOrder'], (v) => !!v)
-    //     data.index = this.#data.index
-
-    //     if (includeVersion) {
-    //         data['.booksmart'] = { version: 1, content: 'folder' }
-    //     }
-    //     if (includeInternals) {
-    //         data.id = this.id
-    //         data.title = this.title
-    //         data.bookmarks = this.#bookmarks.map(b => b.export())
-    //     }
-    //     return data
-    // }
-    // import(data) {
-    //     this.title = data.title
-    //     delete data.title
-    //     this.url = data.url
-    //     delete data.url
-    //     this.#applyData(data)
-    // }
+    
+    import(data)
+    {
+        this.#index = num(data.index)
+        this.#accentColour = data.accentColour
+        this.#backgroundImage = data.backgroundImage
+        this.#collapsed = !!data.collapsed
+        this.#icon = data.icon
+        this.#sortOrder = num(data.sortOrder)
+    }
 }

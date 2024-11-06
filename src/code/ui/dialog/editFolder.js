@@ -305,6 +305,7 @@ export default class EditFolderDialog extends BaseDialog {
                 folder.sortOrder = num(lstSort.value) * (chkSortAsc.checked ? 1 : -1)
                 folder.icon = newIcon
 
+                await State.updateEntry(folder)
                 MainView.setTheme()
                 await State.save()
                 dialog.close()

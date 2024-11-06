@@ -198,7 +198,7 @@ export default class EditBookmarkDialog extends BaseDialog {
                 bookmark.notes = txtNotes.value
                 bookmark.icon = newIcon
 
-                await State.updateBookmark(bookmark)
+                await State.updateEntry(bookmark)
                 await State.save()
                 dialog.close()
             }

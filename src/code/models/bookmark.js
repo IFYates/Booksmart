@@ -7,17 +7,13 @@ export default class Bookmark {
     constructor(bookmark, data = {}) {
         this.#parentId = bookmark.parentId
         this.#id = bookmark.id
-        this.#index = num(data.index, bookmark.index)
         this.#dateAdded = num(bookmark.dateAdded)
-
+        
         this.#title = bookmark.title
         this.#url = bookmark.url
+        data.index = num(bookmark.index)
 
-        this.#icon = data.icon || ''
-        this.#favourite = !!data.favourite
-        this.#clicks = num(data.clicks)
-        this.#lastClick = num(data.lastClick)
-        this.#notes = data.notes || ''
+        this.import(data)
     }
 
     #parentId
@@ -62,17 +58,30 @@ export default class Bookmark {
         index: null,
         clicks: 0,
         lastClick: 0,
-        notes: ''
+        notes: '',
+        title: null,
+        url: null
     }
-    export() {
+    export(standalone) {
         return {
             favourite: this.#favourite,
             icon: this.#icon,
             index: this.#index,
             clicks: this.#clicks,
             lastClick: this.#lastClick,
-            notes: this.#notes
+            notes: this.#notes,
+            title: standalone ? this.#title : null,
+            url: standalone ? this.#url : null
         }.pick(Bookmark.#defaults)
+    }
+
+    import(data) {
+        this.#index = num(data.index, this.#index)
+        this.#icon = data.icon || ''
+        this.#favourite = !!data.favourite
+        this.#clicks = num(data.clicks)
+        this.#lastClick = num(data.lastClick)
+        this.#notes = data.notes || ''
     }
 
     async moveTo(folder) {
@@ -84,21 +93,4 @@ export default class Bookmark {
             folder.bookmarks.push(this)
         }
     }
-
-    // export(includeInternals = true) {
-    //     const data = this.#data
-    //     data.tidy(['favourite', 'icon', 'click', 'lastClick', 'notes'], (v) => !!v)
-
-    //     if (includeInternals) {
-    //         data.id = this.id
-    //         data.index = this.index
-    //         data.title = this.title
-    //         data.url = this.url
-    //     }
-    //     return data
-    // }
-    // import(data) {
-    //     if (this.readonly) return
-    //     this.#applyData(data)
-    // }
 }

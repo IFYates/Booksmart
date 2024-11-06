@@ -113,7 +113,7 @@ export default class OptionsDialog extends BaseDialog {
                 add('span', ' Export')
 
                 this.onclick = async () => {
-                    const data = JSON.stringify(await State.options.export(), null, '  ')
+                    const data = JSON.stringify(await State.export(), null, '  ')
                     const dataUrl = URL.createObjectURL(new Blob([data], { type: 'application/octet-binary' }));
                     chrome.downloads.download({ url: dataUrl, filename: 'booksmart_export.json', conflictAction: 'overwrite', saveAs: true });
                 }
@@ -130,7 +130,7 @@ export default class OptionsDialog extends BaseDialog {
                     const reader = new FileReader()
                     reader.onload = async function () {
                         const data = JSON.parse(this.result)
-                        await State.options.import(data)
+                        State.import(data)
                     }
                     reader.readAsText(file)
                 })
