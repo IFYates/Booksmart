@@ -4,11 +4,6 @@
     transform: rotate(180deg) scaleX(-1);
 }
 
-.actions>button,
-.favourite>button {
-    padding: 1px 2px;
-}
-
 i.action,
 .actions>i {
     cursor: pointer;
@@ -19,15 +14,6 @@ i.action,
 i.action:hover,
 .actions>i:hover {
     opacity: 1;
-}
-
-bookmark.separator {
-    align-self: center;
-    min-width: 0;
-    flex-grow: 0;
-    pointer-events: none;
-    height: 0.7em;
-    opacity: 0.5;
 }
 
 html {
@@ -41,10 +27,21 @@ body {
     background-size: cover;
     padding: 8px;
     margin: 0;
+    overflow-x: hidden;
 }
 
-title {
-    font-size: 140%;
+body>.actions {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    bottom: 5px;
+    width: calc(100% + 70px);
+    z-index: 1;
+}
+
+body>.actions * {
+    pointer-events: auto;
 }
 
 #trash {
@@ -64,62 +61,4 @@ layout {
     margin-top: 5px;
     margin-bottom: 3.5em;
     grid-template-columns: repeat(auto-fill, minmax(var(--layout-columns), 1fr));
-}
-
-folder {
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    border-width: 1px;
-    border-radius: 5px;
-    background: rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-    padding: 5px;
-}
-
-folder .icon {
-    width: 22px;
-    max-height: 22px;
-    padding-right: 4px;
-}
-
-folder.collapsed {
-    filter: brightness(0.6);
-}
-
-folder>title {
-    background: var(--accent-colour);
-    display: flex;
-    align-items: center;
-    width: 100%;
-    border-bottom-width: 1px;
-    padding: 5px;
-    font-weight: bold;
-    margin: -5px;
-    margin-bottom: 5px;
-}
-
-folder>title>span {
-    flex-grow: 1;
-}
-
-folder>title>.actions {
-    visibility: hidden;
-}
-
-folder title:hover .actions {
-    visibility: visible;
-}
-
-folder:has(.showHide) title:hover .icon {
-    visibility: hidden;
-}
-
-folder .showHide {
-    position: absolute;
-    visibility: hidden;
-}
-
-folder title:hover .showHide {
-    visibility: visible;
 }

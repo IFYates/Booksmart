@@ -10,27 +10,9 @@
     color: var(--text-colour);
 }
 
-body {
-    overflow-x: hidden;
-}
-
 a,
 button {
     cursor: pointer;
-}
-
-body>.actions {
-    position: fixed;
-    display: flex;
-    align-items: center;
-    pointer-events: none;
-    bottom: 5px;
-    width: calc(100% + 70px);
-    z-index: 1;
-}
-
-body>.actions * {
-    pointer-events: auto;
 }
 
 *[draggable='true'] {

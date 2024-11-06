@@ -1,15 +1,11 @@
 // TODO: obsolete / reduce
 export default class MainView {
-    static layoutX
-
     static elLayout
     static elEditLock = document.getElementById('editLock')
     static elTrash = document.getElementById('trash')
 
     static async init() {
-        MainView.setTheme()        
-        const layout = MainView.layoutX
-        layout.onchange = () => MainView.fullRefresh()
+        MainView.setTheme()
 
         MainView.elTrash.display(function () {
             const drag = new DropHandler(this)
@@ -47,32 +43,50 @@ export default class MainView {
             .onclick = () => Dialogs.info()
 
         document.getElementById('options')
-            .onclick = () => Dialogs.options(layout).then(() => layout.reload().then(MainView.fullRefresh))
+            .onclick = () => Dialogs.options() // TODO: .then(() => State.options.reload().then(MainView.fullRefresh))
 
         MainView.elEditLock.onclick = () => {
             State.options.allowEdits = !State.options.allowEdits
             State.save()
             MainView.fullRefresh()
 
-            document.getElementsByTagName(customElements.getName(FolderAddElement))[0].style.visibility = !layout.allowEdits ? 'hidden' : null
+            document.getElementsByTagName(customElements.getName(FolderAddElement))[0]
+                .style.visibility = !State.options.allowEdits ? 'hidden' : null
         }
     }
 
-    static setTheme(accentColour = null) {
+    static setTheme(accentColour = null, element = null) {
+        element ??= document.documentElement
         accentColour ??= State.options.accentColour
-        document.documentElement.style.setProperty('--accent-colour', accentColour)
-        document.documentElement.style.setProperty('--accent-colour-r', accentColour.substring(1, 3).fromHex())
-        document.documentElement.style.setProperty('--accent-colour-g', accentColour.substring(3, 5).fromHex())
-        document.documentElement.style.setProperty('--accent-colour-b', accentColour.substring(5, 7).fromHex())
-        // document.documentElement.style.setProperty('--accent-colour-hue', State.options.themeAccent[0])
-        // document.documentElement.style.setProperty('--accent-colour-saturation', `${State.options.themeAccent[1]}%`)
-        // document.documentElement.style.setProperty('--accent-colour-lightness', '24%')
-        document.documentElement.style.setProperty('--text-colour', '#eee') // TODO
-        document.documentElement.style.setProperty('--layout-columns', State.options.columns === -1 ? '100%' : State.options.columns + 'px')
-        document.body.style.backgroundImage = State.options.backgroundImage ? `url(${State.options.backgroundImage})` : null
+        if (accentColour) {
+            element.style.setProperty('--accent-colour', accentColour)
+            element.style.setProperty('--accent-colour-r', parseInt(accentColour.substring(1, 3), 16))
+            element.style.setProperty('--accent-colour-g', parseInt(accentColour.substring(3, 5), 16))
+            element.style.setProperty('--accent-colour-b', parseInt(accentColour.substring(5, 7), 16))
+            // element.style.setProperty('--accent-colour-hue', State.options.themeAccent[0])
+            // element.style.setProperty('--accent-colour-saturation', `${State.options.themeAccent[1]}%`)
+            // element.style.setProperty('--accent-colour-lightness', '24%')
+            element.style.setProperty('--text-colour', '#eee') // TODO
+            // element.style.setProperty('--text-colour', '#eee') // TODO
+            element.style.setProperty('--theme-colour-shade', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585), 0.5)')
+            element.style.setProperty('--theme-colour-darkest', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585))')
+            element.style.setProperty('--theme-colour-lighter', 'rgb(calc(var(--accent-colour-r) * 1.5), calc(var(--accent-colour-g) * 1.5), calc(var(--accent-colour-b) * 1.5))')
+        }
+        else {
+            element.style.setProperty('--accent-colour', null)
+            element.style.setProperty('--accent-colour-r', null)
+            element.style.setProperty('--accent-colour-g', null)
+            element.style.setProperty('--accent-colour-b', null)
+            element.style.setProperty('--theme-colour-darkest', null)
+            element.style.setProperty('--theme-colour-lighter', null)
+        }
 
-        if (State.options.scale && State.options.scale != 100) {
-            document.getElementsByTagName('layout')[0].style.zoom = `${State.options.scale}%`
+        if (element === document.documentElement) {
+            element.style.setProperty('--layout-columns', State.options.columns === -1 ? '100%' : State.options.columns + 'px')
+            document.body.style.backgroundImage = State.options.backgroundImage ? `url(${State.options.backgroundImage})` : null
+            if (State.options.scale && State.options.scale != 100) {
+                document.getElementsByTagName('layout')[0].style.zoom = `${State.options.scale}%`
+            }
         }
     }
 
@@ -99,8 +113,7 @@ export default class MainView {
             })
 
             // Swap
-            const oldLayout = document.getElementsByTagName('layout')[0]
-            oldLayout.replaceWith(MainView.elLayout)
+            document.getElementsByTagName('layout')[0].replaceWith(MainView.elLayout)
         })
 
         MainView.setTheme()

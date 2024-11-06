@@ -64,6 +64,7 @@ dialog#OptionsDialog form {
 
 dialog button {
     margin: 0 5px;
+    padding: 1px 2pc;
 }
 
 dialog .actions-left-3 {

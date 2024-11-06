@@ -73,58 +73,6 @@ export default class Folder {
         }.pick(Folder.#defaults)
     }
 
-    // // TODO: remove this.save() and have global save manage all
-    // bookmarks = {
-    //     add: async (bookmark) => {
-    //         if (bookmark.folderId !== this.id) {
-    //             bookmark.folder?.bookmarks.remove(bookmark)
-    //             // TEMP await bookmark.moveTo(this)
-    //         }
-    //         if (!this.#bookmarks.includes(bookmark)) {
-    //             this.#bookmarks.push(bookmark)
-    //         }
-    //         return bookmark
-    //     },
-    //     create: (title, url) => {
-    //         return this.#storage.bookmarks.create(this, title, url)
-    //     },
-    //     move: async (bookmark, index) => { // TODO: combine in to 'add'?
-    //         await this.bookmarks.add(bookmark)
-    //         this.bookmarks.remove(bookmark)
-    //         const idx = this.#bookmarks.filter((b) => b.index < index).length
-    //         this.#bookmarks.splice(idx, 0, bookmark)
-    //         await bookmark.setIndex(index)
-    //         await this.#reindex(this.#bookmarks)
-    //     },
-    //     remove: (bookmark) => {
-    //         const index = this.#bookmarks.indexOf(bookmark)
-    //         if (index >= 0) {
-    //             this.#bookmarks.splice(index, 1)
-    //         }
-    //     }
-    // }
-
-    // // Ensures all bookmarks have a valid index and double-linked
-    // async #reindex(array) {
-    //     var previous = null
-    //     for (const entry of array) {
-    //         if (entry.index <= previous?.index) {
-    //             await entry.setIndex(previous.index + 1)
-    //         }
-
-    //         // TEMP entry.folder = this
-    //         entry.next = null
-    //         if (previous) previous.next = entry
-    //         entry.previous = previous
-    //         previous = entry
-    //     }
-    // }
-
-    // async delete() {
-    //     if (this.readonly) return
-    //     await this.#storage.delete(this)
-    // }
-
     // export(includeInternals = true, includeVersion = false) {
     //     const data = { ...this.#data }
     //     data.tidy(['accentColour', 'backgroundImage', 'collapsed', 'icon', 'sortOrder'], (v) => !!v)
@@ -146,10 +94,5 @@ export default class Folder {
     //     this.url = data.url
     //     delete data.url
     //     this.#applyData(data)
-    // }
-
-    // async remove() {
-    //     if (this.readonly) return
-    //     await this.#storage.remove(this)
     // }
 }

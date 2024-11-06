@@ -3,12 +3,10 @@ import './common/utilities.js'
 import './ui/display.js'
 
 import Dialogs from './ui/dialogs.js'
-import { LayoutX } from './models/layout.js'
 import MainView from "./ui/main.js"
 import State from './models/state.js'
 
 await State.init()
-MainView.layoutX = await LayoutX.load()
 await MainView.init()
 await MainView.fullRefresh()
 

@@ -44,7 +44,7 @@ export default class State {
 
         // Map all included folders
         for (const [id, data] of Object.entries(state.folders)) {
-            this.importFolder(everything[id], data)
+            State.importFolder(everything[id], data, state.bookmarks)
         }
     }
 
@@ -104,13 +104,14 @@ export default class State {
         return State.#folders[id]
     }
 
-    static importFolder(item, data = {}) {
+    static importFolder(item, data = {}, bookmarkStore = null) {
+        bookmarkStore ??= State.#bookmarks
         const folder = State.#folders[item.id] ??= new Folder(item, data)
         folder.bookmarks.splice(0, folder.bookmarks.length)
         for (const child of (item.children || []).filter(c => c.url)) {
-            const bookmark = new Bookmark(child, State.#bookmarks[child.id] ?? {})
+            const bookmark = new Bookmark(child, bookmarkStore[child.id] ?? {})
             folder.bookmarks.push(bookmark)
-            this.#bookmarks[child.id] = bookmark
+            State.#bookmarks[child.id] = bookmark
         }
         return folder
     }
@@ -122,11 +123,9 @@ export default class State {
         await chrome.bookmarks.move(bookmark.id, { parentId: folder.id })
     }
 
-    // TODO: export
     // TODO: import
 
-    static async save() {
-        // Reshape data
+    static export() {
         const state = State.#options.export()
         state.folders = Object.values(State.#folders).reduce((obj, f) => {
             obj[f.id] = f.export()
@@ -136,7 +135,11 @@ export default class State {
             obj[b.id] = b.export()
             return obj
         }, {})
+        return state
+    }
 
+    static async save() {
+        const state = State.export()
         console.log('save', state)
         await chrome.bookmarks.update(State.#stateId, { title: `${State.Title}${JSON.stringify(state)}` })
     }

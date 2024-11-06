@@ -54,21 +54,8 @@ export class FolderElement extends BaseHTMLElement {
 
     setTheme() {
         const accentColour = this.#folder.accentColour
-        if (accentColour) {
-            this.shadowRoot.host.style.setProperty('--accent-colour', accentColour)
-            this.shadowRoot.host.style.setProperty('--accent-colour-r', accentColour.substring(1, 3).fromHex())
-            this.shadowRoot.host.style.setProperty('--accent-colour-g', accentColour.substring(3, 5).fromHex())
-            this.shadowRoot.host.style.setProperty('--accent-colour-b', accentColour.substring(5, 7).fromHex())
-            // this.shadowRoot.host.style.setProperty('--accent-colour-hue', this.#folder.themeAccent[0])
-            // this.shadowRoot.host.style.setProperty('--accent-colour-saturation', `${this.#folder.themeAccent[1]}%`)
-            // this.shadowRoot.host.style.setProperty('--accent-colour-lightness', '24%')
-            // this.shadowRoot.host.style.setProperty('--text-colour', '#eee') // TODO
-
-            this.shadowRoot.host.style.setProperty('--theme-colour-darkest', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585))')
-            this.shadowRoot.host.style.setProperty('--theme-colour-lighter', 'rgb(calc(var(--accent-colour-r) * 1.5), calc(var(--accent-colour-g) * 1.5), calc(var(--accent-colour-b) * 1.5))')
-            this.shadowRoot.host.style.backgroundColor = 'var(--theme-colour-darkest)'
-        }
-
+        MainView.setTheme(accentColour, this.shadowRoot.host)
+        this.shadowRoot.host.style.backgroundColor = 'var(--theme-colour-shade)'
         this.shadowRoot.host.style.backgroundImage = this.#folder.backgroundImage ? `url(${this.#folder.backgroundImage})` : null
     }
 

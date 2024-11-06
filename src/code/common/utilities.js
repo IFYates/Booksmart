@@ -42,6 +42,7 @@ globalThis.isURL = function (url) {
         return false
     }
 }
+Object.defineProperty(Object.prototype, 'isURL', { enumerable: false, writable: false, configurable: false })
 
 /**
  * Converts the given value to a number, returning the original value or a
@@ -55,6 +56,7 @@ globalThis.num = function (value, otherwise = 0) {
     const result = Number(value)
     return !isNaN(result) ? result : otherwise
 }
+Object.defineProperty(Object.prototype, 'num', { enumerable: false, writable: false, configurable: false })
 
 /**
  * Picks properties from the current object based on the provided defaults and 
@@ -145,17 +147,9 @@ globalThis.tryParse = function (json, alt) {
         return typeof (alt) === 'function' ? alt() : alt
     }
 }
+Object.defineProperty(Object.prototype, 'tryParse', { enumerable: false, writable: false, configurable: false })
 
 /// TEMP
-Number.prototype.toHex = function () {
-    var num = this, res = ''
-    while (num > 0) {
-        const rem = num % 16
-        res = '0123456789ABCDEF'.substring(rem, rem + 1) + res
-        num = (num - rem) / 16
-    }
-    return res.length < 2 ? '0' + res : res
-}
 String.prototype.fromHex = function () {
     var res = 0
     for (var i = 0; i < this.length; ++i) {

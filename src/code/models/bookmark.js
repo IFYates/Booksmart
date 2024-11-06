@@ -85,12 +85,6 @@ export default class Bookmark {
         }
     }
 
-    // folder
-    // previous
-    // next
-    // get isFirst() { return !this.previous }
-    // get isLast() { return !this.next }
-
     // export(includeInternals = true) {
     //     const data = this.#data
     //     data.tidy(['favourite', 'icon', 'click', 'lastClick', 'notes'], (v) => !!v)
@@ -106,15 +100,5 @@ export default class Bookmark {
     // import(data) {
     //     if (this.readonly) return
     //     this.#applyData(data)
-    // }
-
-    // async save() {
-    //     if (this.readonly) return
-    //     await this.#storage.save(this)
-    // }
-
-    // async setIndex(index) {
-    //     this.#index = Math.max(0, index)
-    //     await this.save()
     // }
 }

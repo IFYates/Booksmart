@@ -11,8 +11,8 @@ HTMLElement.prototype.show = function (state) {
 }
 
 HTMLElement.prototype.add = addToElement
-HTMLElement.prototype.and = function (type, text, args, layout) { // Scoped
-    const el = createElement(type, text, args, layout)
+HTMLElement.prototype.and = function (type, text, args, logic) { // Scoped
+    const el = createElement(type, text, args, logic)
     this.insertAdjacentElement('afterend', el)
     return el
 }
@@ -23,17 +23,17 @@ HTMLElement.prototype.clearChildren = function () {
     }
 }
 
-function addToElement(type, text, args, layout) { // Scoped
-    const el = createElement(type, text, args, layout)
+function addToElement(type, text, args, logic) { // Scoped
+    const el = createElement(type, text, args, logic)
     this.appendChild(el)
     return el
 }
-globalThis.createElement = (type, text, args, layout) => {
-    if (!layout) {
+globalThis.createElement = (type, text, args, logic) => {
+    if (!logic) {
         if (typeof (args) === 'function') {
-            [layout, args] = [args, null]
+            [logic, args] = [args, null]
         } else if (typeof (text) === 'function') {
-            [layout, args, text] = [text, null, null]
+            [logic, args, text] = [text, null, null]
         }
     }
     if (!args && typeof (text) === 'object') {
@@ -61,13 +61,13 @@ globalThis.createElement = (type, text, args, layout) => {
     if (text && el.__lookupGetter__('textContent')) {
         el.textContent = text
     }
-    if (typeof (layout) === 'function') {
-        el.display(layout)
+    if (typeof (logic) === 'function') {
+        el.display(logic)
     }
     return el
 }
 
-HTMLElement.prototype.display = function (layout) {
+HTMLElement.prototype.display = function (logic) {
     const previous = {
         add: globalThis.add,
         create: globalThis.create,
@@ -77,11 +77,11 @@ HTMLElement.prototype.display = function (layout) {
     globalThis.add = addToElement.bind(this)
     globalThis.create = createElement
     this.layout = function () {
-        this.display(layout)
+        this.display(logic)
     }
 
-    if (typeof (layout) === 'function') {
-        layout.call(this, this)
+    if (typeof (logic) === 'function') {
+        logic.call(this, this)
     }
 
     Object.assign(globalThis, previous)

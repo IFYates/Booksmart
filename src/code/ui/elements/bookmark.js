@@ -4,6 +4,7 @@ import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
 import { Tabs } from "../../common/tabs.js"
 import State from "../../models/state.js"
 import Dialogs from '../dialogs.js'
+import { BookmarkAddElement } from "./bookmarkAdd.js"
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -128,7 +129,7 @@ export class BookmarkElement extends BaseHTMLElement {
 
         // Move
         const attach = () => {
-            const isFirst = !(self.previousElementSibling instanceof BookmarkElement)
+            const isFirst = !(self.previousElementSibling instanceof BookmarkElement) || self.previousElementSibling.bookmark.favourite
             const isLast = !(self.nextElementSibling instanceof BookmarkElement)
             root.querySelector('.actions>.move[title="Move up"]').style.display = bookmark.readonly || isFirst ? 'none' : ''
             root.querySelector('.actions>.move[title="Move down"]').style.display = bookmark.readonly || isLast ? 'none' : ''
@@ -145,7 +146,7 @@ export class BookmarkElement extends BaseHTMLElement {
                 first.refresh()
                 second.refresh()
 
-                self.reindexSiblings()
+                self.parent.reindexBookmarks()
                 State.save()
                 return false
             }
@@ -170,15 +171,20 @@ export class BookmarkElement extends BaseHTMLElement {
             this.classList.add('dragging')
             MainView.elTrash.classList.toggle('active', !bookmark.readonly) // TODO: through global style?
 
-            return { bookmark: bookmark, element: this, origin: this.nextSibling }
+            return { bookmark: bookmark, element: this, origin: this.nextSibling ?? this.parentNode }
         }
         drag.ondragend = (_, state) => {
             this.classList.remove('dragging')
             MainView.elTrash.classList.remove('active') // TODO: through global style?
 
             // Didn't drop on folder, so reset
-            if (state && !state.dropped) {
-                state.origin.parentNode.insertBefore(this, state.origin)
+            if (state.element && !state.dropped) {
+                state.element.remove()
+                if (state.origin instanceof BookmarkElement || state.origin instanceof BookmarkAddElement) {
+                    state.origin.parentNode.insertBefore(this, state.origin)
+                } else {
+                    state.origin.appendChild(this)
+                }
             }
         }
         if (!bookmark.readonly) {

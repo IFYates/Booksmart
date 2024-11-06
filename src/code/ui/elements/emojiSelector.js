@@ -16,6 +16,7 @@ list {
 }
 
 list .emoji {
+    display: inline-block;
     padding: 0 1px 3px;
     border: 1px solid transparent;
     border-radius: 3px;
