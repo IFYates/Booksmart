@@ -42,6 +42,9 @@ export default class Folder {
     #icon
     get icon() { return this.#icon }
     set icon(value) { this.#icon = value?.trim() }
+    #scale
+    get scale() { return this.#scale }
+    set scale(value) { this.#scale = num(value) }
     #sortOrder
     get sortOrder() { return this.#sortOrder }
     set sortOrder(value) { this.#sortOrder = num(value) }
@@ -55,6 +58,7 @@ export default class Folder {
         collapsed: false,
         icon: v => !v?.length,
         index: null,
+        scale: 100,
         sortOrder: 0,
         title: null
     }
@@ -65,6 +69,7 @@ export default class Folder {
             collapsed: this.#collapsed,
             icon: this.#icon,
             index: this.#index,
+            scale: this.#scale,
             sortOrder: this.#sortOrder,
             title: standalone ? this.#title : null
         }.pick(Folder.#defaults)
@@ -77,6 +82,7 @@ export default class Folder {
         this.#backgroundImage = data.backgroundImage
         this.#collapsed = !!data.collapsed
         this.#icon = data.icon
+        this.#scale = num(data.scale, 100)
         this.#sortOrder = num(data.sortOrder)
     }
 }

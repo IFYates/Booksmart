@@ -185,6 +185,19 @@ export default class EditFolderDialog extends BaseDialog {
             })
         })
 
+        // Scale
+        const lblScale = add('label', 'Scale', { style: 'text-align:right' })
+        add('input', { classes: 'spanCols3', type: 'range', min: 5, max: 50, value: folder?.scale / 10 }, function () {
+            this.oninput = () => {
+                if (folder?.scale && folder.scale != this.value * 10) {
+                    folder.scale = this.value * 10
+                    //folder?.refresh()
+                }
+                lblScale.innerText = `Scale (${folder?.scale}%)`
+            }
+            this.oninput()
+        })
+
         add('label', 'Accent colour', { style: 'text-align:right' })
         const accountColourPicker = add('input', { type: 'color', classes: 'spanCols2', value: folder?.accentColour }, function () { // TODO
             this.onchange = () => {

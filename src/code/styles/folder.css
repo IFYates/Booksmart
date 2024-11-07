@@ -73,10 +73,12 @@ h1>span {
 }
 
 h1>.actions {
+    background: var(--accent-colour);
+    border-radius: 3px;
+    padding-right: 5px;
     position: absolute;
     right: 0;
     visibility: hidden;
-    padding-right: 5px;
 }
 
 h1:hover .actions {

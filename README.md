@@ -36,6 +36,8 @@ A bookmark management tool and customisable homepage.
 - Add notes
 
 # Future possible features
+- Folder tags
+  - Toggle tag visibility
 - Style bookmarks by domain (across all folders)
 - Use browser history to suggest URL on bookmark creation
 - Popup

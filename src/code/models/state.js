@@ -242,7 +242,6 @@ export default class State {
 
     static async save() {
         const state = State.#getData(false)
-        console.log('save', state)
         await chrome.bookmarks.update(State.#stateId, { title: `${State.Title}${JSON.stringify(state)}` })
     }
 
