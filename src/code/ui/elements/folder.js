@@ -5,23 +5,23 @@ import Dialogs from '../dialogs.js'
 import Emojis from "../../common/emojiHelpers.js"
 import FontAwesome from "../../common/faHelpers.js"
 import State from "../../models/state.js"
+import IconElement from './icon.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
 <h1>
     <i class="showHide fa-fw far fa-square-caret-down" title="Show"></i>
     <i class="showHide fa-fw far fa-square-caret-up" title="Hide"></i>
-    <i class="icon fa-fw"></i>
-    <img class="icon" style="display:none" />
-
+    <bs-icon></bs-icon>
+    
     <span class="title"><!--$ title $--></span>
-
+    
     <div class="actions">
         <i class="move fa-fw fas fa-arrow-up" title="Move up"></i>
         <i class="move fa-fw fas fa-arrow-down" title="Move down"></i>
         <i class="fa-fw fas fa-pen" title="Edit folder"></i>
     </div>
-
+    
     <i class="action fa-fw fas fa-folder" title="This is a folder from your browser bookmarks" style="display:none"></i>
 </h1>
 <!-- Bookmarks -->
@@ -37,15 +37,6 @@ export class FolderElement extends BaseHTMLElement {
 
     get bookmarks() { return [...this.shadowRoot.children].filter(c => c instanceof BookmarkElement) }
 
-    // TODO: to model
-    get iconType() {
-        return !this.#folder.icon || this.#folder.icon.startsWith('chrome:')
-            ? 'none'
-            : FontAwesome.isFacon(this.#folder.icon) ? 'facon'
-                : Emojis.isEmoji(this.#folder.icon) ? 'emoji'
-                    : 'custom'
-    }
-
     constructor(folder) {
         super(template, ['/code/styles/common.css', '/code/styles/folder.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
         this.#folder = folder
@@ -55,7 +46,7 @@ export class FolderElement extends BaseHTMLElement {
     setTheme() {
         const accentColour = this.#folder.accentColour
         MainView.setTheme(accentColour, this.shadowRoot.host)
-        this.shadowRoot.host.style.backgroundColor = 'var(--theme-colour-shade)'
+        this.shadowRoot.host.style.backgroundColor = State.options.backgroundImage ? 'var(--theme-colour-shade)' : 'rgb(0, 0, 0, 0.1)'
         this.shadowRoot.host.style.backgroundImage = this.#folder.backgroundImage ? `url(${this.#folder.backgroundImage})` : null
     }
 
@@ -94,7 +85,7 @@ export class FolderElement extends BaseHTMLElement {
         const folder = this.#folder
         const readonly = !State.options.allowEdits || folder.readonly
 
-        if ((folder.scale || 100) !== 100) {
+        if ((folder.scale || 100) != 100) {
             host.style.zoom = `${folder.scale}%`
         }
 
@@ -121,30 +112,13 @@ export class FolderElement extends BaseHTMLElement {
         }
 
         // Icon
-        const faIcon = root.querySelector('i.icon')
-        switch (this.iconType) {
-            case 'custom':
-                this._apply('img.icon', function () {
-                    this.onload = () => {
-                        faIcon.replaceWith(this)
-                        this.style.display = ''
-                    }
-                    this.src = folder.icon
-                })
-                break;
-            case 'emoji':
-                faIcon.innerText = folder.icon
-                break;
-            case 'facon':
-                faIcon.classList.add(...folder.icon.split(' '))
-                break;
-        }
+        root.querySelector('bs-icon').value = folder.icon
 
         // Move
         const title = root.querySelector('h1')
         const attach = () => {
             const isFirst = !(self.previousElementSibling instanceof FolderElement)
-            const isLast = self.nextElementSibling?.constructor.name !== 'FolderElement'
+            const isLast = self.nextElementSibling?.constructor.name != 'FolderElement'
             root.querySelector('.actions>.move[title="Move up"]').show(!this.immobile && !isFirst)
             root.querySelector('.actions>.move[title="Move down"]').show(!this.immobile && !isLast)
             title.removeEventListener('mouseenter', attach)
@@ -154,7 +128,7 @@ export class FolderElement extends BaseHTMLElement {
             this.onclick = (ev) => {
                 ev.stopPropagation()
 
-                const down = this.title === 'Move down'
+                const down = this.title == 'Move down'
                 const [first, second] = !down ? [self, self.previousElementSibling] : [self.nextElementSibling, self]
                 self.parentNode.insertBefore(first, second)
                 first.refresh()
@@ -232,9 +206,9 @@ export class FolderElement extends BaseHTMLElement {
             drop.ondragover = (ev, state) => {
                 const bookmark = state?.bookmark
                 if (bookmark) {
-                    if (bookmark.folderId === folder.id && folder.sortOrder !== 0) return // Cannot reorder non-manual folder
+                    if (bookmark.folderId == folder.id && folder.sortOrder != 0) return // Cannot reorder non-manual folder
                     ev.preventDefault() // Can drop here
-                    ev.dataTransfer.dropEffect = bookmark.folderId !== folder.id && (bookmark.readonly || ev.ctrlKey) ? 'copy' : 'move' // Can copy to another collection
+                    ev.dataTransfer.dropEffect = bookmark.folderId != folder.id && (bookmark.readonly || ev.ctrlKey) ? 'copy' : 'move' // Can copy to another collection
                 }
             }
             drop.ondrop = async (ev, state) => {
@@ -245,7 +219,7 @@ export class FolderElement extends BaseHTMLElement {
                 state.dropped = true
 
                 // Place bookmark
-                await state.element.moveTo(this, state.origin, bookmark.folderId !== folder.id && ev.ctrlKey)
+                await state.element.moveTo(this, state.origin, bookmark.folderId != folder.id && ev.ctrlKey)
                 await State.save()
             }
         }

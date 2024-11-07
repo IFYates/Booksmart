@@ -5,12 +5,13 @@ import { Tabs } from "../../common/tabs.js"
 import State from "../../models/state.js"
 import Dialogs from '../dialogs.js'
 import { BookmarkAddElement } from "./bookmarkAdd.js"
+import IconElement from './icon.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
 <a href="<!--$ url $-->" title="<!--$ url $-->">
-    <i class="icon fa-fw far fa-bookmark"></i>
-    <img class="icon" style="display:none" />
+    <bs-icon altIcon="far fa-bookmark"></bs-icon>
+
     <div class="favourite">
         <i class="fa-fw far fa-star" title="Pin"></i>
         <i class="fa-fw fas fa-star" title="Unpin"></i>
@@ -35,16 +36,6 @@ export class BookmarkElement extends BaseHTMLElement {
     get index() { return this.#bookmark.index }
     set index(value) { this.#bookmark.index = num(value) }
 
-    get iconType() {
-        return !this.#bookmark.icon || this.#bookmark.icon.startsWith('chrome:')
-            ? 'default'
-            : FontAwesome.isFacon(this.#bookmark.icon)
-                ? 'facon'
-                : Emojis.isEmoji(this.#bookmark.icon)
-                    ? 'emoji'
-                    : 'custom'
-    }
-
     constructor(bookmark) {
         super(template, ['/code/styles/common.css', '/code/styles/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
         this.#bookmark = bookmark
@@ -64,35 +55,7 @@ export class BookmarkElement extends BaseHTMLElement {
         }
 
         // Icon
-        const faIcon = root.querySelector('i.icon')
-        if (bookmark.altIcon?.includes('fa-')) {
-            faIcon.classList.remove('far', 'fa-bookmark')
-            faIcon.classList.add(...bookmark.altIcon.split(' '))
-        }
-        function showIcon(icon) {
-            self._apply('img.icon', function () {
-                this.onload = () => {
-                    faIcon.replaceWith(this)
-                    this.style.display = ''
-                }
-                this.src = icon
-            })
-        }
-        switch (this.iconType) {
-            case 'emoji':
-                // TODO
-                break
-            case 'facon':
-                faIcon.classList.remove('far', 'fa-bookmark')
-                faIcon.classList.add(...bookmark.icon.split(' '))
-                break
-            case 'custom':
-                showIcon(bookmark.icon)
-                break
-            default:
-                showIcon(bookmark.domain ? `${bookmark.domain}/favicon.ico` : '')
-                break
-        }
+        root.querySelector('bs-icon').value = bookmark.icon
 
         // Link
         this._apply('a', function () {
@@ -140,7 +103,7 @@ export class BookmarkElement extends BaseHTMLElement {
             this.onclick = (ev) => {
                 ev.stopPropagation()
 
-                const down = this.title === 'Move down'
+                const down = this.title == 'Move down'
                 const [first, second] = !down ? [self, self.previousElementSibling] : [self.nextElementSibling, self]
                 self.parentNode.insertBefore(first, second)
                 first.refresh()
@@ -191,7 +154,7 @@ export class BookmarkElement extends BaseHTMLElement {
             drag.ondragenter = (_, state) => {
                 const dragging = state?.bookmark
                 if (dragging && dragging !== bookmark && !bookmark.readonly) {
-                    if (dragging.folderId === folder.id && folder.sortOrder !== 0) {
+                    if (dragging.folderId == folder.id && folder.sortOrder !== 0) {
                         return // Cannot reorder non-manual folder
                     }
 

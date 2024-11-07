@@ -21,9 +21,13 @@
 }
 
 .icon {
+    padding-right: 4px;
     max-width: 16px;
     max-height: 16px;
-    padding-right: 4px;
+}
+
+.emoji {
+    margin-bottom: 5px;
 }
 
 :host(:not(.readonly):hover) .icon {
@@ -127,5 +131,5 @@ a .title.nowrap {
 }
 
 :host(bs-folder-add:hover) {
-    margin-right: 50px;
+    margin-right: 85px;
 }

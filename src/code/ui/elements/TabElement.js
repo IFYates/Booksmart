@@ -33,7 +33,11 @@ export class TabElement extends BookmarkElement {
         const data = await State.createBookmark(folder.folder, this.tab.title, this.tab.url);
         const element = new BookmarkElement(data);
         this.parentNode.insertBefore(element, this);
-        origin?.parentNode.insertBefore(this, origin);
+        if (origin instanceof TabElement) {
+            origin.parentNode?.insertBefore(this, origin)
+        } else {
+            origin?.appendChild(this)
+        }
         folder.reindexBookmarks();
     }
 }

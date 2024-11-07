@@ -86,12 +86,12 @@ export class FaconSelectorElement extends BaseHTMLElement {
                     this.update(value)
                 }
                 facon.onmouseenter = (ev) => {
-                    if (ev.buttons === 1) {
+                    if (ev.buttons == 1) {
                         this.update(value)
                     }
                 }
                 facon.onmouseup = () => {
-                    if (this.#value === value) {
+                    if (this.#value == value) {
                         this.update(value, true)
                         this.dispatchEvent(new Event('change'))
                     }

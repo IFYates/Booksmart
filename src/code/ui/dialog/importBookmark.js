@@ -10,14 +10,14 @@ export default class ImportBookmarkDialog extends BaseDialog {
     #tree
     #folders
     async _prepare() {
-        this.#tree = (await chrome.bookmarks.getTree())[0].children[0]
+        this.#tree = (await chrome.bookmarks.getTree())[0]
         this.#folders = Object.values(State.folders)
     }
 
     _display(dialog) {
         const items = []
         function showFolder(folder, parentShowHide, depth = 0) {
-            if (folder.id === State.booksmartRootId) {
+            if (folder.id == State.booksmartRootId) {
                 return // Hide Booksmart root
             }
 
@@ -33,7 +33,7 @@ export default class ImportBookmarkDialog extends BaseDialog {
             var el = add('div', { className: 'folder', style: `margin-left: ${depth}px` }, () => {
                 add(showHide)
                 const id = 'folder-' + folder.id
-                folder.showFolder = this.#folders.some(c => c.id === folder.id)
+                folder.showFolder = this.#folders.some(c => c.id == folder.id)
                 add('input', { type: 'checkbox', id: id, checked: folder.showFolder }).onchange = function () {
                     folder.showFolder = this.checked
                 }
@@ -55,7 +55,7 @@ export default class ImportBookmarkDialog extends BaseDialog {
             }
             parentShowHide?.addEventListener('click', el.update)
 
-            if (children.length === 0) {
+            if (!children.length) {
                 showHide.style.visibility = 'hidden'
             }
             return el
@@ -63,7 +63,9 @@ export default class ImportBookmarkDialog extends BaseDialog {
 
         add('p', 'Choose the bookmark folders to include on your dashboard:')
         const folderList = add('div', { className: 'folderList' }, () => {
-            showFolder.call(this, this.#tree)
+            for (const child of this.#tree.children) {
+                showFolder.call(this, child)
+            }
         })
         setTimeout(() => {
             folderList.style.height = `${folderList.offsetHeight}px`
@@ -78,7 +80,7 @@ export default class ImportBookmarkDialog extends BaseDialog {
                 add('span', ' Save')
             }).onclick = async () => {
                 for (const item of items) {
-                    const folder = this.#folders.find(c => c.id === item.id)
+                    const folder = this.#folders.find(c => c.id == item.id)
                     if (item.showFolder) {
                         if (!folder) {
                             State.importFolder(item, { index: State.folderCount })

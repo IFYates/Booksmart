@@ -94,7 +94,7 @@ export default class OptionsDialog extends BaseDialog {
                 MainView.setTheme()
             }
         })
-        add('textarea', { classes: 'spanCols4', style: 'width:100%;height:100%;resize:none', value: State.options.backgroundImage || '' }, function () {
+        add('textarea', { classes: 'spanCols3', style: 'width:100%;height:100%;resize:none', value: State.options.backgroundImage || '' }, function () {
             this.onkeyup = () => {
                 bgImage.src = this.value
                 State.options.backgroundImage = this.value
@@ -103,7 +103,7 @@ export default class OptionsDialog extends BaseDialog {
                 }
             }
         })
-        add(bgImage)
+        add(bgImage, { classes: 'spanCols2' })
 
         add('p', { classes: 'spanCols6' })
 
@@ -164,7 +164,7 @@ export default class OptionsDialog extends BaseDialog {
                 }
 
                 // Full delete
-                await chrome.bookmarks.removeTree(State.options.dataId)
+                await chrome.bookmarks.removeTree(State.stateId)
                 document.location.reload()
             }
         })

@@ -92,12 +92,12 @@ export class EmojiSelectorElement extends BaseHTMLElement {
                 this.update(icon, name, true)
             }
             emoji.onmouseenter = (ev) => {
-                if (ev.buttons === 1) {
+                if (ev.buttons == 1) {
                     this.update(icon, name)
                 }
             }
             emoji.onmouseup = () => {
-                if (this.#value[0] === name) {
+                if (this.#value[0] == name) {
                     this.update(icon, name, true)
                 }
             }

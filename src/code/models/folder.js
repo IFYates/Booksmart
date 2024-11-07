@@ -4,7 +4,7 @@ import State from "./state.js"
 A folder in the bookmarks hierarchy.
 */
 export default class Folder {
-    constructor(folder, data = {}) {
+    constructor(folder = {}, data = {}) {
         this.#parentId = folder.parentId
         this.#id = folder.id
         this.#dateAdded = folder.dateAdded
@@ -63,7 +63,7 @@ export default class Folder {
         title: null
     }
     export(standalone) {
-        return {
+        const data = {
             accentColour: this.#accentColour,
             backgroundImage: this.#backgroundImage,
             collapsed: this.#collapsed,
@@ -73,6 +73,14 @@ export default class Folder {
             sortOrder: this.#sortOrder,
             title: standalone ? this.#title : null
         }.pick(Folder.#defaults)
+        if (standalone) {
+            data['.booksmart'] = {
+                version: 1,
+                content: 'Folder'
+            }
+            data.children = this.#bookmarks.map(b => b.export(true))
+        }
+        return data
     }
     
     import(data)

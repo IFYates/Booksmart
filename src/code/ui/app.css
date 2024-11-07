@@ -36,7 +36,7 @@ body>.actions {
     align-items: center;
     pointer-events: none;
     bottom: 5px;
-    width: calc(100% + 70px);
+    width: calc(100% + 125px);
     z-index: 1;
 }
 

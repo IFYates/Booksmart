@@ -31,7 +31,7 @@ export class SiteListElement extends FolderElement {
     refresh() {
         chrome.topSites.get().then((sites) => {
             SiteListElement.#sitesFolder.bookmarks.splice(0, SiteListElement.#sitesFolder.bookmarks.length)
-            for (const site of sites.filter(s => s.url !== document.location.href)) {
+            for (const site of sites.filter(s => s.url != document.location.href)) {
                 SiteListElement.#sitesFolder.bookmarks.push(new SiteElement(site))
             }
             super.refresh()

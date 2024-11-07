@@ -30,18 +30,18 @@ function addToElement(type, text, args, logic) { // Scoped
 }
 globalThis.createElement = (type, text, args, logic) => {
     if (!logic) {
-        if (typeof (args) === 'function') {
+        if (typeof (args) == 'function') {
             [logic, args] = [args, null]
-        } else if (typeof (text) === 'function') {
+        } else if (typeof (text) == 'function') {
             [logic, args, text] = [text, null, null]
         }
     }
-    if (!args && typeof (text) === 'object') {
+    if (!args && typeof (text) == 'object') {
         [args, text] = [text, null]
     }
 
     const el = type instanceof HTMLElement ? type : document.createElement(type)
-    if (args && typeof (args) === 'object') {
+    if (args && typeof (args) == 'object') {
         if (args.classes) {
             args.classes = Array.isArray(args.classes) ? args.classes : [args.classes]
             args.classes = [...args.classes].filter(c => !!c)
@@ -51,7 +51,7 @@ globalThis.createElement = (type, text, args, logic) => {
         Object.entries(args).forEach(v => {
             if (v[1] === null || v[1] === undefined) {
                 delete el[v[0]]
-            } else if (v[0][0] === '$') {
+            } else if (v[0][0] == '$') {
                 el.setAttribute(v[0].substring(1), v[1])
             } else {
                 el[v[0]] = v[1]
@@ -61,7 +61,7 @@ globalThis.createElement = (type, text, args, logic) => {
     if (text && el.__lookupGetter__('textContent')) {
         el.textContent = text
     }
-    if (typeof (logic) === 'function') {
+    if (typeof (logic) == 'function') {
         el.display(logic)
     }
     return el
@@ -80,7 +80,7 @@ HTMLElement.prototype.display = function (logic) {
         this.display(logic)
     }
 
-    if (typeof (logic) === 'function') {
+    if (typeof (logic) == 'function') {
         logic.call(this, this)
     }
 
@@ -133,25 +133,35 @@ export class StyleManager {
 export class BaseHTMLElement extends HTMLElement {
     #template
     #styles
+    get host() { return this.#template ? this.shadowRoot.host : this }
 
     static TemplateRE = /<!--\$\s*([\w\.]+)\s*\$-->/g
 
     constructor(template, styles) {
         super()
-        this.attachShadow({ mode: 'open' })
 
-        this.#template = template
-        this.#styles = styles || []
+        if (template) {
+            this.attachShadow({ mode: 'open' })
+            this.#template = template
+            this.#styles = styles || []
+        }
+
         this._reset()
     }
 
     refresh() {
         this._reset()
-        this._ondisplay(this.shadowRoot, this.shadowRoot.host)
+        this._ondisplay(this.shadowRoot, this.host)
     }
 
     _reset() {
+        if (!this.#template) {
+            this.innerHTML = ''
+            return
+        }
+
         this.shadowRoot.innerHTML = ''
+
         this.shadowRoot.appendChild(this.#template.content.cloneNode(true))
 
         if (!this.#styles) {
@@ -170,20 +180,22 @@ export class BaseHTMLElement extends HTMLElement {
         this.#displayed = true
         const self = this
 
-        this.shadowRoot.host.style.display = 'none !important'
-        await Promise.allSettled([
-            this._ondisplay(this.shadowRoot, this.shadowRoot.host),
-            StyleManager.wait()
-        ])
-        if (this.shadowRoot.host.style.display === 'none !important') {
-            this.shadowRoot.host.style.display = null
+        if (this.#template) {
+            this.host.style.display = 'none !important'
+            await Promise.allSettled([
+                this._ondisplay(this.shadowRoot, this.host),
+                StyleManager.wait()
+            ])
+            if (this.host.style.display == 'none !important') {
+                this.host.style.display = null
+            }
         }
 
-        if (typeof this.onclick === 'function') {
-            this.shadowRoot.host.addEventListener('click', (ev) => this.onclick.call(self, ev))
+        if (typeof this.onclick == 'function') {
+            this.host.addEventListener('click', (ev) => this.onclick.call(self, ev))
         }
-        if (typeof this.onmouseenter === 'function') {
-            this.shadowRoot.host.addEventListener('mouseenter', (ev) => this.onmouseenter.call(self, ev))
+        if (typeof this.onmouseenter == 'function') {
+            this.host.addEventListener('mouseenter', (ev) => this.onmouseenter.call(self, ev))
         }
     }
 

@@ -5,6 +5,7 @@ import { FaconSelectorElement } from '../elements/faconSelector.js'
 import { EmojiSelectorElement } from '../elements/emojiSelector.js'
 import Emojis from '../../common/emojiHelpers.js'
 import State from '../../models/state.js'
+import Folder from '../../models/folder.js'
 
 export default class EditFolderDialog extends BaseDialog {
     constructor(title) {
@@ -12,15 +13,17 @@ export default class EditFolderDialog extends BaseDialog {
     }
 
     async _display(dialog, folder) {
+        folder ??= new Folder()
+
         const txtTitle = create('input', {
             autofocus: true,
             type: 'textbox',
-            value: folder?.title || 'New folder'
+            value: folder.title || 'New folder'
         })
 
         const ASC = '1', DESC = '0'
         const chkSortAsc = create('button', { type: 'button' }, function () {
-            this.value = folder?.sortOrder >= 0 ? ASC : DESC
+            this.value = folder.sortOrder < 0 ? DESC : ASC
             this.onclick = (ev) => {
                 if (ev) {
                     this.value = this.value == ASC ? DESC : ASC
@@ -38,7 +41,7 @@ export default class EditFolderDialog extends BaseDialog {
             this.onchange = () => {
                 chkSortAsc.disabled = this.value == '0'
             }
-            this.value = Math.abs(num(folder?.sortOrder))
+            this.value = Math.abs(num(folder.sortOrder))
             this.onchange()
         })
 
@@ -51,7 +54,7 @@ export default class EditFolderDialog extends BaseDialog {
                     return
                 }
 
-                if (url && this.src !== url) {
+                if (url && this.src != url) {
                     this.style.display = 'none'
                     iconPreviewDefault.style.display = ''
                     this.src = url
@@ -65,8 +68,8 @@ export default class EditFolderDialog extends BaseDialog {
             }
         })
 
-        const isFacon = FontAwesome.isFacon(folder?.icon)
-        const faconSelector = new FaconSelectorElement(folder?.icon || '')
+        const isFacon = FontAwesome.isFacon(folder.icon)
+        const faconSelector = new FaconSelectorElement(folder.icon)
         const iconPreviewFA = create('i', { className: 'fa-fw fa-3x centred' }, function () {
             var _lastValue = []
             this.update = () => {
@@ -79,8 +82,8 @@ export default class EditFolderDialog extends BaseDialog {
         })
         faconSelector.addEventListener('change', iconPreviewFA.update)
 
-        const isEmoji = Emojis.isEmoji(folder?.icon)
-        const emojiSelector = new EmojiSelectorElement(folder?.icon || '')
+        const isEmoji = Emojis.isEmoji(folder.icon)
+        const emojiSelector = new EmojiSelectorElement(folder.icon)
         const iconPreviewEmoji = create('i', { className: 'fa-fw fa-3x centred' }, function () {
             this.update = () => {
                 iconPreviewEmoji.innerText = emojiSelector.value || ''
@@ -88,29 +91,26 @@ export default class EditFolderDialog extends BaseDialog {
         })
         emojiSelector.addEventListener('change', iconPreviewEmoji.update)
 
-        const isBookmarkIcon = !isEmoji && !isFacon ? folder?.bookmarks?.find(b => b.icon && b.icon === folder.icon) : null
+        const bookmarkIcon = !isEmoji && !isFacon ? folder.bookmarks?.find(b => b.icon && b.icon == folder.icon) : null
         const lstBookmarkIcons = create('select', function () {
-            folder?.bookmarks.forEach(b => {
+            folder.bookmarks.forEach(b => {
                 add('option', b.title, { value: b.icon || '(none)' }, function () {
-                    this.selected = isBookmarkIcon === b
+                    this.selected = bookmarkIcon === b
                     this.disabled = !b.icon?.startsWith('data:image/') && !b.icon?.includes('://')
                 })
             })
             this.onchange = () => {
                 iconPreviewCustom.image(this.value)
             }
-            this.value = folder?.icon
+            this.value = folder.icon
             this.onchange()
         })
 
-        const txtCustomIcon = create('input', {
-            type: 'textbox',
-            value: !folder?.icon?.includes('fa-') ? folder?.icon || '' : ''
-        }, function () {
+        const txtCustomIcon = create('input', { type: 'textbox' }, function () {
             this.onkeyup = () => {
                 iconPreviewCustom.image(this.value)
             }
-            this.value = !isFacon && !isEmoji ? folder?.icon : ''
+            this.value = !isFacon && !isEmoji ? folder.icon : ''
             this.onkeyup()
         })
 
@@ -119,14 +119,14 @@ export default class EditFolderDialog extends BaseDialog {
             add('option', 'None', { value: IT_NONE })
             add('option', 'Emoji', { value: IT_EMOJI })
             add('option', 'Font Awesome', { value: IT_FACON })
-            if (folder?.bookmarks?.length) {
+            if (folder.bookmarks.length) {
                 add('option', 'From bookmark', { value: IT_BOOKMARK })
             }
-            add('option', 'Custom', { value: '3' })
+            add('option', 'Custom', { value: IT_CUSTOM })
 
-            this.value = !folder?.icon ? IT_NONE
+            this.value = !folder.icon ? IT_NONE
                 : isFacon ? IT_FACON
-                    : isBookmarkIcon ? IT_BOOKMARK
+                    : bookmarkIcon ? IT_BOOKMARK
                         : isEmoji ? IT_EMOJI
                             : IT_CUSTOM
         })
@@ -187,39 +187,41 @@ export default class EditFolderDialog extends BaseDialog {
 
         // Scale
         const lblScale = add('label', 'Scale', { style: 'text-align:right' })
-        add('input', { classes: 'spanCols3', type: 'range', min: 5, max: 50, value: folder?.scale / 10 }, function () {
+        const scaleInput = add('input', { classes: 'spanCols3', type: 'range', min: 5, max: 50, value: folder.scale / 10 }, function () {
             this.oninput = () => {
-                if (folder?.scale && folder.scale != this.value * 10) {
+                if (folder.scale && folder.scale != this.value * 10) {
                     folder.scale = this.value * 10
-                    //folder?.refresh()
+                    //folder?.refresh() // TODO
                 }
-                lblScale.innerText = `Scale (${folder?.scale}%)`
+                lblScale.innerText = `Scale (${folder.scale}%)`
             }
             this.oninput()
         })
 
+        var defaultAccent = !folder.accentColour
         add('label', 'Accent colour', { style: 'text-align:right' })
-        const accountColourPicker = add('input', { type: 'color', classes: 'spanCols2', value: folder?.accentColour }, function () { // TODO
-            this.onchange = () => {
-                if (folder) {
-                    folder.accentColour = this.value !== '#000000' ? this.value : null
-                    BaseDialog.setTheme(folder.accentColour)
+        const accountColourPicker = add('input', { type: 'color', classes: 'spanCols2', value: !defaultAccent ? folder.accentColour : State.options.accentColour }, function () {
+            this.on_change(() => {
+                defaultAccent = false
+                if (folder.id) {
+                    folder.accentColour = this.value
                 }
-            }
-            this.onchange()
+            })
+            BaseDialog.setTheme(folder.accentColour)
         })
         add('button', { type: 'button' }, () => {
             add('i', { className: 'fa-fw fas fa-xmark' })
             add('span', ' Clear')
         }).onclick = async () => {
-            accountColourPicker.value = '#000000'
-            folder.accentColour = null
+            accountColourPicker.value = State.options.accentColour
+            defaultAccent = true
             BaseDialog.setTheme(folder.accentColour)
+            folder.accentColour = null
         }
 
         add('label', 'Background image URL', { style: 'text-align:right' })
-        const bgImage = create('img', { style: 'max-width:100%;max-height:100%', src: folder?.backgroundImage || '' })
-        add('textarea', { classes: 'spanCols2', style: 'width:100%;height:100%;resize:none', value: folder?.backgroundImage || '' }, function () {
+        const bgImage = create('img', { style: 'max-width:100%;max-height:100%', src: folder.backgroundImage || '' })
+        add('textarea', { classes: 'spanCols2', style: 'width:100%;height:100%;resize:none', value: folder.backgroundImage || '' }, function () {
             this.onkeyup = () => {
                 bgImage.src = this.value
                 folder.backgroundImage = this.value
@@ -233,7 +235,7 @@ export default class EditFolderDialog extends BaseDialog {
         const elError = add('div', { classes: ['error', 'spanCols4'] })
 
         add('div', { classes: 'spanCols2', style: 'white-space:nowrap' }, () => {
-            if (folder) {
+            if (folder.id) {
                 var confirmedDelete = false
                 add('button', { type: 'button' }, () => {
                     add('i', { className: 'fa-fw fas fa-trash-can', title: 'Delete folder' })
@@ -259,14 +261,15 @@ export default class EditFolderDialog extends BaseDialog {
                         dialog.close()
                     }
                 }
-            }
-            add('button', { type: 'button' }, () => {
-                add('i', { className: 'fa-fw fas fa-upload' })
-                add('span', ' Export')
-            }).onclick = async () => {
-                const data = JSON.stringify(folder.export(true, true), null, '  ')
-                const dataUrl = URL.createObjectURL(new Blob([data], { type: 'application/octet-binary' }))
-                chrome.downloads.download({ url: dataUrl, filename: 'booksmart_export.json', conflictAction: 'overwrite', saveAs: true })
+                
+                add('button', { type: 'button' }, () => {
+                    add('i', { className: 'fa-fw fas fa-upload' })
+                    add('span', ' Export')
+                }).onclick = async () => {
+                    const data = JSON.stringify(folder.export(true, true), null, '  ')
+                    const dataUrl = URL.createObjectURL(new Blob([data], { type: 'application/octet-binary' }))
+                    chrome.downloads.download({ url: dataUrl, filename: 'booksmart_export.json', conflictAction: 'overwrite', saveAs: true })
+                }
             }
         })
 
@@ -282,25 +285,25 @@ export default class EditFolderDialog extends BaseDialog {
                 }
 
                 var newIcon = null
-                if (lstIconType.value === IT_FACON) {
+                if (lstIconType.value == IT_FACON) {
                     newIcon = faconSelector.value
                     if (!newIcon?.includes('fa-')) {
                         elError.textContent = 'Font Awesome icon is required'
                         return
                     }
-                } else if (lstIconType.value === IT_BOOKMARK) {
+                } else if (lstIconType.value == IT_BOOKMARK) {
                     newIcon = lstBookmarkIcons.value
                     if (!newIcon) {
                         elError.textContent = 'Bookmark selection is required'
                         return
                     }
-                } else if (lstIconType.value === IT_CUSTOM) {
+                } else if (lstIconType.value == IT_CUSTOM) {
                     newIcon = txtCustomIcon.value
                     if (!newIcon) {
                         elError.textContent = 'Custom icon is required'
                         return
                     }
-                } else if (lstIconType.value === IT_EMOJI) {
+                } else if (lstIconType.value == IT_EMOJI) {
                     newIcon = emojiSelector.value
                     if (!newIcon) {
                         elError.textContent = 'Emoji selection is required'
@@ -309,7 +312,7 @@ export default class EditFolderDialog extends BaseDialog {
                 }
 
                 // Create / update folder
-                if (!folder) {
+                if (!folder.id) {
                     folder = await State.createFolder(txtTitle.value.trim())
                 } else {
                     folder.title = txtTitle.value
@@ -317,6 +320,8 @@ export default class EditFolderDialog extends BaseDialog {
 
                 folder.sortOrder = num(lstSort.value) * (chkSortAsc.checked ? 1 : -1)
                 folder.icon = newIcon
+                folder.accentColour = defaultAccent ? null : accountColourPicker.value
+                folder.scale = scaleInput.value * 10
 
                 await State.updateEntry(folder)
                 MainView.setTheme()
@@ -329,7 +334,7 @@ export default class EditFolderDialog extends BaseDialog {
             }).onclick = () => dialog.close()
         })
 
-        if (!folder) {
+        if (!folder.id) {
             add('p', { className: 'spanCols4 centred' }, () => {
                 add('button', { type: 'button' }, () => {
                     add('span', { className: 'fa-stack fa-xs' }, () => {

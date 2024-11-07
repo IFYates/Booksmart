@@ -38,7 +38,7 @@ export default class Options {
     }
 
     static #defaults = {
-        accentColour: v => !v || v === '#4F4F78',
+        accentColour: v => !v || v == '#4F4F78',
         allowEdits: true,
         backgroundImage: v => !v?.length,
         columns: 500,

@@ -6,7 +6,7 @@ Object.prototype.allKeys = function () {
     const objectKeys = Object.keys(this)
     const classProperties = Object.getOwnPropertyDescriptors(Object.getPrototypeOf(this))
     const classKeys = Object.entries(classProperties)
-        .filter(d => d[1].get && d[0] !== '__proto__')
+        .filter(d => d[1].get && d[0] != '__proto__')
         .map(d => d[0])
     return objectKeys.concat(classKeys).sort()
 }
@@ -19,12 +19,12 @@ Object.defineProperty(Object.prototype, 'allKeys', { enumerable: false, writable
  * @returns {boolean} True if the two objects are equal.
  */
 Object.prototype.areEquivalent = function (other) {
-    if (this === other) {
+    if (this == other) {
         return true
     }
     if (Array.isArray(this) && Array.isArray(other)) {
-        return this.length === other.length
-            && this.every((e, i) => other[i] === e)
+        return this.length == other.length
+            && this.every((e, i) => other[i] == e)
     }
     return false
 }
@@ -82,7 +82,7 @@ Object.prototype.pick = function (defaults, excludeOtherPredicate = null) {
 
     const result = {}
     for (const [key, value] of this.allKeys().map(k => [k, this[k]])) {
-        if ((defaults.hasOwnProperty(key) && !(typeof defaults[key] !== 'function' ? defaults[key]?.areEquivalent(value) : defaults[key](value, key)))
+        if ((defaults.hasOwnProperty(key) && !(typeof defaults[key] != 'function' ? defaults[key]?.areEquivalent(value) : defaults[key](value, key)))
             || (!defaults.hasOwnProperty(key) && excludeOtherPredicate?.call(this, value, key) === false)) {
             result[key] = value
         }
@@ -124,7 +124,7 @@ Object.prototype.tidy = function (defaults, excludeOtherPredicate = null) {
     for (const [key, value] of Object.entries(this)) {
         if ((!defaults.hasOwnProperty(key) && excludeOtherPredicate?.call(this, value, key) === true)
             || defaults[key]?.areEquivalent(value)
-            || (typeof defaults[key] === 'function' && defaults[key](value, key) === true)) {
+            || (typeof defaults[key] == 'function' && defaults[key](value, key) === true)) {
             delete this[key]
         }
     }
@@ -144,7 +144,7 @@ globalThis.tryParse = function (json, alt) {
     try {
         return json instanceof Object ? json : JSON.parse(json)
     } catch {
-        return typeof (alt) === 'function' ? alt() : alt
+        return typeof (alt) == 'function' ? alt() : alt
     }
 }
 Object.defineProperty(Object.prototype, 'tryParse', { enumerable: false, writable: false, configurable: false })

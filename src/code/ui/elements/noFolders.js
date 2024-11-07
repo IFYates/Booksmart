@@ -1,3 +1,4 @@
+import Dialogs from "../dialogs.js";
 import { BookmarkElement } from "./bookmark.js";
 
 export class NoFoldersElement extends BookmarkElement {
@@ -8,6 +9,10 @@ export class NoFoldersElement extends BookmarkElement {
 
     async _ondisplay(root) {
         root.innerHTML = 'You don\'t have any bookmarks; create one now';
+    }
+
+    onclick() {
+        Dialogs.newFolder().then(MainView.fullRefresh)
     }
 }
 customElements.define('bs-nobookmarks', NoFoldersElement)

@@ -7,7 +7,7 @@ function emit(event, tabOrId) {
     }
 }
 chrome.tabs.onUpdated.addListener(async (_, changeInfo, tab) => {
-    if (!Tabs.isSelf(tab) && changeInfo.status === 'complete' || changeInfo.hasOwnProperty('title')) {
+    if (!Tabs.isSelf(tab) && changeInfo.status == 'complete' || changeInfo.hasOwnProperty('title')) {
         emit('updated', tab)
     }
 })
@@ -39,7 +39,7 @@ export class Tabs {
     }
 
     static isSelf(tab) {
-        return tab.id === ownTab.id || tab.url === ownTab.url || tab.favIconUrl?.startsWith(document.location.origin)
+        return tab.id == ownTab.id || tab.url == ownTab.url || tab.favIconUrl?.startsWith(document.location.origin)
     }
 }
 

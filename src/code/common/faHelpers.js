@@ -29,7 +29,7 @@ export default class FontAwesome {
             for (const style of styles) {
                 const el = document.body.add('i', { classes: [style, icon], style: 'visibility: hidden' })
                 if (el.offsetHeight < 10) {
-                    if (this.#icons[icon].length === 1) {
+                    if (this.#icons[icon].length == 1) {
                         delete this.#icons[icon]
                     } else {
                         this.#icons[icon].remove(style)
