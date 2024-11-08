@@ -11,7 +11,7 @@ export class BookmarkAddElement extends BaseHTMLElement {
     get folder() { return this.#folder }
 
     constructor(folder) {
-        super(template, ['/code/styles/common.css', '/code/styles/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
+        super(template, ['/styles/common.css', '/styles/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
         this.#folder = folder
     }
 

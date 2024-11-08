@@ -43,7 +43,8 @@ export default class MainView {
             .onclick = () => Dialogs.info()
 
         document.getElementById('options')
-            .onclick = () => Dialogs.options() // TODO: .then(() => State.options.reload().then(MainView.fullRefresh))
+            .onclick = () => Dialogs.options() // TODO: .then(() => State.options.reload()
+                .then(MainView.fullRefresh)
 
         MainView.elEditLock.onclick = () => {
             State.options.allowEdits = !State.options.allowEdits
@@ -84,6 +85,7 @@ export default class MainView {
             }
             const lum = calculateRelativeLuminance(parseInt(accentColour.substring(1, 3), 16), parseInt(accentColour.substring(3, 5), 16), parseInt(accentColour.substring(5, 7), 16))
             element.style.setProperty('--text-colour', lum > 0.4 ? 'black' : 'white')
+            element.style.setProperty('--text-shadow-colour', lum <= 0.4 ? 'black' : 'white')
         }
         else {
             element.style.setProperty('--accent-colour', null)
@@ -120,9 +122,11 @@ export default class MainView {
                 }
                 if (State.options.showTopSites) {
                     this.appendChild(SiteListElement.instance)
+                    SiteListElement.instance.refresh()
                 }
                 this.appendChild(TabListElement.instance)
                 this.classList.toggle('editable', State.options.allowEdits)
+                TabListElement.instance.refresh()
             })
 
             // Swap
