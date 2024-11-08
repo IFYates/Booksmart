@@ -50,34 +50,6 @@ export class FolderElement extends BaseHTMLElement {
         this.shadowRoot.host.style.backgroundImage = this.#folder.backgroundImage ? `url(${this.#folder.backgroundImage})` : null
     }
 
-    // TODO: to model
-    get #bookmarks() {
-        const result = [...this.#folder.bookmarks]
-        const compareFavourite = (a, b) => (a.favourite ? 0 : 1) - (b.favourite ? 0 : 1)
-        switch (Math.abs(this.sortOrder)) {
-            default: // Manual
-                result.sort((a, b) => compareFavourite(a, b) || a.index - b.index)
-                break;
-            case 1: // Alphabetic
-                result.sort((a, b) => compareFavourite(a, b) || a.title.localeCompare(b.title))
-                break;
-            case 2: // Creation date
-                result.sort((a, b) => compareFavourite(a, b) || a.dateAddedUtc - b.dateAddedUtc)
-                break;
-            case 3: // Clicks
-                result.sort((a, b) => compareFavourite(a, b) || b.clicks - a.clicks || a.title.localeCompare(b.title))
-                break;
-            case 4: // Last click
-                result.sort((a, b) => compareFavourite(a, b) || b.lastClick - a.lastClick)
-                break;
-        }
-        if (this.sortOrder < 0) {
-            result.reverse()
-        }
-        // TODO? this.#reindex(result)
-        return result
-    }
-
     onShowOrHide() { }
 
     async _ondisplay(root, host) {
@@ -161,7 +133,8 @@ export class FolderElement extends BaseHTMLElement {
 
         // Bookmarks
         if (!folder.collapsed) {
-            for (const bookmark of this.#bookmarks) {
+            const bookmarks = folder.getBookmarks ? folder.getBookmarks() : folder.bookmarks
+            for (const bookmark of bookmarks) {
                 root.appendChild(bookmark instanceof BookmarkElement ? bookmark : new BookmarkElement(bookmark))
             }
 

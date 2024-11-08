@@ -66,11 +66,24 @@ export default class MainView {
             // element.style.setProperty('--accent-colour-hue', State.options.themeAccent[0])
             // element.style.setProperty('--accent-colour-saturation', `${State.options.themeAccent[1]}%`)
             // element.style.setProperty('--accent-colour-lightness', '24%')
-            element.style.setProperty('--text-colour', '#eee') // TODO
-            // element.style.setProperty('--text-colour', '#eee') // TODO
             element.style.setProperty('--theme-colour-shade', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585), 0.5)')
             element.style.setProperty('--theme-colour-darkest', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585))')
             element.style.setProperty('--theme-colour-lighter', 'rgb(calc(var(--accent-colour-r) * 1.5), calc(var(--accent-colour-g) * 1.5), calc(var(--accent-colour-b) * 1.5))')
+
+            // TODO: tidier
+            function calculateRelativeLuminance(r, g, b) {
+                const R = r / 255;
+                const G = g / 255;
+                const B = b / 255;
+
+                const rLinear = R <= 0.03928 ? R / 12.92 : Math.pow((R + 0.055) / 1.055, 2.4);
+                const gLinear = G <= 0.03928 ? G / 12.92 : Math.pow((G + 0.055) / 1.055, 2.4);
+                const bLinear = B <= 0.03928 ? B / 12.92 : Math.pow((B + 0.055) / 1.055, 2.4);
+
+                return 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+            }
+            const lum = calculateRelativeLuminance(parseInt(accentColour.substring(1, 3), 16), parseInt(accentColour.substring(3, 5), 16), parseInt(accentColour.substring(5, 7), 16))
+            element.style.setProperty('--text-colour', lum > 0.4 ? 'black' : 'white')
         }
         else {
             element.style.setProperty('--accent-colour', null)
@@ -136,28 +149,6 @@ export default class MainView {
             const folderEl = document.getElementsByTagName(customElements.getName(FolderElement))[0]
             await folderEl.reindexSiblings()
             await State.save()
-        }
-    }
-
-    static updateTabsList(inplace = true) {
-        // Rebuild list
-        MainView.tabFolder.bookmarks.splice(0, MainView.tabFolder.bookmarks.length)
-        var lastWindowId = 0
-        for (const tab of MainView.tabs) {
-            // TODO
-            // if (lastWindowId && lastWindowId != tab.windowId) {
-            //     MainView.tabFolder.bookmarks.push({ type: 'separator' })
-            // }
-            //lastWindowId = tab.windowId
-            MainView.tabFolder.bookmarks.push(tab)
-        }
-
-        const el = document.getElementById('folder-' + MainView.tabFolder.id)
-        if (el && inplace) {
-            el.replaceWith(new FolderElement(MainView.tabFolder))
-        } else {
-            el?.remove()
-            MainView.elLayout.appendChild(new FolderElement(MainView.tabFolder))
         }
     }
 }

@@ -191,7 +191,7 @@ export default class EditFolderDialog extends BaseDialog {
             this.oninput = () => {
                 if (folder.scale && folder.scale != this.value * 10) {
                     folder.scale = this.value * 10
-                    //folder?.refresh() // TODO
+                    document.getElementById(`folder-${folder.id}`)?.refresh()
                 }
                 lblScale.innerText = `Scale (${folder.scale}%)`
             }

@@ -1,6 +1,5 @@
 import './common/html.js'
 import './common/utilities.js'
-import './ui/display.js'
 
 import Dialogs from './ui/dialogs.js'
 import MainView from "./ui/main.js"

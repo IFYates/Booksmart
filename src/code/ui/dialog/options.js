@@ -81,7 +81,7 @@ export default class OptionsDialog extends BaseDialog {
 
         // Theme
         add('label', 'Accent colour', { style: 'text-align:right' })
-        add('input', { type: 'color', classes: 'spanCols5', value: State.options.accentColour }, function () { // TODO
+        add('input', { type: 'color', classes: 'spanCols5', value: State.options.accentColour }, function () {
             this.onchange = () => {
                 State.options.accentColour = this.value
                 MainView.setTheme()

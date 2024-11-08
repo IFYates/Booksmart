@@ -272,15 +272,21 @@ export default class State {
 
     static async save() {
         const state = State.#getData(false)
-        await chrome.storage.sync.clear()
+
         await chrome.storage.sync.set(state)
+        const keys = await chrome.storage.sync.getKeys()
+        for (const key of keys.filter(k => !state.hasOwnProperty(k))) {
+            await chrome.storage.sync.remove(k)
+        }
     }
 
     static async updateEntry(entry) {
         if (entry.url) {
             await chrome.bookmarks.update(entry.id, { title: entry.title, url: entry.url })
+            await chrome.storage.sync.set({ [`bookmark.${entry.id}`]: entry.export(false) })
         } else {
             await chrome.bookmarks.update(entry.id, { title: entry.title })
+            await chrome.storage.sync.set({ [`folder.${entry.id}`]: entry.export(false) })
         }
     }
 }

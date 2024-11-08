@@ -1,5 +1,3 @@
-// TODO: given icon string (facon, emoji, url), displays correctly
-
 import Emojis from "../../common/emojiHelpers.js"
 import FontAwesome from "../../common/faHelpers.js"
 import { BaseHTMLElement } from "../../common/html.js"

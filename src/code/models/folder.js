@@ -52,6 +52,33 @@ export default class Folder {
     get immobile() { return false }
     get readonly() { return false }
 
+    getBookmarks() {
+        const result = [...this.#bookmarks]
+        const compareFavourite = (a, b) => (a.favourite ? 0 : 1) - (b.favourite ? 0 : 1)
+        switch (Math.abs(this.sortOrder)) {
+            default: // Manual
+                result.sort((a, b) => compareFavourite(a, b) || a.index - b.index)
+                break;
+            case 1: // Alphabetic
+                result.sort((a, b) => compareFavourite(a, b) || a.title.localeCompare(b.title))
+                break;
+            case 2: // Creation date
+                result.sort((a, b) => compareFavourite(a, b) || a.dateAddedUtc - b.dateAddedUtc)
+                break;
+            case 3: // Clicks
+                result.sort((a, b) => compareFavourite(a, b) || b.clicks - a.clicks || a.title.localeCompare(b.title))
+                break;
+            case 4: // Last click
+                result.sort((a, b) => compareFavourite(a, b) || b.lastClick - a.lastClick)
+                break;
+        }
+        if (this.sortOrder < 0) {
+            result.reverse()
+        }
+        // TODO? this.#reindex(result)
+        return result
+    }
+
     static #defaults = {
         accentColour: v => !v,
         backgroundImage: v => !v?.length,

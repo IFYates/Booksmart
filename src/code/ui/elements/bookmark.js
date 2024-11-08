@@ -66,10 +66,9 @@ export class BookmarkElement extends BaseHTMLElement {
                     self.#lastTab.focus()
                 }
 
-                // TODO
-                // self.#bookmark.clicks += 1
-                // self.#bookmark.lastClick = new Date().getTime()
-                // this.save()
+                self.#bookmark.clicks += 1
+                self.#bookmark.lastClick = new Date().getTime()
+                State.updateEntry(self.#bookmark)
             }
         })
         this._apply('span.title', function () {
@@ -194,7 +193,7 @@ export class BookmarkElement extends BaseHTMLElement {
     }
 
     static #defaults = {
-        index: null, // TODO?
+        index: null,
         dateAdded: 0,
         icon: '',
         favourite: false,
