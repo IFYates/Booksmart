@@ -72,11 +72,11 @@ export default class Options {
         this.backgroundImage = data.backgroundImage
         this.columns = data.columns
         this.openExistingTab = data.openExistingTab !== false
-        this.openNewTab = data.openNewTab
+        this.openNewTab = !!data.openNewTab
         this.scale = data.scale || 100
-        this.showFavicons = data.showFavicons
+        this.showFavicons = data.showFavicons !== false
         this.showTabList = data.showTabList !== false
-        this.showTopSites = data.showTopSites
-        this.wrapTitles = data.wrapTitles
+        this.showTopSites = !!data.showTopSites
+        this.wrapTitles = data.wrapTitles !== false
     }
 }

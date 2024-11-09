@@ -34,7 +34,7 @@ export default class MainView {
                 const folder = state?.folder
                 if (folder) {
                     state.element.remove()
-                    return State.deleteFolder(folder)
+                    return State.removeFolder(folder)
                 }
             }
         })

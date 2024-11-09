@@ -237,18 +237,19 @@ export default class EditFolderDialog extends BaseDialog {
         add('div', { classes: 'spanCols2', style: 'white-space:nowrap' }, () => {
             if (folder.id) {
                 var confirmedDelete = false
+                const span = create('span', ' Delete')
                 add('button', { type: 'button' }, () => {
                     add('i', { className: 'fa-fw fas fa-trash-can', title: 'Delete folder' })
-                    add('span', ' Delete')
+                    add(span)
                 }).onclick = async function () {
                     if (!confirmedDelete) {
                         confirmedDelete = true
-                        this.add('span', 'Press again to confirm')
+                        span.innerText = ' Press again to confirm'
                         this.classList.add('danger')
                         return
                     }
 
-                    await folder.delete()
+                    await State.removeFolder(folder, true)
                     dialog.close()
                 }
 
@@ -257,7 +258,7 @@ export default class EditFolderDialog extends BaseDialog {
                         add('i', { className: 'fa-fw fas fa-folder-minus', title: 'Remove folder' })
                         add('span', ' Remove')
                     }).onclick = async function () {
-                        await folder.remove()
+                        await State.removeFolder(folder, false)
                         dialog.close()
                     }
                 }

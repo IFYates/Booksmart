@@ -113,8 +113,8 @@ export default class State {
         await State.save()
     }
 
-    static async deleteFolder(folder) {
-        if (folder.isOwned) {
+    static async removeFolder(folder, deleteOwned = null) {
+        if (deleteOwned !== false && (deleteOwned === true || folder.isOwned)) {
             await chrome.bookmarks.removeTree(folder.id)
         }
         delete State.#folders[folder.id]
@@ -276,7 +276,7 @@ export default class State {
         await chrome.storage.sync.set(state)
         const keys = await chrome.storage.sync.getKeys()
         for (const key of keys.filter(k => !state.hasOwnProperty(k))) {
-            await chrome.storage.sync.remove(k)
+            await chrome.storage.sync.remove(key)
         }
     }
 

@@ -145,8 +145,8 @@ export default class EditBookmarkDialog extends BaseDialog {
 
         add('div', { classes: 'spanCols2', style: 'white-space:nowrap' }, () => {
             if (bookmark) {
-                add('button', { type: 'button' }, () => {
-                    add('i', { className: 'fa-fw fas fa-trash-can danger', title: 'Delete bookmark' })
+                add('button', { type: 'button', className: 'danger' }, () => {
+                    add('i', { className: 'fa-fw fas fa-trash-can', title: 'Delete bookmark' })
                     add('span', ' Delete')
                 }).onclick = async () => {
                     await bookmark.delete()
