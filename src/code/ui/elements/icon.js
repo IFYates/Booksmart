@@ -31,7 +31,9 @@ export default class IconElement extends BaseHTMLElement {
     }
 
     _ondisplay() {
-        this.#show(this.#altIcon)
+        if (this.#altIcon) {
+            this.#show(this.#altIcon)
+        }
         this.#show(this.#icon)
     }
 
@@ -39,20 +41,25 @@ export default class IconElement extends BaseHTMLElement {
         if (Emojis.isEmoji(icon)) {
             this.querySelector('i.icon')?.remove()
             this.add('i', icon, { className: 'icon emoji fa-fw' })
+            return
         }
-        else if (FontAwesome.isFacon(icon)) {
+        if (FontAwesome.isFacon(icon)) {
             this.querySelector('i.icon')?.remove()
             this.add('i', { className: `icon fa-fw ${icon}` })
+            return
         }
-        else {
-            icon = (!icon && this.#favDomain) ? `${this.#favDomain}/favicon.ico` : null
-            if (icon) {
-                this.add('img', { className: 'icon', src: icon, style: 'display:none' })
-                    .onload = (ev) => {
-                        ev.target.style.display = ''
-                        this.querySelector('i.icon')?.remove()
+
+        icon = (!icon && /^https?:\/\/\w+\.\w+/i.test(this.#favDomain)) ? `${this.#favDomain}/favicon.ico` : icon
+        if (icon) {
+            this.add('img', { className: 'icon', src: icon, style: 'display:none' })
+                .onload = (ev) => {
+                    ev.target.style.display = ''
+                    this.querySelector('i.icon')?.remove()
+                    if (ev.target.src != this.#icon) {
+                        this.#icon = ev.target.src
+                        this.onchange?.call(this)
                     }
-            }
+                }
         }
     }
 }

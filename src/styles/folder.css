@@ -8,6 +8,7 @@
     border-radius: 5px;
     overflow: hidden;
     padding: 5px;
+    border-width: 1px !important;
 
     background-position: center;
     background-repeat: no-repeat;

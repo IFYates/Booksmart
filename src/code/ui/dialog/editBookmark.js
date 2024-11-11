@@ -13,11 +13,11 @@ export default class EditBookmarkDialog extends BaseDialog {
     async _display(dialog, bookmark, folder) {
         const txtTitle = create('input', {
             autofocus: true,
-            type: 'textbox',
+            type: 'text',
             value: bookmark?.title || 'New bookmark'
         })
         const txtURL = create('input', {
-            type: 'textbox',
+            type: 'text',
             value: bookmark?.url || 'https://',
         })
         const txtNotes = document.createElement('textarea')
@@ -60,15 +60,15 @@ export default class EditBookmarkDialog extends BaseDialog {
         faconSelector.addEventListener('change', iconPreviewFA.update)
 
         const isEmoji = Emojis.isEmoji(bookmark?.icon)
-        const emojiSelector = new EmojiSelectorElement(bookmark?.icon || '')
-        const iconPreviewEmoji = create('i', { className: 'fa-fw fa-6x centred' }, function () {
+        const emojiSelector = new EmojiSelectorElement(isEmoji ? bookmark?.icon : '')
+        const iconPreviewEmoji = create('i', { className: 'emoji fa-6x centred' }, function () {
             this.update = () => {
                 iconPreviewEmoji.innerText = emojiSelector.value || ''
             }
         })
         emojiSelector.addEventListener('change', iconPreviewEmoji.update)
 
-        const txtCustomIcon = create('input', { type: 'textbox' }, function () {
+        const txtCustomIcon = create('input', { type: 'text' }, function () {
             this.onkeyup = () => {
                 iconPreviewCustom.image(this.value)
             }
@@ -103,42 +103,43 @@ export default class EditBookmarkDialog extends BaseDialog {
         })
 
         add('label', 'Icon')
-        add(iconPreviewDefault, { classes: 'spanRows2' }, (me) => {
+        add(lstIconType)
+        add('div', { classes: ['spanCols2', 'spanRows2'] }, (me) => {
+            lstIconType.on_change(value => { me.show(value == IT_FAVICON) })
+        })
+        add(faconSelector, { classes: ['spanCols2', 'spanRows2'] }, (me) => {
+            lstIconType.on_change(value => { me.show(value == IT_FACON) })
+        })
+        add(emojiSelector, { classes: ['spanCols2', 'spanRows2'] }, (me) => {
+            lstIconType.on_change(value => { me.show(value == IT_EMOJI) })
+        })
+        add(txtCustomIcon, { classes: ['spanCols2', 'spanRows2'] }, (me) => {
+            lstIconType.on_change((value) => {
+                if (me.show(value == IT_CUSTOM)) {
+                    me.onkeyup()
+                }
+            })
+        })
+        add('div')
+        add(iconPreviewDefault, (me) => {
             lstIconType.on_change(value => { me.show(value == IT_FAVICON || value == IT_CUSTOM) })
         })
-        add(iconPreviewFA, { classes: 'spanRows2' }, (me) => {
+        add(iconPreviewFA, (me) => {
             lstIconType.on_change((value) => {
                 if (me.show(value == IT_FACON)) {
                     me.update()
                 }
             })
         })
-        add(iconPreviewEmoji, { classes: 'spanRows2' }, (me) => {
+        add(iconPreviewEmoji, (me) => {
             lstIconType.on_change((value) => {
                 if (me.show(value == IT_EMOJI)) {
                     me.update()
                 }
             })
         })
-        add(iconPreviewCustom, { classes: 'spanRows2' }, (me) => {
+        add(iconPreviewCustom, (me) => {
             lstIconType.on_change(value => { me.show(value == IT_CUSTOM) })
-        })
-        add(lstIconType, { classes: 'spanCols2' })
-        add('div', { classes: 'spanCols2' }, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_FAVICON) })
-        })
-        add(faconSelector, { classes: 'spanCols2' }, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_FACON) })
-        })
-        add(emojiSelector, { classes: 'spanCols2' }, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_EMOJI) })
-        })
-        add(txtCustomIcon, { classes: 'spanCols2' }, (me) => {
-            lstIconType.on_change((value) => {
-                if (me.show(value == IT_CUSTOM)) {
-                    me.onkeyup()
-                }
-            })
         })
 
         const elError = add('div', { classes: ['error', 'spanCols4'] })
@@ -204,6 +205,7 @@ export default class EditBookmarkDialog extends BaseDialog {
 
                 await State.updateEntry(bookmark)
                 await State.save()
+                dialog.returnValue = true
                 dialog.close()
             }
             add('button', { type: 'button' }, () => {

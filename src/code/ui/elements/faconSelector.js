@@ -11,7 +11,7 @@ input {
 list {
     display: block;
     overflow-y: scroll;
-    height: 100px;
+    height: 150px;
 }
 
 list .facon {

@@ -38,8 +38,9 @@ h1 {
     margin: 0;
 }
 
-i.fa-fw {
+i.emoji {
     font-style: normal;
+    height: 100%;
 }
 
 label {

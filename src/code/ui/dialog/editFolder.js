@@ -17,7 +17,7 @@ export default class EditFolderDialog extends BaseDialog {
 
         const txtTitle = create('input', {
             autofocus: true,
-            type: 'textbox',
+            type: 'text',
             value: folder.title || 'New folder'
         })
 
@@ -83,8 +83,8 @@ export default class EditFolderDialog extends BaseDialog {
         faconSelector.addEventListener('change', iconPreviewFA.update)
 
         const isEmoji = Emojis.isEmoji(folder.icon)
-        const emojiSelector = new EmojiSelectorElement(folder.icon)
-        const iconPreviewEmoji = create('i', { className: 'fa-fw fa-6x centred' }, function () {
+        const emojiSelector = new EmojiSelectorElement(isEmoji ? folder.icon : '')
+        const iconPreviewEmoji = create('i', { className: 'emoji fa-6x centred' }, function () {
             this.update = () => {
                 iconPreviewEmoji.innerText = emojiSelector.value || ''
             }
@@ -97,6 +97,9 @@ export default class EditFolderDialog extends BaseDialog {
                 add('option', b.title, { value: b.icon || '(none)' }, function () {
                     this.selected = bookmarkIcon === b
                     this.disabled = !b.icon?.startsWith('data:image/') && !b.icon?.includes('://')
+                    if (this.disabled) {
+                        this.textContent = "[No icon] " + this.textContent
+                    }
                 })
             })
             this.onchange = () => {
@@ -106,7 +109,7 @@ export default class EditFolderDialog extends BaseDialog {
             this.onchange()
         })
 
-        const txtCustomIcon = create('input', { type: 'textbox' }, function () {
+        const txtCustomIcon = create('input', { type: 'text' }, function () {
             this.onkeyup = () => {
                 iconPreviewCustom.image(this.value)
             }
@@ -139,47 +142,48 @@ export default class EditFolderDialog extends BaseDialog {
         add(chkSortAsc)
 
         add('label', 'Icon')
-        add(iconPreviewDefault, { classes: 'spanRows2' }, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_NONE || value == IT_CUSTOM) })
-        })
-        add(iconPreviewFA, { classes: 'spanRows2' }, (me) => {
-            lstIconType.on_change((value) => {
-                if (me.show(value == IT_FACON)) {
-                    me.update()
-                }
-            })
-        })
-        add(iconPreviewEmoji, { classes: 'spanRows2' }, (me) => {
-            lstIconType.on_change((value) => {
-                if (me.show(value == IT_EMOJI)) {
-                    me.update()
-                }
-            })
-        })
-        add(iconPreviewCustom, { classes: 'spanRows2' }, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_BOOKMARK) })
-        })
-        add(lstIconType, { classes: 'spanCols2' })
-        add('div', { classes: 'spanCols2' }, (me) => {
+        add(lstIconType)
+        add('div', { classes: ['spanCols2', 'spanRows2'] }, (me) => {
             lstIconType.on_change(value => { me.show(value == IT_NONE) })
         })
-        add(faconSelector, { classes: 'spanCols2' }, (me) => {
+        add(faconSelector, { classes: ['spanCols2', 'spanRows2'] }, (me) => {
             lstIconType.on_change(value => { me.show(value == IT_FACON) })
         })
-        add(emojiSelector, { classes: 'spanCols2' }, (me) => {
+        add(emojiSelector, { classes: ['spanCols2', 'spanRows2'] }, (me) => {
             lstIconType.on_change(value => { me.show(value == IT_EMOJI) })
         })
-        add(lstBookmarkIcons, { classes: 'spanCols2' }, (me) => {
+        add(lstBookmarkIcons, { classes: ['spanCols2', 'spanRows2'] }, (me) => {
             lstIconType.on_change((value) => {
                 if (me.show(value == IT_BOOKMARK)) {
                     me.onchange()
                 }
             })
         })
-        add(txtCustomIcon, { classes: 'spanCols2' }, (me) => {
+        add(txtCustomIcon, { classes: ['spanCols2', 'spanRows2'] }, (me) => {
             lstIconType.on_change((value) => {
                 if (me.show(value == IT_CUSTOM)) {
                     me.onkeyup()
+                }
+            })
+        })
+        add('div')
+        add(iconPreviewCustom, (me) => {
+            lstIconType.on_change(value => { me.show(value == IT_BOOKMARK) })
+        })
+        add(iconPreviewDefault, (me) => {
+            lstIconType.on_change(value => { me.show(value == IT_NONE || value == IT_CUSTOM) })
+        })
+        add(iconPreviewFA, (me) => {
+            lstIconType.on_change((value) => {
+                if (me.show(value == IT_FACON)) {
+                    me.update()
+                }
+            })
+        })
+        add(iconPreviewEmoji, (me) => {
+            lstIconType.on_change((value) => {
+                if (me.show(value == IT_EMOJI)) {
+                    me.update()
                 }
             })
         })
@@ -261,7 +265,7 @@ export default class EditFolderDialog extends BaseDialog {
                         dialog.close()
                     }
                 }
-                
+
                 add('button', { type: 'button' }, () => {
                     add('i', { className: 'fa-fw fas fa-upload' })
                     add('span', ' Export')
@@ -326,6 +330,7 @@ export default class EditFolderDialog extends BaseDialog {
                 await State.updateEntry(folder)
                 MainView.setTheme()
                 await State.save()
+                dialog.returnValue = true
                 dialog.close()
             }
             add('button', { type: 'button' }, () => {

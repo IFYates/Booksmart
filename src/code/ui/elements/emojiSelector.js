@@ -12,7 +12,7 @@ list {
     display: block;
     overflow-y: scroll;
     padding-top: 5px;
-    height: 100px;
+    height: 150px;
 }
 
 list .emoji {
@@ -35,7 +35,7 @@ list .emoji {
 
 <input type="text" placeholder="Filter" />
 <list>
-    <span role="button" tabIndex="0" class="emoji fa-fw fa-2x"></span>
+    <span role="button" tabIndex="0" class="emoji fa-2x"></span>
 </list>
 `
 
