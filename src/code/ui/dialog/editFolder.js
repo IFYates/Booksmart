@@ -258,24 +258,24 @@ export default class EditFolderDialog extends BaseDialog {
 
         add('div', { classes: 'spanCols2', style: 'white-space:nowrap' }, () => {
             if (folder.id) {
-                var confirmedDelete = false
-                const span = create('span', ' Delete')
-                add('button', { type: 'button' }, () => {
-                    add('i', { className: 'fa-fw fas fa-trash-can', title: 'Delete folder' })
-                    add(span)
-                }).onclick = async function () {
-                    if (!confirmedDelete) {
-                        confirmedDelete = true
-                        span.innerText = ' Press again to confirm'
-                        this.classList.add('danger')
-                        return
+                if (folder.isOwned) {
+                    var confirmedDelete = false
+                    const span = create('span', ' Delete')
+                    add('button', { type: 'button' }, () => {
+                        add('i', { className: 'fa-fw fas fa-trash-can', title: 'Delete folder' })
+                        add(span)
+                    }).onclick = async function () {
+                        if (!confirmedDelete) {
+                            confirmedDelete = true
+                            span.innerText = ' Press again to confirm'
+                            this.classList.add('danger')
+                            return
+                        }
+
+                        await State.removeFolder(folder, true)
+                        dialog.close()
                     }
-
-                    await State.removeFolder(folder, true)
-                    dialog.close()
-                }
-
-                if (!folder.isOwned) {
+                } else {
                     add('button', { type: 'button' }, () => {
                         add('i', { className: 'fa-fw fas fa-folder-minus', title: 'Remove folder' })
                         add('span', ' Remove')
