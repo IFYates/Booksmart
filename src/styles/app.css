@@ -1,0 +1,68 @@
+.obfuscated {
+    filter: blur(3px);
+    /*-webkit-text-security: disc;*/
+    transform: rotate(180deg) scaleX(-1);
+}
+
+i.action,
+.actions>i {
+    cursor: pointer;
+    opacity: 0.3;
+    transition: opacity 0.5s ease-in-out;
+    text-shadow: 1px 1px 1px var(--text-shadow-colour),
+        -1px 1px 1px var(--text-shadow-colour),
+        1px -1px 1px var(--text-shadow-colour),
+        -1px -1px 1px var(--text-shadow-colour);
+}
+
+i.action:hover,
+.actions>i:hover {
+    opacity: 1;
+}
+
+html {
+    background: var(--theme-colour-darkest);
+    user-select: none;
+}
+
+body {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding: 8px;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+body>.actions {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    bottom: 5px;
+    width: calc(100% + 125px);
+    z-index: 1;
+}
+
+body>.actions * {
+    pointer-events: auto;
+}
+
+#trash {
+    float: right;
+    opacity: 0.1;
+}
+
+#trash.active {
+    color: darkred;
+    opacity: 1.0;
+}
+
+layout {
+    display: grid;
+    align-items: start;
+    grid-gap: 20px;
+    margin-top: 5px;
+    margin-bottom: 3.5em;
+    grid-template-columns: repeat(auto-fill, minmax(var(--layout-columns), 1fr));
+}

@@ -15,9 +15,9 @@ export default class Dialogs {
 
     static async editBookmark(bookmark, folder) { return await this.#editBookmark.show(bookmark, folder) }
     static async editFolder(folder) { return await this.#editFolder.show(folder, null) }
-    static async importBookmarks(layout) { return await this.#importBookmarks.show(layout) }
+    static async importBookmarks() { return await this.#importBookmarks.show() }
     static async info() { return await this.#info.show() }
     static async newBookmark(folder) { return await this.#newBookmark.show(null, folder) }
-    static async newFolder(layout) { return await this.#newFolder.show(null, layout) }
-    static async options(layout) { return await this.#options.show(layout) }
+    static async newFolder() { return await this.#newFolder.show(null) }
+    static async options() { return await this.#options.show() }
 }

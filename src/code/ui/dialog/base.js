@@ -23,9 +23,9 @@ export default class BaseDialog {
         throw new Error('Must be implemented by a subclass');
     }
 
-    async show(...args) {        
+    async show(...args) {
         await this._prepare(...args)
-        
+
         const self = this
         const dialog = document.body.add('dialog', function () {
             this.id = self.id
@@ -38,9 +38,16 @@ export default class BaseDialog {
 
         const promise = new Promise(resolve => {
             dialog.showModal()
+            dialog.classList.add('open')
             dialog.onclose = resolve
         })
         await promise
         dialog.remove()
+        return dialog.returnValue
+    }
+
+    static setTheme(accentColour) {
+        const element = document.getElementsByTagName('dialog')[0]
+        MainView.setTheme(accentColour, element)
     }
 }

@@ -1,0 +1,107 @@
+:host {
+    position: relative;
+    display: flex;
+    align-content: baseline;
+    align-self: stretch;
+    flex-wrap: wrap;
+    border-width: 1px;
+    border-radius: 5px;
+    overflow: hidden;
+    padding: 5px;
+
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+:host(#folder-tabs),
+:host(#folder-topSites) {
+    grid-column: 1 / -1;
+}
+
+i.action,
+.actions>i {
+    cursor: pointer;
+    opacity: 0.3;
+    transition: opacity 0.5s ease-in-out;
+}
+
+i.action:hover,
+.actions>i:hover {
+    opacity: 1;
+}
+
+.icon {
+    position: absolute;
+    width: 22px;
+    max-height: 22px;
+    padding-right: 4px;
+}
+
+:host(.collapsed) {
+    align-self: unset;
+    filter: brightness(0.8);
+    padding-bottom: 0;
+}
+
+h1 {
+    background: var(--accent-colour);
+    display: flex;
+    align-items: center;
+    align-self: start;
+    text-align: center;
+    width: 100%;
+    border-bottom-width: 1px;
+    padding: 5px;
+    font-weight: bold;
+    font-size: initial;
+    margin: -5px;
+    margin-bottom: 5px;
+}
+
+:host(.collapsable) h1 {
+    cursor: pointer;
+}
+
+:host(.collapsed) h1 {
+    border-bottom: 0;
+    margin-bottom: 0;
+}
+
+h1>span {
+    flex-grow: 1;
+}
+
+h1>.actions {
+    background: var(--accent-colour);
+    border-radius: 3px;
+    padding-right: 5px;
+    position: absolute;
+    right: 0;
+    visibility: hidden;
+}
+
+h1:hover .actions {
+    visibility: visible;
+}
+
+:host(.collapsable) h1:hover .icon {
+    visibility: hidden;
+}
+
+.showHide {
+    position: absolute;
+    visibility: hidden;
+}
+
+h1:hover .showHide {
+    visibility: visible;
+}
+
+:host(.collapsed) .showHide[title="Hide"] {
+    display: none;
+}
+
+:host(:not(.collapsed)) .showHide[title="Show"] {
+    display: none;
+}

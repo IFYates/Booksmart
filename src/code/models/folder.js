@@ -1,134 +1,123 @@
+import State from "./state.js"
+
 /*
 A folder in the bookmarks hierarchy.
 */
 export default class Folder {
-    #storage
-    #parentId
-    #id
-    #title
-    #data = {}
-    #bookmarks = []
-    #owned = true
-
-    constructor(storage, folder, data, isOwned) {
-        this.#storage = storage
+    constructor(folder = {}, data = {}) {
         this.#parentId = folder.parentId
         this.#id = folder.id
+        this.#dateAdded = folder.dateAdded
         this.#title = folder.title
-        this.#owned = isOwned
-        this.#applyData(data)
-    }
-    #applyData(data) {
-        this.#data = {
-            favourite: !!data.favourite,
-            icon: data.icon || '',
-            index: num(data.index, NaN),
-            collapsed: !!data.collapsed,
-            sortOrder: num(data.sortOrder)
-        }
+        this.import(data)
     }
 
-    get readonly() { return !this.#storage }
-    get isOwned() { return this.#owned }
+    get isOwned() { return this.#parentId == State.booksmartRootId }
 
+    #parentId
     get parentId() { return this.#parentId }
+    #id
     get id() { return this.#id }
+    #dateAdded
+    get dateAdded() { return new Date(this.#dateAdded) }
+
+    #title
     get title() { return this.#title }
     set title(value) { this.#title = value?.trim() }
+    #index
+    get index() { return this.#index }
+    set index(value) { this.#index = num(value) }
+    #bookmarks = []
+    get bookmarks() { return this.#bookmarks }
 
-    get collapsed() { return this.#data.collapsed }
-    set collapsed(value) { this.#data.collapsed = !!value }
-    get favourite() { return this.#data.favourite }
-    set favourite(value) { this.#data.favourite = !!value }
-    get icon() { return this.#data.icon }
-    set icon(value) { this.#data.icon = value?.trim() }
-    get index() { return this.#data.index }
-    set index(value) { this.#data.index = (isNaN(value) && typeof value === 'number') ? value : num(value) }
-    get sortOrder() { return this.#data.sortOrder } // 0: Manual, 1: Alphabetic, 2: Creation date, 3: Clicks (then alphabetic), 4 Last click, -ve = opposite
-    set sortOrder(value) { this.#data.sortOrder = num(value) }
+    #accentColour
+    get accentColour() { return this.#accentColour }
+    set accentColour(value) { this.#accentColour = value }
+    #backgroundImage
+    get backgroundImage() { return this.#backgroundImage }
+    set backgroundImage(value) { this.#backgroundImage = value }
+    #collapsed
+    get collapsed() { return this.#collapsed }
+    set collapsed(value) { this.#collapsed = !!value }
+    #icon
+    get icon() { return this.#icon }
+    set icon(value) { this.#icon = value?.trim() }
+    #scale
+    get scale() { return this.#scale }
+    set scale(value) { this.#scale = num(value) }
+    #sortOrder
+    get sortOrder() { return this.#sortOrder }
+    set sortOrder(value) { this.#sortOrder = num(value) }
 
-    bookmarks = {
-        count: () => this.#bookmarks.length,
-        add: async (bookmark) => {
-            if (bookmark.folderId !== this.id) {
-                await bookmark.moveTo(this)
-            } else if (!this.#bookmarks.includes(bookmark)) {
-                this.#bookmarks.push(bookmark)
-            }
-            return bookmark
-        },
-        create: async (title, url) => {
-            return this.#storage.createBookmark(this, title, url)
-        },
-        list: () => {
-            const result = []
-            for (const bookmark of this.#bookmarks) {
-                result.push(bookmark)
-            }
+    get immobile() { return false }
+    get readonly() { return false }
 
-            function compareFavourite(a, b) { return (a.favourite ? 0 : 1) - (b.favourite ? 0 : 1) }
-            switch (Math.abs(this.sortOrder)) {
-                default: // Manual
-                    result.sort(compareFavourite)
-                    break;
-                case 1: // Alphabetic
-                    result.sort((a, b) => compareFavourite(a, b) || a.title.localeCompare(b.title))
-                    break;
-                case 2: // Creation date
-                    result.sort((a, b) => compareFavourite(a, b) || a.dateAddedUtc - b.dateAddedUtc)
-                    break;
-                case 3: // Clicks
-                    result.sort((a, b) => compareFavourite(a, b) || b.clicks - a.clicks || a.title.localeCompare(b.title))
-                    break;
-                case 4: // Last click
-                    result.sort((a, b) => compareFavourite(a, b) || b.lastClick - a.lastClick)
-                    break;
-            }
-            return this.sortOrder < 0 ? result.reverse() : result
-        },
-        remove: (bookmark) => {
-            const index = this.#bookmarks.indexOf(bookmark)
-            if (index >= 0) {
-                this.#bookmarks.splice(index, 1)
-            }
+    getBookmarks() {
+        const result = [...this.#bookmarks]
+        const compareFavourite = (a, b) => (a.favourite ? 0 : 1) - (b.favourite ? 0 : 1)
+        switch (Math.abs(this.sortOrder)) {
+            default: // Manual
+                result.sort((a, b) => compareFavourite(a, b) || a.index - b.index)
+                break;
+            case 1: // Alphabetic
+                result.sort((a, b) => compareFavourite(a, b) || a.title.localeCompare(b.title))
+                break;
+            case 2: // Creation date
+                result.sort((a, b) => compareFavourite(a, b) || a.dateAddedUtc - b.dateAddedUtc)
+                break;
+            case 3: // Clicks
+                result.sort((a, b) => compareFavourite(a, b) || b.clicks - a.clicks || a.title.localeCompare(b.title))
+                break;
+            case 4: // Last click
+                result.sort((a, b) => compareFavourite(a, b) || b.lastClick - a.lastClick)
+                break;
         }
+        if (this.sortOrder < 0) {
+            result.reverse()
+        }
+        // TODO? this.#reindex(result)
+        return result
     }
 
-    async delete() {
-        if (this.readonly) return
-        await this.#storage.delete(this)
+    static #defaults = {
+        accentColour: v => !v,
+        backgroundImage: v => !v?.length,
+        collapsed: false,
+        icon: v => !v?.length,
+        index: null,
+        scale: 100,
+        sortOrder: 0,
+        title: null
     }
-
-    export(includeInternals = true, includeVersion = false) {
-        const data = { ...this.#data }
-        data.tidy(['favourite', 'icon', 'collapsed', 'sortOrder'], (v) => !!v)
-        data.index = this.#data.index
-
-        if (includeVersion) {
-            data['.booksmart'] = { version: 1, content: 'folder' }
-        }
-        if (includeInternals) {
-            data.id = this.id
-            data.title = this.title
-            data.bookmarks = this.#bookmarks.map(b => b.export())
+    export(standalone) {
+        const data = {
+            accentColour: this.#accentColour,
+            backgroundImage: this.#backgroundImage,
+            collapsed: this.#collapsed,
+            icon: this.#icon,
+            index: this.#index,
+            scale: this.#scale,
+            sortOrder: this.#sortOrder,
+            title: standalone ? this.#title : null
+        }.pick(Folder.#defaults)
+        if (standalone) {
+            data['.booksmart'] = {
+                version: 1,
+                content: 'Folder'
+            }
+            data.children = this.#bookmarks.map(b => b.export(true))
         }
         return data
     }
-    import(data) {
-        this.title = data.title
-        delete data.title
-        this.url = data.url
-        delete data.url
-        this.#applyData(data)
-    }
-
-    async save() {
-        if (this.readonly) return
-        await this.#storage.save(this)
-    }
-
-    async remove() {
-        if (this.readonly) return
-        await this.#storage.remove(this)
+    
+    import(data)
+    {
+        this.#index = num(data.index)
+        this.#accentColour = data.accentColour
+        this.#backgroundImage = data.backgroundImage
+        this.#collapsed = !!data.collapsed
+        this.#icon = data.icon
+        this.#scale = num(data.scale, 100)
+        this.#sortOrder = num(data.sortOrder)
     }
 }

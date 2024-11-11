@@ -1,127 +1,96 @@
+import State from './state.js'
+
 /*
 A single bookmark.
 */
 export default class Bookmark {
-    #storage
-    #parentId
-    #id
-    #index
-    #title
-    #url
-    #dateAdded
-    #data = {}
-
-    constructor(storage, bookmark, data) {
-        this.#storage = storage
+    constructor(bookmark, data = {}) {
         this.#parentId = bookmark.parentId
         this.#id = bookmark.id
-        this.#index = num(bookmark.index)
+        this.#dateAdded = num(bookmark.dateAdded)
+
         this.#title = bookmark.title
         this.#url = bookmark.url
-        this.#dateAdded = bookmark.dateAdded
-        this.#applyData(data)
-    }
-    #applyData(data) {
-        this.#data = {
-            icon: data.icon || '',
-            favourite: !!data.favourite,
-            clicks: num(data.clicks),
-            lastClick: data.lastClick || 0,
-            notes: data.notes || ''
-        }
+        data.index = num(bookmark.index)
+
+        this.import(data)
     }
 
-    get readonly() { return !this.#storage }
-
+    #parentId
     get folderId() { return this.#parentId }
+    #id
     get id() { return this.#id }
-    get index() { return this.#index }
+    #dateAdded
+    get dateAdded() { return new Date(this.#dateAdded) }
+
+    #title
     get title() { return this.#title }
     set title(value) { this.#title = value?.trim() }
+    #index
+    get index() { return this.#index }
+    set index(value) { this.#index = num(value) }
+    #url
     get url() { return this.#url }
     set url(value) { this.#url = value?.trim() }
-    get dateAddedUtc() { return new Date(this.#dateAdded) }
     get domain() { return new URL(this.#url).origin }
 
-    get icon() { return this.#data.icon }
-    set icon(value) { this.#data.icon = value?.trim() }
-    get favourite() { return this.#data.favourite }
-    set favourite(value) { this.#data.favourite = !!value }
-    get clicks() { return this.#data.clicks }
-    get lastClick() { return new Date(this.#data.lastClick) }
-    get notes() { return this.#data.notes }
-    set notes(value) { this.#data.notes = value?.trim() }
-
-    #lastTab = null
-    async click(ev, openExistingTab, openNewTab) {
-        if (openExistingTab && this.#lastTab) {
-            ev.preventDefault()
-            await Tabs.focus(this.#lastTab)
-        } else if (!openNewTab) {
-            ev.target.parentNode.classList.add('pulse')
-        }
-
-        this.#data.clicks += 1
-        this.#data.lastClick = new Date().getTime()
-        await this.save()
-    }
+    #icon
+    get icon() { return this.#icon }
+    set icon(value) { this.#icon = value?.trim() }
+    #favourite
+    get favourite() { return this.#favourite }
+    set favourite(value) { this.#favourite = !!value }
+    #clicks
+    get clicks() { return this.#clicks }
+    #lastClick
+    get lastClick() { return new Date(this.#lastClick) }
+    #notes
+    get notes() { return this.#notes }
+    set notes(value) { this.#notes = value?.trim() }
 
     async duplicate() {
-        const data = { ...this.#data }
-        delete data.clicks
-        delete data.lastClick
-
-        const bookmark = await this.#storage.create(this.folderId, this.title, this.url)
-        bookmark.#applyData(data)
-        await this.save()
-        return bookmark
+        return await State.createBookmark(this.#parentId, this.#title, this.#url, this.export())
     }
 
-    async delete() {
-        if (this.readonly) return
-        await this.#storage.delete(this)
+    static #defaults = {
+        favourite: false,
+        icon: '',
+        index: null,
+        clicks: 0,
+        lastClick: 0,
+        notes: '',
+        title: null,
+        url: null
+    }
+    export(standalone) {
+        return {
+            favourite: this.#favourite,
+            icon: this.#icon,
+            index: this.#index,
+            clicks: this.#clicks,
+            lastClick: this.#lastClick,
+            notes: this.#notes,
+            title: standalone ? this.#title : null,
+            url: standalone ? this.#url : null
+        }.pick(Bookmark.#defaults)
     }
 
-    export(includeInternals = true) {
-        const data = this.#data
-        data.tidy(['favourite', 'icon', 'click', 'lastClick', 'notes'], (v) => !!v)
-        
-        if (includeInternals) {
-            data.id = this.id
-            data.index = this.index
-            data.title = this.title
-            data.url = this.url
-        }
-        return data
-    }
     import(data) {
-        if (this.readonly) return
-        this.#applyData(data)
-    }
-
-    async hasOpenTab() {
-        if (!isURL(this.url)) {
-            return false
-        }
-        this.#lastTab = await Tabs.find(this.url)
-        return !!this.#lastTab
+        this.#index = num(data.index, this.#index)
+        this.#icon = data.icon || ''
+        this.#favourite = !!data.favourite
+        this.#clicks = num(data.clicks)
+        this.#lastClick = num(data.lastClick)
+        this.#notes = data.notes || ''
     }
 
     async moveTo(folder) {
-        if (this.readonly) return
-        this.#parentId = folder.id
-        await this.save()
-    }
-
-    async save() {
-        if (this.readonly) return
-        await this.#storage.save(this)
-    }
-
-    async setIndex(index) {
-        this.#index = Math.max(0, index)
-        await this.save()
+        if (this.#parentId != folder.id) {
+            const from = State.folder(this.#parentId)
+            this.#parentId = folder.id
+            await State.moveBookmark(this, folder)
+            from.bookmarks.splice(from.bookmarks.indexOf(this), 1)
+            folder.bookmarks.push(this)
+        }
     }
 }
-
-import Tabs from './tabs.js'

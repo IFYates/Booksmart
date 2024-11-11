@@ -1,0 +1,80 @@
+:root {
+    --theme-colour-dark: rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585));
+    --theme-colour-darkest: rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585));
+    --theme-colour-lighter: rgb(calc(var(--accent-colour-r) * 1.5), calc(var(--accent-colour-g) * 1.5), calc(var(--accent-colour-b) * 1.5));
+    /*--theme-colour-darkest: hsl(var(--accent-colour-hue), var(--accent-colour-saturation), calc(var(--accent-colour-lightness) * 0.585));
+    --theme-colour-lighter: hsl(var(--accent-colour-hue), calc(var(--accent-colour-saturation) * 1.5), calc(var(--accent-colour-lightness) * 1.625));*/
+}
+
+* {
+    border: 0 solid var(--theme-colour-lighter);
+    color: var(--text-colour);
+}
+
+a,
+button {
+    cursor: pointer;
+}
+
+*[draggable='true'] {
+    cursor: pointer;
+}
+
+button,
+button *,
+input,
+select,
+option,
+textarea {
+    color: initial;
+    border: revert !important;
+}
+
+bs-icon {
+    display: contents;
+}
+
+h1 {
+    margin: 0;
+}
+
+i.fa-fw {
+    font-style: normal;
+}
+
+label {
+    align-content: center;
+}
+
+.danger,
+.danger * {
+    color: darkred !important;
+}
+
+.error {
+    color: red;
+}
+
+.spanRows2 {
+    grid-row: span 2;
+}
+
+.spanCols2 {
+    grid-column: span 2;
+}
+
+.spanCols3 {
+    grid-column: span 3;
+}
+
+.spanCols4 {
+    grid-column: span 4;
+}
+
+.spanCols5 {
+    grid-column: span 5;
+}
+
+.spanCols6 {
+    grid-column: span 6;
+}

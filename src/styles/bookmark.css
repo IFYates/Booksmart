@@ -1,0 +1,129 @@
+:host {
+    align-content: center;
+    background: var(--accent-colour);
+    cursor: pointer;
+    padding: 5px 10px;
+    margin: 5px;
+    border-radius: 0.8em;
+    flex-grow: 5;
+    min-width: 150px;
+    font-size: 130%;
+}
+
+:host(#empty) {
+    grid-column: 1 / -1;
+    text-align: center;
+    zoom: 200%;
+}
+
+:host(.dragging) {
+    opacity: 0.5;
+}
+
+.icon {
+    padding-right: 4px;
+    max-width: 16px;
+    max-height: 16px;
+}
+
+.emoji {
+    margin-bottom: 5px;
+}
+
+:host(:not(.readonly):hover) .icon {
+    visibility: hidden;
+}
+
+:host(:hover) {
+    filter: brightness(1.2);
+}
+
+:host(:active) {
+    filter: brightness(0.8);
+}
+
+a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+a .title {
+    margin-left: 5px;
+}
+
+a .title.nowrap {
+    white-space: nowrap;
+    overflow-x: hidden;
+}
+
+:host(.favourite),
+:host(.favourite) .actions {
+    background: #ff8;
+}
+
+:host(.favourite) * {
+    color: black;
+}
+
+.favourite {
+    position: absolute;
+    visibility: hidden;
+}
+
+.favourite button {
+    padding: 1px 0;
+}
+
+:host(:not(.readonly):hover) .favourite {
+    visibility: visible;
+}
+
+.actions {
+    background: var(--accent-colour);
+    border-radius: 5px;
+    position: absolute;
+    right: 5px;
+    visibility: hidden;
+}
+
+:host(:not(.readonly):not(.favourite):hover) .actions {
+    visibility: visible;
+}
+
+.actions>i {
+    cursor: pointer;
+    opacity: 0.3;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.actions>i:hover {
+    opacity: 1;
+}
+
+:host(.add) {
+    background: rgb(0, 0, 0, 0.1);
+    flex-grow: 1;
+    border-radius: 5px;
+    min-width: initial;
+    text-align: center;
+}
+
+:host(.add:hover) {
+    background: rgb(255, 255, 255, 0.1);
+    flex-grow: 1;
+    border-radius: 5px;
+    min-width: initial;
+    text-align: center;
+}
+
+:host(bs-folder-add) {
+    flex-grow: unset;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+    margin-right: 0;
+    transition: margin-right 0.5s ease-in-out;
+}
+
+:host(bs-folder-add:hover) {
+    margin-right: 85px;
+}

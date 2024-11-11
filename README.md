@@ -12,15 +12,15 @@ A bookmark management tool and customisable homepage.
 - Choose to switch to existing tab, if open
 - Open bookmarks in same or new tab
 - Give quick list of most visited sites
-- Select own accent colour
-- Specify background image
-???- Export and reimport all settings
+- Style with accent colour and background image
+- Export and reimport all settings
 - Lock for edits
 
 ## Folders (Group of bookmarks)
 - Change title
 - Change icon
 - Create bookmarks
+- Style with accent colour and background image
 - Drag bookmarks, tabs, sites to the folder
 - Remove bookmarks
 - Collapse
@@ -36,12 +36,16 @@ A bookmark management tool and customisable homepage.
 - Add notes
 
 # Future possible features
+- Open folder as tab group
+- Folder description (visible)
+- Improved edit UI
+- Folder tags
+  - Toggle tag visibility
 - Style bookmarks by domain (across all folders)
 - Use browser history to suggest URL on bookmark creation
+- Popup
+  - Quick list of favourites / last used bookmarks
+- ? Show if bookmark is open
 - ? Show preview image
 - ? Side panel add-on (https://developer.chrome.com/docs/extensions/develop/ui#side-panels)
 - ? Non-bookmark items (e.g., notes)
-- ? Show if bookmark is open (& switch to)
-- Popup
-  - Quick list of favourites / last used bookmarks
-- ? Custom HTML components

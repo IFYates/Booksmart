@@ -1,3 +1,5 @@
+import Folder from '../../models/folder.js'
+import State from '../../models/state.js'
 import BaseDialog from './base.js'
 
 export default class ImportBookmarkDialog extends BaseDialog {
@@ -7,15 +9,15 @@ export default class ImportBookmarkDialog extends BaseDialog {
 
     #tree
     #folders
-    async _prepare(layout) {
-        this.#tree = (await chrome.bookmarks.getTree())[0].children[0]
-        this.#folders = await layout.folders.entries()
+    async _prepare() {
+        this.#tree = (await chrome.bookmarks.getTree())[0]
+        this.#folders = Object.values(State.folders)
     }
 
-    _display(dialog, layout) {
+    _display(dialog) {
         const items = []
         function showFolder(folder, parentShowHide, depth = 0) {
-            if (folder.id === layout.id) {
+            if (folder.id == State.booksmartRootId) {
                 return // Hide Booksmart root
             }
 
@@ -24,14 +26,14 @@ export default class ImportBookmarkDialog extends BaseDialog {
             showHide.onclick = () => {
                 showHide.value = !showHide.value
                 showHide.classList.toggle('fa-chevron-down', !showHide.value)
-                showHide.classList.toggle('fa-chevron-right', showHide.value)
+                showHide.classList.toggle('fa-chevron-right', !!showHide.value)
             }
             showHide.hide = () => !!showHide.value || parentShowHide?.hide()
 
             var el = add('div', { className: 'folder', style: `margin-left: ${depth}px` }, () => {
                 add(showHide)
                 const id = 'folder-' + folder.id
-                folder.showFolder = this.#folders.some(c => c.id === folder.id)
+                folder.showFolder = this.#folders.some(c => c.id == folder.id)
                 add('input', { type: 'checkbox', id: id, checked: folder.showFolder }).onchange = function () {
                     folder.showFolder = this.checked
                 }
@@ -53,7 +55,7 @@ export default class ImportBookmarkDialog extends BaseDialog {
             }
             parentShowHide?.addEventListener('click', el.update)
 
-            if (children.length === 0) {
+            if (!children.length) {
                 showHide.style.visibility = 'hidden'
             }
             return el
@@ -61,7 +63,9 @@ export default class ImportBookmarkDialog extends BaseDialog {
 
         add('p', 'Choose the bookmark folders to include on your dashboard:')
         const folderList = add('div', { className: 'folderList' }, () => {
-            showFolder.call(this, this.#tree)
+            for (const child of this.#tree.children) {
+                showFolder.call(this, child)
+            }
         })
         setTimeout(() => {
             folderList.style.height = `${folderList.offsetHeight}px`
@@ -76,18 +80,18 @@ export default class ImportBookmarkDialog extends BaseDialog {
                 add('span', ' Save')
             }).onclick = async () => {
                 for (const item of items) {
-                    var folder = this.#folders.find(c => c.id === item.id)
+                    const folder = this.#folders.find(c => c.id == item.id)
                     if (item.showFolder) {
                         if (!folder) {
-                            folder = await layout.folders.add(item)
-                            folder.index = NaN
-                            await folder.save()
+                            State.importFolder(item, { index: State.folderCount })
                         }
-                    } else if (folder) {
-                        await layout.folders.remove(folder)
+                    }
+                    else if (folder) {
+                        delete State.folders[folder.id]
                     }
                 }
-                await layout.reload()
+                await State.save()
+                dialog.returnValue = true
                 dialog.close()
             }
 
