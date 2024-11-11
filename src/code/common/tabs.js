@@ -48,6 +48,7 @@ export class Tab {
     get id() { return this.#tab.id }
     get title() { return this.#tab.title }
     get url() { return this.#tab.url }
+    get icon() { return this.#tab.favIconUrl }
 
     constructor(tab) {
         this.#tab = tab
