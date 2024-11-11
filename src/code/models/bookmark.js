@@ -11,7 +11,7 @@ export default class Bookmark {
 
         this.#title = bookmark.title
         this.#url = bookmark.url
-        data.index = num(bookmark.index)
+        this.#index = num(bookmark.index)
 
         this.import(data)
     }

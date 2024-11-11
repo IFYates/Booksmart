@@ -200,8 +200,8 @@ export class FolderElement extends BaseHTMLElement {
 
     reindexBookmarks() {
         var idx = 0
-        for (const bookmark of this.bookmarks) {
-            bookmark.index = idx++
+        for (const child of this.bookmarks) {
+            child.bookmark.index = idx++
         }
         this.refresh()
     }
