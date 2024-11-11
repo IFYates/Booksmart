@@ -45,7 +45,7 @@ export default class EditFolderDialog extends BaseDialog {
             this.onchange()
         })
 
-        const iconPreviewDefault = create('i', { className: 'fa-fw fa-3x centred' })
+        const iconPreviewDefault = create('i', { className: 'fa-fw fa-6x centred' })
         const iconPreviewCustom = create('img', { className: 'iconPreview centred' }, function () {
             this.image = (url) => {
                 if (!url || (!url?.startsWith('data:image/') && !url?.includes('://'))) {
@@ -70,7 +70,7 @@ export default class EditFolderDialog extends BaseDialog {
 
         const isFacon = FontAwesome.isFacon(folder.icon)
         const faconSelector = new FaconSelectorElement(folder.icon)
-        const iconPreviewFA = create('i', { className: 'fa-fw fa-3x centred' }, function () {
+        const iconPreviewFA = create('i', { className: 'fa-fw fa-6x centred' }, function () {
             var _lastValue = []
             this.update = () => {
                 iconPreviewFA.classList.remove(..._lastValue)
@@ -84,7 +84,7 @@ export default class EditFolderDialog extends BaseDialog {
 
         const isEmoji = Emojis.isEmoji(folder.icon)
         const emojiSelector = new EmojiSelectorElement(folder.icon)
-        const iconPreviewEmoji = create('i', { className: 'fa-fw fa-3x centred' }, function () {
+        const iconPreviewEmoji = create('i', { className: 'fa-fw fa-6x centred' }, function () {
             this.update = () => {
                 iconPreviewEmoji.innerText = emojiSelector.value || ''
             }
@@ -110,7 +110,7 @@ export default class EditFolderDialog extends BaseDialog {
             this.onkeyup = () => {
                 iconPreviewCustom.image(this.value)
             }
-            this.value = !isFacon && !isEmoji ? folder.icon : ''
+            this.value = folder.icon && !isFacon && !isEmoji ? folder.icon : ''
             this.onkeyup()
         })
 
@@ -135,9 +135,8 @@ export default class EditFolderDialog extends BaseDialog {
         add(txtTitle, { classes: 'spanCols3' })
 
         add('label', 'Sort')
-        add(lstSort)
+        add(lstSort, { classes: 'spanCols2' })
         add(chkSortAsc)
-        add('div')
 
         add('label', 'Icon')
         add(iconPreviewDefault, { classes: 'spanRows2' }, (me) => {

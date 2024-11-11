@@ -46,7 +46,7 @@ export class FolderElement extends BaseHTMLElement {
     setTheme() {
         const accentColour = this.#folder.accentColour
         MainView.setTheme(accentColour, this.shadowRoot.host)
-        this.shadowRoot.host.style.backgroundColor = State.options.backgroundImage ? 'var(--theme-colour-shade)' : 'rgb(0, 0, 0, 0.1)'
+        this.shadowRoot.host.style.backgroundColor = accentColour || State.options.backgroundImage ? 'var(--theme-colour-shade)' : 'rgb(0, 0, 0, 0.1)'
         this.shadowRoot.host.style.backgroundImage = this.#folder.backgroundImage ? `url(${this.#folder.backgroundImage})` : null
     }
 

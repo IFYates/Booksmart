@@ -22,7 +22,7 @@ export default class EditBookmarkDialog extends BaseDialog {
         })
         const txtNotes = document.createElement('textarea')
 
-        const iconPreviewDefault = create('i', { className: 'fa-fw fa-3x far fa-bookmark centred' })
+        const iconPreviewDefault = create('i', { className: 'fa-fw fa-6x far fa-bookmark centred' })
         const iconPreviewCustom = create('img', { className: 'iconPreview centred' }, function () {
             this.image = (url) => {
                 if (!url || (!url?.startsWith('data:image/') && !url?.includes('://'))) {
@@ -47,7 +47,7 @@ export default class EditBookmarkDialog extends BaseDialog {
 
         const isFacon = FontAwesome.isFacon(bookmark?.icon)
         const faconSelector = new FaconSelectorElement(bookmark?.icon || '')
-        const iconPreviewFA = create('i', { className: 'fa-fw fa-3x far fa-bookmark centred' }, function () {
+        const iconPreviewFA = create('i', { className: 'fa-fw fa-6x far fa-bookmark centred' }, function () {
             var _lastValue = ['far', 'fa-bookmark']
             this.update = () => {
                 iconPreviewFA.classList.remove(..._lastValue)
@@ -61,7 +61,7 @@ export default class EditBookmarkDialog extends BaseDialog {
 
         const isEmoji = Emojis.isEmoji(bookmark?.icon)
         const emojiSelector = new EmojiSelectorElement(bookmark?.icon || '')
-        const iconPreviewEmoji = create('i', { className: 'fa-fw fa-3x centred' }, function () {
+        const iconPreviewEmoji = create('i', { className: 'fa-fw fa-6x centred' }, function () {
             this.update = () => {
                 iconPreviewEmoji.innerText = emojiSelector.value || ''
             }

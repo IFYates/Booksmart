@@ -79,20 +79,6 @@ a .title.nowrap {
     visibility: visible;
 }
 
-:host.add {
-    background: hsl(var(--accent-colour-hue), calc(var(--accent-colour-saturation) * 0.4), calc(var(--accent-colour-lightness) * 0.585), 0.5);
-    flex-grow: 1;
-    border-radius: 5px;
-    text-align: center;
-    min-width: initial;
-}
-
-:host.add i {
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
 .actions {
     background: var(--accent-colour);
     border-radius: 5px;
@@ -116,7 +102,15 @@ a .title.nowrap {
 }
 
 :host(.add) {
-    background: hsl(var(--accent-colour-hue), calc(var(--accent-colour-saturation) * 0.4), calc(var(--accent-colour-lightness) * 0.585), 0.5);
+    background: rgb(0, 0, 0, 0.1);
+    flex-grow: 1;
+    border-radius: 5px;
+    min-width: initial;
+    text-align: center;
+}
+
+:host(.add:hover) {
+    background: rgb(255, 255, 255, 0.1);
     flex-grow: 1;
     border-radius: 5px;
     min-width: initial;

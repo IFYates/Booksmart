@@ -8,6 +8,15 @@ export default class OptionsDialog extends BaseDialog {
     }
 
     _display(dialog) {
+        function show(labelText, getter, setter) {
+            const id = `input-${(Math.random() * 1000) | 0}`
+            const label = add('label', labelText, { htmlFor: id })
+            return add('input', { id: id, type: 'checkbox', checked: getter() })
+                .onchange = function () {
+                    setter(this.checked, this, label)
+                }
+        }
+
         // Column count
         const sizes = { '200': 'Tiny', '350': 'Narrow', '500': 'Medium', '750': 'Wide', '-1': 'Full' }
         const values = Object.keys(sizes)
@@ -27,40 +36,12 @@ export default class OptionsDialog extends BaseDialog {
             this.oninput()
         })
 
-        // Show favicons
-        add('label', 'Show favicons', { style: 'text-align:right' })
-        add('input', { type: 'checkbox', checked: State.options.showFavicons })
-            .onclick = function () {
-                State.options.showFavicons = this.checked
-            }
-
-        // Use existing tabs
-        add('label', 'Switch to tab, if open', { style: 'text-align:right' })
-        add('input', { type: 'checkbox', checked: State.options.openExistingTab })
-            .onclick = function () {
-                State.options.openExistingTab = this.checked
-            }
-
-        // Open in new tab
-        add('label', 'Open in new tab', { style: 'text-align:right' })
-        add('input', { type: 'checkbox', checked: State.options.openNewTab })
-            .onclick = function () {
-                State.options.openNewTab = this.checked
-            }
-
-        // Show topSites
-        add('label', 'Show most visited sites', { style: 'text-align:right' })
-        add('input', { type: 'checkbox', checked: State.options.showTopSites })
-            .onclick = function () {
-                State.options.showTopSites = this.checked
-            }
-
-        // Wrap bookmark titles
-        add('label', 'Wrap long bookmark titles', { style: 'text-align:right' })
-        add('input', { type: 'checkbox', checked: State.options.wrapTitles })
-            .onclick = function () {
-                State.options.wrapTitles = this.checked
-            }
+        // Options
+        show('Show favicons', () => State.options.showFavicons, (v) => State.options.showFavicons = v)
+        show('Switch to tab, if open', () => State.options.openExistingTab, (v) => State.options.openExistingTab = v)
+        show('Open in new tab', () => State.options.openNewTab, (v) => State.options.openNewTab = v)
+        show('Show most visited sites', () => State.options.showTopSites, (v) => State.options.showTopSites = v)
+        show('Wrap long bookmark titles', () => State.options.wrapTitles, (v) => State.options.wrapTitles = v)
 
         add('div', { classes: 'spanCols2' })
 

@@ -37,11 +37,11 @@ dialog form label {
     margin-right: 1em;
 }
 
-dialog#EditFolderDialog form,
-dialog#EditBookmarkDialog form {
+dialog#EditBookmarkDialog form,
+dialog#EditFolderDialog form {
     display: grid;
     grid-row-gap: 1em;
-    grid-template-columns: 2fr 2fr 4fr 2fr;
+    grid-template-columns: 1fr 1fr 4fr 2fr;
 }
 
 dialog#ImportBookmarkDialog form input[type="checkbox"] {
