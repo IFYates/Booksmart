@@ -10,7 +10,6 @@ export class TabElement extends BookmarkElement {
             id: tab.id,
             title: tab.title,
             url: tab.url,
-            readonly: true,
             domain: isURL(tab.url) ? new URL(tab.url).origin : null,
             altIcon: 'fas fa-window-maximize',
             icon: tab.icon,
@@ -41,6 +40,23 @@ export class TabElement extends BookmarkElement {
             origin?.appendChild(this)
         }
         folder.reindexBookmarks()
+    }
+
+    async _ondisplay(root, host) {
+        const self = this
+        await super._ondisplay(root, host)
+
+        this._apply('.actions i', (el) => el.remove())
+
+        root.querySelector('.actions').display(() => {
+            add('i', { className: 'fa-fw far fa-window-close', title: 'Close tab' })
+                .onclick = (ev) => {
+                    ev.preventDefault()
+                    ev.stopPropagation()
+                    self.#tab.close()
+                    return false
+                }
+        })
     }
 }
 customElements.define('bs-tab', TabElement)

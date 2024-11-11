@@ -99,8 +99,8 @@ export class BookmarkElement extends BaseHTMLElement {
         const attach = () => {
             const isFirst = !(self.previousElementSibling instanceof BookmarkElement) || self.previousElementSibling.bookmark.favourite
             const isLast = !(self.nextElementSibling instanceof BookmarkElement)
-            root.querySelector('.actions>.move[title="Move up"]').style.display = bookmark.readonly || isFirst ? 'none' : ''
-            root.querySelector('.actions>.move[title="Move down"]').style.display = bookmark.readonly || isLast ? 'none' : ''
+            this._apply('.actions>.move[title="Move up"]', (el) => el.style.display = bookmark.readonly || isFirst ? 'none' : '')
+            this._apply('.actions>.move[title="Move down"]', (el) => el.style.display = bookmark.readonly || isLast ? 'none' : '')
             self.removeEventListener('mouseenter', attach)
         }
         self.addEventListener('mouseenter', attach)

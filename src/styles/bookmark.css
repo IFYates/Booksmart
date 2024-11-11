@@ -87,7 +87,7 @@ a .title.nowrap {
     visibility: hidden;
 }
 
-:host(:not(.readonly):not(.favourite):hover) .actions {
+:host(:not(.favourite):hover) .actions {
     visibility: visible;
 }
 

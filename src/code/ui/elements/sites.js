@@ -49,6 +49,7 @@ export class SiteElement extends BookmarkElement {
             url: site.url,
             domain: isURL(site.url) ? new URL(site.url).origin : null,
             altIcon: 'far fa-file-code',
+            icon: site.icon,
             readonly: true,
             immobile: true
         })
@@ -56,11 +57,16 @@ export class SiteElement extends BookmarkElement {
     }
 
     async moveTo(folder, origin) {
-        const data = await State.createBookmark(folder.folder, this.site.title, this.site.url)
+        const data = await State.createBookmark(folder.folder, this.site.title, this.site.url, { icon: this.site.icon })
         const element = new BookmarkElement(data)
         this.parentNode.insertBefore(element, this)
         origin?.parentNode.insertBefore(this, origin)
         folder.reindexBookmarks()
+    }
+
+    async _ondisplay(root, host) {
+        await super._ondisplay(root, host)
+        root.querySelector('.actions').remove()
     }
 }
 customElements.define('bs-site', SiteElement)

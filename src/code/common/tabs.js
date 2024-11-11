@@ -54,6 +54,10 @@ export class Tab {
         this.#tab = tab
     }
 
+    async close() {
+        await chrome.tabs.remove(this.#tab.id)
+    }
+
     async focus() {
         await chrome.windows.update(this.#tab.windowId, { focused: true })
         await chrome.tabs.update(this.#tab.id, { active: true })
