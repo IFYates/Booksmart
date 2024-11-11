@@ -16,6 +16,8 @@ export default class Bookmark {
         this.import(data)
     }
 
+    get uuid() { return `${this.#id}:${this.#dateAdded}:${this.#url.hashCode()}` }
+
     #parentId
     get folderId() { return this.#parentId }
     #id

@@ -22,6 +22,7 @@ export default class State {
 
     static async init() {
         const everything = await State.#getEverything()
+        const allItems = Object.values(everything)
 
         var booksmartRoot = Object.values(everything).find(b => b.title == State.Title && !b.url)
         if (!booksmartRoot) {
@@ -41,12 +42,40 @@ export default class State {
         const state = await chrome.storage.sync.get(keys)
         State.#options = new Options(state.options || {})
         const folders = {}
-        for (const key of keys.filter(k => k.startsWith('folder.'))) {
-            folders[key.substring(7)] = state[key]
+        for (const key of keys.filter(k => k.startsWith('folder.'))) { // TODO: old: remove
+            const id = key.substring(7)
+            if (everything.hasOwnProperty(id) && !everything[id].url) {
+                folders[id] = state[key]
+            } else {
+                delete state[key]
+            }
+        }
+        for (const key of keys.filter(k => k.startsWith('folder:'))) {
+            const uuid = key.split(':')
+            const match = allItems.find(f => (f.id == uuid[1] || f.dateAdded == uuid[2]) && f.title.hashCode() == uuid[3] && !f.url)
+            if (match) {
+                folders[match.id] = state[key]
+            } else {
+                delete state[key]
+            }
         }
         const bookmarks = {}
-        for (const key of keys.filter(k => k.startsWith('bookmark.'))) {
-            bookmarks[key.substring(9)] = state[key]
+        for (const key of keys.filter(k => k.startsWith('bookmark.'))) { // TODO: old: remove
+            const id = key.substring(9)
+            if (everything.hasOwnProperty(id) && everything[id].url) {
+                bookmarks[id] = state[key]
+            } else {
+                delete state[key]
+            }
+        }
+        for (const key of keys.filter(k => k.startsWith('bookmark:'))) {
+            const uuid = key.split(':')
+            const match = allItems.find(b => (b.id == uuid[1] || b.dateAdded == uuid[2]) && b.url?.hashCode() == uuid[3])
+            if (match) {
+                bookmarks[match.id] = state[key]
+            } else {
+                delete state[key]
+            }
         }
 
         // Ensure all Booksmart children included
@@ -97,7 +126,7 @@ export default class State {
 
     static async createFolder(title, data = {}) {
         const item = await chrome.bookmarks.create({
-            parentId: this.#booksmartRootId,
+            parentId: State.#booksmartRootId,
             title: title
         })
         const folder = new Folder(item, data)
@@ -152,11 +181,11 @@ export default class State {
         const state = {
             options: State.#options.export()
         }
-        for (const [id, folder] of Object.entries(State.#folders)) {
-            state[`folder.${id}`] = folder.export(false)
+        for (const folder of Object.values(State.#folders)) {
+            state[`folder:${folder.uuid}`] = folder.export(false)
         }
-        for (const [id, bookmark] of Object.entries(State.#bookmarks)) {
-            state[`bookmark.${id}`] = bookmark.export(false)
+        for (const bookmark of Object.values(State.#bookmarks)) {
+            state[`bookmark:${bookmark.uuid}`] = bookmark.export(false)
         }
         return state
     }
@@ -260,7 +289,7 @@ export default class State {
             }
 
             // Create new bookmarks
-            for (const [id, item] of Object.entries(bookmarks)) {
+            for (const item of Object.values(bookmarks)) {
                 await State.createBookmark(folder.id, item.title, item.url, item)
             }
         }
@@ -272,7 +301,6 @@ export default class State {
 
     static async save() {
         const state = State.#getData(false)
-
         await chrome.storage.sync.set(state)
         const keys = await chrome.storage.sync.getKeys()
         for (const key of keys.filter(k => !state.hasOwnProperty(k))) {
@@ -281,12 +309,13 @@ export default class State {
     }
 
     static async updateEntry(entry) {
+        const data = entry.export?.call(entry, false)
         if (entry.url) {
             await chrome.bookmarks.update(entry.id, { title: entry.title, url: entry.url })
-            await chrome.storage.sync.set({ [`bookmark.${entry.id}`]: entry.export(false) })
+            await chrome.storage.sync.set({ [`bookmark.${entry.uuid}`]: data })
         } else {
             await chrome.bookmarks.update(entry.id, { title: entry.title })
-            await chrome.storage.sync.set({ [`folder.${entry.id}`]: entry.export(false) })
+            await chrome.storage.sync.set({ [`folder:${entry.uuid}`]: data })
         }
     }
 }

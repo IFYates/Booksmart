@@ -13,6 +13,7 @@ export default class Folder {
     }
 
     get isOwned() { return this.#parentId == State.booksmartRootId }
+    get uuid() { return `${this.#id}:${this.#dateAdded}:${this.#title.hashCode()}` }
 
     #parentId
     get parentId() { return this.#parentId }
@@ -86,16 +87,16 @@ export default class Folder {
     }
 
     static #defaults = {
-        accentColour: v => !v,
+        accentColour: v => !v || State.options.accentColour.localeCompare(v, undefined, { sensitivity: 'base' }) == 0,
         backgroundImage: v => !v?.length,
         collapsed: false,
         icon: v => !v?.length,
-        height: 1,
+        height: v => num(v) < 2,
         index: null,
         scale: 100,
         sortOrder: 0,
         title: null,
-        width: 1
+        width: v => num(v) < 2
     }
     export(standalone) {
         const data = {

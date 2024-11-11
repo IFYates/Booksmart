@@ -135,7 +135,16 @@ export class BaseHTMLElement extends HTMLElement {
     #styles
     get host() { return this.#template ? this.shadowRoot.host : this }
 
-    static TemplateRE = /<!--\$\s*([\w\.]+)\s*\$-->/g
+    static TemplateRE = /<!--\$\s*([\w\.]+)\s*\$-->/
+    static replaceTemplates(input, object) {
+        input = String(input)
+        var m, result = ''
+        while (m = BaseHTMLElement.TemplateRE.exec(input)) {
+            result += input.substring(0, m.index) + object[m[1]]
+            input = input.substring(m.index + m[0].length)
+        }
+        return result + input
+    }
 
     constructor(template, styles) {
         super()

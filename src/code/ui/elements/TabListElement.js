@@ -55,6 +55,7 @@ export class TabListElement extends FolderElement {
 
     onShowOrHide() {
         State.options.showTabList = !TabListElement.#tabsFolder.collapsed
+        State.save()
     }
 }
 customElements.define('bs-tab-list', TabListElement)

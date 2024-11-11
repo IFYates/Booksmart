@@ -13,7 +13,7 @@ Object.prototype.allKeys = function () {
 Object.defineProperty(Object.prototype, 'allKeys', { enumerable: false, writable: false, configurable: false })
 
 /**
- * Compares two objects for equality, recursively traversing properties and
+ * Compares two objects for equality, recursively traversing 
  * arrays. If the objects are not the same type, they are not equal.
  * @param {any} other The object to compare to.
  * @returns {boolean} True if the two objects are equal.
@@ -22,6 +22,9 @@ Object.prototype.areEquivalent = function (other) {
     if (this == other) {
         return true
     }
+    if (!!this !== !!other) {
+        return false
+    }
     if (Array.isArray(this) && Array.isArray(other)) {
         return this.length == other.length
             && this.every((e, i) => other[i] == e)
@@ -29,6 +32,20 @@ Object.prototype.areEquivalent = function (other) {
     return false
 }
 Object.defineProperty(Object.prototype, 'areEquivalent', { enumerable: false, writable: false, configurable: false })
+
+/**
+ * Calculates the hash code of this string.
+ * @returns {number} The hash code.
+ */
+String.prototype.hashCode = function () {
+    let hash = 0
+    for (let i = 0; i < this.length; ++i) {
+        hash = ((hash << 5) - hash) + this.charCodeAt(i)
+        hash |= 0 // Convert to 32bit integer
+    }
+    return hash
+}
+Object.defineProperty(Object.prototype, 'hashCode', { enumerable: false, writable: false, configurable: false })
 
 /**
  * Checks if the given string is a valid URL.
@@ -82,7 +99,7 @@ Object.prototype.pick = function (defaults, excludeOtherPredicate = null) {
 
     const result = {}
     for (const [key, value] of this.allKeys().map(k => [k, this[k]])) {
-        if ((defaults.hasOwnProperty(key) && !(typeof defaults[key] != 'function' ? defaults[key]?.areEquivalent(value) : defaults[key](value, key)))
+        if ((defaults.hasOwnProperty(key) && !(typeof defaults[key] != 'function' ? areEquivalent.call(defaults[key], value) : defaults[key](value, key)))
             || (!defaults.hasOwnProperty(key) && excludeOtherPredicate?.call(this, value, key) === false)) {
             result[key] = value
         }
@@ -123,7 +140,7 @@ Object.prototype.tidy = function (defaults, excludeOtherPredicate = null) {
 
     for (const [key, value] of Object.entries(this)) {
         if ((!defaults.hasOwnProperty(key) && excludeOtherPredicate?.call(this, value, key) === true)
-            || defaults[key]?.areEquivalent(value)
+            || areEquivalent.call(defaults[key], value)
             || (typeof defaults[key] == 'function' && defaults[key](value, key) === true)) {
             delete this[key]
         }
@@ -148,13 +165,3 @@ globalThis.tryParse = function (json, alt) {
     }
 }
 Object.defineProperty(Object.prototype, 'tryParse', { enumerable: false, writable: false, configurable: false })
-
-/// TEMP
-String.prototype.fromHex = function () {
-    var res = 0
-    for (var i = 0; i < this.length; ++i) {
-        res *= 16
-        res += '0123456789ABCDEF'.indexOf(this[i].toUpperCase())
-    }
-    return res
-}

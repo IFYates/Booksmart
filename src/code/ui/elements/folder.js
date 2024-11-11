@@ -50,7 +50,9 @@ export class FolderElement extends BaseHTMLElement {
         this.shadowRoot.host.style.backgroundImage = this.#folder.backgroundImage ? `url(${this.#folder.backgroundImage})` : null
     }
 
-    onShowOrHide() { }
+    onShowOrHide() {
+        State.updateEntry(this.#folder)
+    }
 
     async _ondisplay(root, host) {
         const self = this
@@ -62,10 +64,7 @@ export class FolderElement extends BaseHTMLElement {
         host.style.zoom = ((folder.scale || 100) != 100) ? `${folder.scale}%` : ''
 
         // Replace templates
-        var m
-        while (m = BaseHTMLElement.TemplateRE.exec(root.innerHTML)) {
-            root.innerHTML = String(root.innerHTML).replaceAll(m[0], folder[m[1]])
-        }
+        root.innerHTML = BaseHTMLElement.replaceTemplates(root.innerHTML, folder)
         this.setTheme()
 
         // Show/hide
@@ -76,8 +75,7 @@ export class FolderElement extends BaseHTMLElement {
             root.querySelector('h1').onclick = async () => {
                 folder.collapsed = !folder.collapsed
                 this.onShowOrHide()
-                await State.save()
-                host.refresh()
+                this.refresh()
             }
             this.classList.toggle('collapsed', !!folder.collapsed)
             this.classList.add('collapsable')
