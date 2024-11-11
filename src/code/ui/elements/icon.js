@@ -27,7 +27,6 @@ export default class IconElement extends BaseHTMLElement {
 
     constructor() {
         super()
-
         this.#altIcon = this.attributes.altIcon?.value
     }
 
@@ -46,10 +45,11 @@ export default class IconElement extends BaseHTMLElement {
             this.add('i', { className: `icon fa-fw ${icon}` })
         }
         else {
-            icon = icon || `${this.#favDomain}/favicon.ico`
+            icon = (!icon && this.#favDomain) ? `${this.#favDomain}/favicon.ico` : null
             if (icon) {
                 this.add('img', { className: 'icon', src: icon, style: 'display:none' })
                     .onload = (ev) => {
+                        ev.target.style.display = ''
                         this.querySelector('i.icon')?.remove()
                     }
             }

@@ -8,7 +8,7 @@ export default class Bookmark {
         this.#parentId = bookmark.parentId
         this.#id = bookmark.id
         this.#dateAdded = num(bookmark.dateAdded)
-        
+
         this.#title = bookmark.title
         this.#url = bookmark.url
         data.index = num(bookmark.index)

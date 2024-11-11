@@ -8,13 +8,21 @@ export default class OptionsDialog extends BaseDialog {
     }
 
     _display(dialog) {
-        function show(labelText, getter, setter) {
+        function checkbox(labelText, getter, setter) {
             const id = `input-${(Math.random() * 1000) | 0}`
             const label = add('label', labelText, { htmlFor: id })
-            return add('input', { id: id, type: 'checkbox', checked: getter() })
-                .onchange = function () {
-                    setter(this.checked, this, label)
+
+            var value = !!getter()
+            add('i', { className: 'fa-fw fas fa-toggle-off', role: 'button' }, function () {
+                this.onclick = () => {
+                    value = !value
+                    this.classList.toggle('fa-toggle-off', !value)
+                    this.classList.toggle('fa-toggle-on', value)
+                    setter(value, this, label)
                 }
+                this.classList.toggle('fa-toggle-off', !value)
+                this.classList.toggle('fa-toggle-on', value)
+            })
         }
 
         // Column count
@@ -37,11 +45,20 @@ export default class OptionsDialog extends BaseDialog {
         })
 
         // Options
-        show('Show favicons', () => State.options.showFavicons, (v) => State.options.showFavicons = v)
-        show('Switch to tab, if open', () => State.options.openExistingTab, (v) => State.options.openExistingTab = v)
-        show('Open in new tab', () => State.options.openNewTab, (v) => State.options.openNewTab = v)
-        show('Show most visited sites', () => State.options.showTopSites, (v) => State.options.showTopSites = v)
-        show('Wrap long bookmark titles', () => State.options.wrapTitles, (v) => State.options.wrapTitles = v)
+        checkbox('Show favicons', () => State.options.showFavicons, (v) => {
+            State.options.showFavicons = v
+            MainView.fullRefresh() // TODO
+        })
+        checkbox('Switch to tab, if open', () => State.options.openExistingTab, (v) => State.options.openExistingTab = v)
+        checkbox('Open in new tab', () => State.options.openNewTab, (v) => State.options.openNewTab = v)
+        checkbox('Show most visited sites', () => State.options.showTopSites, (v) => {
+            State.options.showTopSites = v
+            MainView.fullRefresh() // TODO
+        })
+        checkbox('Wrap long bookmark titles', () => State.options.wrapTitles, (v) => {
+            State.options.wrapTitles = v
+            MainView.fullRefresh() // TODO
+        })
 
         add('div', { classes: 'spanCols2' })
 

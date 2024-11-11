@@ -117,3 +117,11 @@ form {
     background: black;
     opacity: 0.66;
 }
+
+i.fa-toggle-off,
+i.fa-toggle-on {
+    align-content: center;
+    cursor: pointer;
+    font-size: 1.75em;
+    width: 100%;
+}

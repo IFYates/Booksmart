@@ -13,7 +13,7 @@ A bookmark management tool and customisable homepage.
 - Open bookmarks in same or new tab
 - Give quick list of most visited sites
 - Style with accent colour and background image
-???- Export and reimport all settings
+- Export and reimport all settings
 - Lock for edits
 
 ## Folders (Group of bookmarks)
@@ -36,6 +36,9 @@ A bookmark management tool and customisable homepage.
 - Add notes
 
 # Future possible features
+- Open folder as tab group
+- Folder description (visible)
+- Improved edit UI
 - Folder tags
   - Toggle tag visibility
 - Style bookmarks by domain (across all folders)

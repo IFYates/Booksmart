@@ -1,10 +1,20 @@
-// TODO: obsolete / reduce
+
+import Dialogs from './dialogs.js'
+import { DropHandler } from '../common/html.js'
+import { FolderElement } from './elements/folder.js'
+import { FolderAddElement } from './elements/folderAdd.js'
+import { NoFoldersElement } from './elements/noFolders.js'
+import { SiteListElement } from './elements/sites.js'
+import { TabListElement } from './elements/TabListElement.js'
+import State from '../models/state.js'
+
 export default class MainView {
     static elLayout
     static elEditLock = document.getElementById('editLock')
     static elTrash = document.getElementById('trash')
 
     static async init() {
+        await State.init()
         MainView.setTheme()
 
         MainView.elTrash.display(function () {
@@ -143,7 +153,7 @@ export default class MainView {
                 ev.dataTransfer.dropEffect = 'move'
             }
         }
-        drag.ondrop = async (ev, state) => {
+        drag.ondrop = async (_, state) => {
             const folder = state?.folder
             if (!folder) {
                 return
@@ -157,12 +167,4 @@ export default class MainView {
     }
 }
 
-import Dialogs from './dialogs.js'
-import { DropHandler } from '../common/html.js'
-import { FolderElement } from './elements/folder.js'
-import { FolderAddElement } from './elements/folderAdd.js'
-import { NoFoldersElement } from './elements/noFolders.js'
-import { SiteListElement } from './elements/sites.js'
-import { TabListElement } from './elements/TabListElement.js'
-import State from '../models/state.js'
 globalThis.MainView = MainView // TODO: drop
