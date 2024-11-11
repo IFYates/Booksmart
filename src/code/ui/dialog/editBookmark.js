@@ -150,7 +150,7 @@ export default class EditBookmarkDialog extends BaseDialog {
                     add('i', { className: 'fa-fw fas fa-trash-can', title: 'Delete bookmark' })
                     add('span', ' Delete')
                 }).onclick = async () => {
-                    await bookmark.delete()
+                    await State.deleteBookmark(bookmark)
                     dialog.close()
                 }
             }
