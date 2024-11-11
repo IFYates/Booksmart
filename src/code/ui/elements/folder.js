@@ -57,9 +57,7 @@ export class FolderElement extends BaseHTMLElement {
         const folder = this.#folder
         const readonly = !State.options.allowEdits || folder.readonly
 
-        if ((folder.scale || 100) != 100) {
-            host.style.zoom = `${folder.scale}%`
-        }
+        host.style.zoom = ((folder.scale || 100) != 100) ? `${folder.scale}%` : ''
 
         // Replace templates
         var m

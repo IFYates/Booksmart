@@ -109,8 +109,8 @@ export default class MainView {
         if (element == document.documentElement) {
             element.style.setProperty('--layout-columns', State.options.columns == -1 ? '100%' : State.options.columns + 'px')
             document.body.style.backgroundImage = State.options.backgroundImage ? `url(${State.options.backgroundImage})` : null
-            if (State.options.scale && State.options.scale != 100) {
-                document.getElementsByTagName('layout')[0].style.zoom = `${State.options.scale}%`
+            if (document.getElementsByTagName('layout')[0]) {
+                document.getElementsByTagName('layout')[0].style.zoom = (State.options.scale && State.options.scale != 100) ? `${State.options.scale}%` : ''
             }
         }
     }

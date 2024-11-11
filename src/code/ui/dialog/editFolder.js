@@ -274,6 +274,19 @@ export default class EditFolderDialog extends BaseDialog {
                     const dataUrl = URL.createObjectURL(new Blob([data], { type: 'application/octet-binary' }))
                     chrome.downloads.download({ url: dataUrl, filename: 'booksmart_export.json', conflictAction: 'overwrite', saveAs: true })
                 }
+            } else {
+                add('button', { type: 'button' }, () => {
+                    add('span', { className: 'fa-stack fa-xs' }, () => {
+                        add('i', { className: 'fas fa-bookmark fa-stack-2x' })
+                        add('i', { className: 'fas fa-arrow-right fa-stack-1x fa-inverse' })
+                    })
+                    add('span', ' Add from browser bookmarks')
+                }).onclick = async () => {
+                    const result = await Dialogs.importBookmarks()
+                    if (result) {
+                        dialog.close()
+                    }
+                }
             }
         })
 
@@ -338,22 +351,5 @@ export default class EditFolderDialog extends BaseDialog {
                 add('span', ' Cancel')
             }).onclick = () => dialog.close()
         })
-
-        if (!folder.id) {
-            add('p', { className: 'spanCols4 centred' }, () => {
-                add('button', { type: 'button' }, () => {
-                    add('span', { className: 'fa-stack fa-xs' }, () => {
-                        add('i', { className: 'fas fa-bookmark fa-stack-2x' })
-                        add('i', { className: 'fas fa-arrow-right fa-stack-1x fa-inverse' })
-                    })
-                    add('span', ' Add from browser bookmarks')
-                }).onclick = async () => {
-                    const result = await Dialogs.importBookmarks()
-                    if (result) {
-                        dialog.close()
-                    }
-                }
-            })
-        }
     }
 }

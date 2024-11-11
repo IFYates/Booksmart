@@ -17,8 +17,8 @@ export default class ImportBookmarkDialog extends BaseDialog {
     _display(dialog) {
         const items = []
         function showFolder(folder, parentShowHide, depth = 0) {
-            if (folder.id == State.booksmartRootId) {
-                return // Hide Booksmart root
+            if (folder.id == State.booksmartRootId || folder.trash) {
+                return // Hide Booksmart root and tras
             }
 
             items.push(folder)
