@@ -39,6 +39,9 @@ export default class Folder {
     #collapsed
     get collapsed() { return this.#collapsed }
     set collapsed(value) { this.#collapsed = !!value }
+    #height
+    get height() { return this.#height }
+    set height(value) { this.#height = num(value) }
     #icon
     get icon() { return this.#icon }
     set icon(value) { this.#icon = value?.trim() }
@@ -48,6 +51,9 @@ export default class Folder {
     #sortOrder
     get sortOrder() { return this.#sortOrder }
     set sortOrder(value) { this.#sortOrder = num(value) }
+    #width
+    get width() { return this.#width }
+    set width(value) { this.#width = num(value) }
 
     get immobile() { return false }
     get readonly() { return false }
@@ -84,10 +90,12 @@ export default class Folder {
         backgroundImage: v => !v?.length,
         collapsed: false,
         icon: v => !v?.length,
+        height: 1,
         index: null,
         scale: 100,
         sortOrder: 0,
-        title: null
+        title: null,
+        width: 1
     }
     export(standalone) {
         const data = {
@@ -95,10 +103,12 @@ export default class Folder {
             backgroundImage: this.#backgroundImage,
             collapsed: this.#collapsed,
             icon: this.#icon,
+            height: this.#height,
             index: this.#index,
             scale: this.#scale,
             sortOrder: this.#sortOrder,
-            title: standalone ? this.#title : null
+            title: standalone ? this.#title : null,
+            width: this.#width
         }.pick(Folder.#defaults)
         if (standalone) {
             data['.booksmart'] = {
@@ -116,8 +126,10 @@ export default class Folder {
         this.#accentColour = data.accentColour
         this.#backgroundImage = data.backgroundImage
         this.#collapsed = !!data.collapsed
+        this.#height = num(data.height)
         this.#icon = data.icon
         this.#scale = num(data.scale, 100)
         this.#sortOrder = num(data.sortOrder)
+        this.#width = num(data.width)
     }
 }

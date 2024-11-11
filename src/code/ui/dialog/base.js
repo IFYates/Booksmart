@@ -50,4 +50,27 @@ export default class BaseDialog {
         const element = document.getElementsByTagName('dialog')[0]
         MainView.setTheme(accentColour, element)
     }
+
+    _addCheckbox(labelText, value, setter) {
+        const label = add('label', labelText)
+        const checkbox = add('i', { className: 'fa-fw fas fa-toggle-off', role: 'button', tabIndex: 0 }, function () {
+            function toggle() {
+                value = !value
+                this.classList.toggle('fa-toggle-off', !value)
+                this.classList.toggle('fa-toggle-on', !!value)
+                setter(!!value, this, label)
+            }
+
+            this.classList.toggle('fa-toggle-off', !value)
+            this.classList.toggle('fa-toggle-on', !!value)
+
+            this.addEventListener('click', toggle)
+            this.addEventListener('keydown', (ev) => {
+                if (ev.key == 'Enter' || ev.key == ' ') {
+                    toggle.call(this)
+                }
+            })
+        })
+        label.addEventListener('click', () => checkbox.click())
+    }
 }

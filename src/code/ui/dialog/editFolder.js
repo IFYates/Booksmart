@@ -15,12 +15,14 @@ export default class EditFolderDialog extends BaseDialog {
     async _display(dialog, folder) {
         folder ??= new Folder()
 
+        // Title
         const txtTitle = create('input', {
             autofocus: true,
             type: 'text',
             value: folder.title || 'New folder'
         })
 
+        // Sort
         const ASC = '1', DESC = '0'
         const chkSortAsc = create('button', { type: 'button' }, function () {
             this.value = folder.sortOrder < 0 ? DESC : ASC
@@ -45,6 +47,7 @@ export default class EditFolderDialog extends BaseDialog {
             this.onchange()
         })
 
+        // Icon
         const iconPreviewDefault = create('i', { className: 'fa-fw fa-6x centred' })
         const iconPreviewCustom = create('img', { className: 'iconPreview centred' }, function () {
             this.image = (url) => {
@@ -189,7 +192,7 @@ export default class EditFolderDialog extends BaseDialog {
         })
 
         // Scale
-        const lblScale = add('label', 'Scale', { style: 'text-align:right' })
+        const lblScale = add('label', 'Scale')
         const scaleInput = add('input', { classes: 'spanCols3', type: 'range', min: 5, max: 50, value: folder.scale / 10 }, function () {
             this.oninput = () => {
                 if (folder.scale && folder.scale != this.value * 10) {
@@ -201,8 +204,23 @@ export default class EditFolderDialog extends BaseDialog {
             this.oninput()
         })
 
+        // Span
+        add('label', 'Size')
+        add('div', { className: 'spanCols3', style: 'display: grid; grid-template-columns: 1fr 2fr 1fr 2fr 6fr;' }, (me) => {
+            super._addCheckbox('Wide', folder.width > 1, (v) => {
+                folder.width = !!v ? 2 : 1
+                document.getElementById(`folder-${folder.id}`)?.refresh()
+            })
+
+            super._addCheckbox('Tall', folder.height > 1, (v) => {
+                folder.height = !!v ? 2 : 1
+                document.getElementById(`folder-${folder.id}`)?.refresh()
+            })
+        })
+
+        // Colour
         var defaultAccent = !folder.accentColour
-        add('label', 'Accent colour', { style: 'text-align:right' })
+        add('label', 'Accent colour')
         const accountColourPicker = add('input', { type: 'color', classes: 'spanCols2', value: !defaultAccent ? folder.accentColour : State.options.accentColour }, function () {
             this.on_change(() => {
                 defaultAccent = false
@@ -222,7 +240,8 @@ export default class EditFolderDialog extends BaseDialog {
             folder.accentColour = null
         }
 
-        add('label', 'Background image URL', { style: 'text-align:right' })
+        // Background
+        add('label', 'Background image URL')
         const bgImage = create('img', { style: 'max-width:100%;max-height:100%', src: folder.backgroundImage || '' })
         add('textarea', { classes: 'spanCols2', style: 'width:100%;height:100%;resize:none', value: folder.backgroundImage || '' }, function () {
             this.onkeyup = () => {
