@@ -45,7 +45,7 @@ export class EmojiSelectorElement extends BaseHTMLElement {
 
     constructor(currentIcon) {
         super(template, ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
-        this.#value = currentIcon
+        this.#value = Emojis.isEmoji(currentIcon) ? currentIcon : null
     }
 
     update(char, title, scrollTo, force) {

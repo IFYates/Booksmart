@@ -21,6 +21,7 @@ export class TabElement extends BookmarkElement {
     }
 
     onclick(ev) {
+        ev.preventDefault()
         ev.stopPropagation()
         this.focus()
         return false

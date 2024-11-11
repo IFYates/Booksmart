@@ -39,7 +39,7 @@ export class FaconSelectorElement extends BaseHTMLElement {
 
     constructor(currentIcon) {
         super(template, ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
-        this.#value = currentIcon
+        this.#value = FontAwesome.isFacon(currentIcon) ? currentIcon : null
     }
 
     update(value, scrollTo, force) {

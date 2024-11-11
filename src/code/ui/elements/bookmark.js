@@ -42,6 +42,17 @@ export class BookmarkElement extends BaseHTMLElement {
         this.id = 'bookmark-' + bookmark.id
     }
 
+    onclick(ev) {
+        this.#bookmark.click()
+
+        if (!ev.ctrlKey && !ev.shiftKey && State.options.openExistingTab && this.#lastTab) {
+            ev.stopPropagation()
+            ev.preventDefault()
+            this.#lastTab.focus()
+            return true
+        }
+    }
+
     async _ondisplay(root, host) {
         const self = this
         const bookmark = this.#bookmark
@@ -65,16 +76,6 @@ export class BookmarkElement extends BaseHTMLElement {
         // Link
         this._apply('a', function () {
             this.target = State.options.openNewTab ? '_blank' : ''
-            this.onclick = (ev) => {
-                if (!ev.ctrlKey && !ev.shiftKey && State.options.openExistingTab && self.#lastTab) {
-                    ev.preventDefault()
-                    self.#lastTab.focus()
-                }
-
-                self.#bookmark.clicks += 1
-                self.#bookmark.lastClick = new Date().getTime()
-                State.updateEntry(self.#bookmark)
-            }
         })
         this._apply('span.title', function () {
             this.classList.toggle('nowrap', !State.options.wrapTitles)
@@ -179,7 +180,7 @@ export class BookmarkElement extends BaseHTMLElement {
 
     #lastTab = null
     onmouseenter() {
-        Tabs.find(this.url).then(t => this.#lastTab = t)
+        Tabs.find(this.#bookmark.url).then(t => this.#lastTab = t)
     }
 
     async moveTo(folder, origin, doCopy) {

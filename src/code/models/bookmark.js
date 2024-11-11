@@ -48,6 +48,12 @@ export default class Bookmark {
     get notes() { return this.#notes }
     set notes(value) { this.#notes = value?.trim() }
 
+    async click() {
+        this.#clicks += 1
+        this.#lastClick = new Date().getTime()
+        State.updateEntry(this)
+    }
+
     async duplicate() {
         return await State.createBookmark(this.#parentId, this.#title, this.#url, this.export())
     }
