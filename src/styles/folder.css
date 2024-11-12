@@ -106,3 +106,15 @@ h1:hover .showHide {
 :host(:not(.collapsed)) .showHide[title="Show"] {
     display: none;
 }
+
+.tags {
+    position: absolute;
+    width: calc(100% - 10px);
+    top: 0;
+}
+
+.tags>.tag {
+    display: inline-block;
+    height: 5px;
+    width: 30px;
+}

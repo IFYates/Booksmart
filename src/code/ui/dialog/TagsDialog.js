@@ -9,9 +9,7 @@ export default class TagsDialog extends BaseDialog {
 
     _refresh(dialog) {
         dialog.querySelector('form').display((el) => {
-            while (el.firstChild) {
-                el.firstChild.remove()
-            }
+            el.clearChildren()
             this._display(dialog)
         })
     }
@@ -24,7 +22,7 @@ export default class TagsDialog extends BaseDialog {
 
         // Row per tag
         console.log(State.options)
-        for (const tag of State.options.tags) {
+        for (const tag of State.options.tags.filter(t => t.id > 0)) {
             add('input', { type: 'text', maxlength: 20, value: tag.name }, (el) => {
                 el.addEventListener('blur', async () => {
                     el.value = el.value?.trim()
@@ -51,12 +49,14 @@ export default class TagsDialog extends BaseDialog {
         }
 
         // New tag
-        var newColour = '#' + Math.rand(0, 256).toString(16) + Math.rand(0, 256).toString(16) + Math.rand(0, 256).toString(16)
+        var newColour = '#' + Math.rand(0, 256).toString(16).padStart(2, '0') + Math.rand(0, 256).toString(16).padStart(2, '0') + Math.rand(0, 256).toString(16).padStart(2, '0')
+        console.log(newColour)
         add('input', { type: 'text', maxlength: 20, placeholder: 'New tag' }, (el) => {
             el.addEventListener('keydown', async (ev) => {
                 el.value = el.value?.trim()
                 if (el.value.length && ev.key == 'Enter') {
-                    State.options.tags.push(new Tag(State.options.tags.length + 1, el.value, newColour))
+                    const maxId = State.options.tags.reduce((a, b) => a > b.id ? a : b.id, 0)
+                    State.options.tags.push(new Tag(maxId + 1, el.value, newColour))
                     await State.save()
                     this._refresh(dialog)
                 }

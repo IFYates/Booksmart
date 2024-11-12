@@ -284,8 +284,9 @@ export class DragDropHandler extends DropHandler {
             }
 
             const clone = DragEvent.prototype.allKeys().reduce((o, k) => { o[k] = ev[k]; return o }, {})
-            clone.preventDefault = ev.preventDefault.bind(ev)
+            clone.stopPropagation = ev.stopPropagation.bind(ev)
             clone.target = el
+            clone.preventDefault = ev.preventDefault.bind(ev)
             self['on' + ev.type].call(element, clone, DragDropHandler.#currentState)
         }
 

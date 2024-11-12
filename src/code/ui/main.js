@@ -27,16 +27,12 @@ export default class MainView {
             }
 
             if (State.options.tags?.length) {
-                while (el.firstChild) {
-                    el.firstChild.remove()
-                }
+                el.clearChildren()
                 add('i', { className: 'fa-fw fas fa-tags', title: 'Manage tags' })
 
-                for (const tag of State.options.tags) {
+                for (const tag of State.options.tags.sort((a, b) => a.name.localeCompare(b.name))) {
                     add(new TagElement(tag))
                 }
-
-                add(new TagElement({ id: 0, name: '(Untagged)', colour: '#808080' }))
             }
         })
 

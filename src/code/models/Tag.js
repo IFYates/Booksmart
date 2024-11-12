@@ -13,16 +13,28 @@ export default class Tag {
     #colour
     get colour() { return this.#colour }
     set colour(value) { this.#colour = value }
+    #visible = true
+    get visible() { return this.#visible }
+    set visible(value) { this.#visible = !!value }
 
+    static #defaults = {
+        id: null,
+        name: null,
+        colour: null,
+        visible: true
+    }
     export() {
         return {
             id: this.#id,
             name: this.#name,
-            colour: this.#colour
-        }
+            colour: this.#colour,
+            visible: this.#visible
+        }.pick(Tag.#defaults)
     }
 
     static import(data) {
-        return new Tag(num(data.id), data.name || 'Tag', data.colour || '#808080')
+        const tag = new Tag(num(data.id), data.name || 'Tag', data.colour || '#808080')
+        tag.visible = data.visible !== false
+        return tag
     }
 }

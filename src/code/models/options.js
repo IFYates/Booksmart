@@ -33,7 +33,6 @@ export default class Options {
     set showTopSites(value) { this.#showTopSites = !!value }
     #tags = []
     get tags() { return this.#tags }
-    set tags(value) { this.#tags = value || [] }
     #wrapTitles
     get wrapTitles() { return this.#wrapTitles }
     set wrapTitles(value) { this.#wrapTitles = !!value }
@@ -84,7 +83,10 @@ export default class Options {
         this.showFavicons = data.showFavicons !== false
         this.showTabList = data.showTabList !== false
         this.showTopSites = !!data.showTopSites
-        this.tags = data.tags.map(t => Tag.import(t))
+        this.#tags = data.tags?.filter(t => t.id > 0).map(t => Tag.import(t)) || []
         this.wrapTitles = data.wrapTitles !== false
+
+        const notag = data.tags?.find(t => t.id == 0)
+        this.tags.push(Tag.import({ id: 0, name: '(Untagged)', colour: '#808080', visible: notag?.visible }))
     }
 }

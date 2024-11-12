@@ -39,3 +39,7 @@
 i.fa-tag {
     opacity: 0.5;
 }
+
+:host(.dragging) {
+    opacity: 0.5;
+}

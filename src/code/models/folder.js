@@ -52,6 +52,8 @@ export default class Folder {
     #sortOrder
     get sortOrder() { return this.#sortOrder }
     set sortOrder(value) { this.#sortOrder = num(value) }
+    #tags = []
+    get tags() { return this.#tags }
     #width
     get width() { return this.#width }
     set width(value) { this.#width = num(value) }
@@ -95,6 +97,7 @@ export default class Folder {
         index: null,
         scale: 100,
         sortOrder: 0,
+        tags: [],
         title: null,
         width: v => num(v) < 2
     }
@@ -108,6 +111,7 @@ export default class Folder {
             index: this.#index,
             scale: this.#scale,
             sortOrder: this.#sortOrder,
+            tags: this.#tags.map(t => t.id),
             title: standalone ? this.#title : null,
             width: this.#width
         }.pick(Folder.#defaults)
@@ -131,6 +135,7 @@ export default class Folder {
         this.#icon = data.icon
         this.#scale = num(data.scale, 100)
         this.#sortOrder = num(data.sortOrder)
+        this.#tags = data.tags?.map(d => State.options.tags.find(t => t.id == d)) || []
         this.#width = num(data.width)
     }
 }

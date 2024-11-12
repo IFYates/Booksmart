@@ -22,6 +22,8 @@ template.innerHTML = `
         <i class="move fa-fw fas fa-arrow-down" title="Move down"></i>
         <i class="fa-fw fas fa-pen" title="Edit folder"></i>
     </div>
+
+    <div class="tags"></div>
     
     <i class="action fa-fw fas fa-folder" title="This is a folder from your browser bookmarks" style="display:none"></i>
 </h1>
@@ -53,6 +55,16 @@ export class FolderElement extends BaseHTMLElement {
 
     onShowOrHide() {
         State.updateEntry(this.#folder)
+    }
+
+    applyTags() {
+        const folder = this.#folder
+        if (num(folder.id) == folder.id) {
+            const visible = folder.tags.length
+                ? folder.tags.some(t => t.visible)
+                : State.options.tags.find(t => t.id == 0).visible
+            this.shadowRoot.host.style.display = !visible ? 'none' : ''
+        }
     }
 
     async _ondisplay(root, host) {
@@ -110,6 +122,14 @@ export class FolderElement extends BaseHTMLElement {
                 return false
             }
         })
+
+        // Tags
+        this.applyTags()
+        const tagList = root.querySelector('.tags')
+        tagList.clearChildren()
+        for (const tag of folder.tags || []) {
+            tagList.add('span', { className: 'tag', style: `background-color: ${tag.colour}`, title: tag.name })
+        }
 
         // Edit
         this._apply('i.fa-pen', function () {
