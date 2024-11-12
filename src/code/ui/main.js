@@ -36,33 +36,21 @@ export default class MainView {
                     add(new TagElement(tag))
                 }
 
-                add(new TagElement({ id: -1, name: '(Untagged)', colour: '#808080' }))
+                add(new TagElement({ id: 0, name: '(Untagged)', colour: '#808080' }))
             }
         })
 
         MainView.elTrash.display(function () {
             const drag = new DropHandler(this)
             drag.ondragover = (ev, state) => {
-                const bookmark = state?.bookmark
                 const folder = state?.folder
-                if ((bookmark && !bookmark.readonly) || folder) {
+                if (folder) {
                     ev.preventDefault()
                     ev.dataTransfer.dropEffect = 'move'
-                    this.classList.replace('fa-dumpster', 'fa-dumpster-fire')
                 }
-            }
-            drag.ondragleave = () => {
-                this.classList.replace('fa-dumpster-fire', 'fa-dumpster')
             }
             drag.ondrop = (ev, state) => {
-                drag.ondragleave()
                 state.dropped = true
-
-                const bookmark = state?.bookmark
-                if (bookmark && !bookmark.readonly) {
-                    state.element.remove()
-                    return State.deleteBookmark(bookmark)
-                }
 
                 const folder = state?.folder
                 if (folder) {

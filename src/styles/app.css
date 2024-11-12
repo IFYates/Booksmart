@@ -57,9 +57,13 @@ body>.actions * {
     opacity: 0.1;
 }
 
-#trash.active {
+.dragging #trash {
     color: darkred;
     opacity: 1.0;
+}
+
+.dragging.over-trash #trash {
+    text-shadow: 0px 0px 30px red;
 }
 
 layout {

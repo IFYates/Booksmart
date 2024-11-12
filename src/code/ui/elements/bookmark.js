@@ -7,6 +7,7 @@ import { Tabs } from "../../common/tabs.js"
 import State from "../../models/state.js"
 import Dialogs from '../dialogs.js'
 import { BookmarkAddElement } from "./bookmarkAdd.js"
+import { FolderElement } from './folder.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -135,13 +136,20 @@ export class BookmarkElement extends BaseHTMLElement {
 
             ev.dataTransfer.effectAllowed = bookmark.readonly ? 'copy' : 'copyMove'
             this.classList.add('dragging')
-            MainView.elTrash.classList.toggle('active', !bookmark.readonly) // TODO: through global style?
+            document.body.classList.add('dragging')
 
-            return { bookmark: bookmark, element: this, origin: this.nextSibling ?? this.parentNode }
+            return {
+                bookmark: bookmark,
+                element: this,
+                origin: this.nextSibling ?? this.parentNode,
+                dropTargetFilter: (el) => (el instanceof FolderElement && el.folder && !el.folder.readonly)
+                    || (!bookmark.readonly && el === MainView.elTrash)
+            }
         }
         drag.ondragend = (_, state) => {
             this.classList.remove('dragging')
-            MainView.elTrash.classList.remove('active') // TODO: through global style?
+            document.body.classList.remove('dragging')
+            document.body.classList.remove('over-trash')
 
             // Didn't drop on folder, so reset
             if (state.element && !state.dropped) {
@@ -153,6 +161,41 @@ export class BookmarkElement extends BaseHTMLElement {
                 }
             }
         }
+
+        drag.ondragover = (ev) => {
+            // Trash
+            if (ev.target === MainView.elTrash) {
+                ev.preventDefault()
+                ev.dataTransfer.dropEffect = 'move'
+                document.body.classList.add('over-trash')
+                return
+            }
+            document.body.classList.remove('over-trash')
+
+            // Folder (other or manual sort)
+            const folder = ev.target.folder
+            if (bookmark.folderId != folder.id || folder.sortOrder == 0) {
+                ev.preventDefault() // Can drop here
+                ev.dataTransfer.dropEffect = bookmark.folderId != folder.id && (bookmark.readonly || ev.ctrlKey)
+                    ? 'copy' : 'move' // Can copy to another collection
+            }
+        }
+        drag.ondrop = async (ev, state) => {
+            // Trash
+            if (ev.target === MainView.elTrash) {
+                this.remove()
+                return State.deleteBookmark(bookmark)
+            }
+
+            // Move/copy bookmark
+            const folder = ev.target.folder
+            if (state && !state.dropped) {
+                state.dropped = true
+                await this.moveTo(ev.target, state.origin, bookmark.folderId != folder.id && ev.ctrlKey)
+                await State.save()
+            }
+        }
+
         if (!bookmark.readonly) {
             drag.ondragenter = (_, state) => {
                 const dragging = state?.bookmark

@@ -223,28 +223,39 @@ export class BaseHTMLElement extends HTMLElement {
 }
 
 export class DropHandler {
+    #registration
     #element
     get element() { return this.#element }
 
     constructor(element) {
         this.#element = element
+        this.#registration = this.register()
+    }
 
-        element.addEventListener('dragenter', (ev) => {
-            // console.log('ondragenter', element, ev, DragDropHandler.state)
-            this.ondragenter.call(element, ev, DragDropHandler.state)
-        })
-        element.addEventListener('dragover', (ev) => {
-            // console.log('ondragover', element, ev, DragDropHandler.state)
-            this.ondragover.call(element, ev, DragDropHandler.state)
-        })
-        element.addEventListener('dragleave', (ev) => {
-            // console.log('ondragleave', element, ev, DragDropHandler.state)
-            this.ondragleave.call(element, ev, DragDropHandler.state)
-        })
-        element.addEventListener('drop', (ev) => {
-            // console.log('ondrop', element, ev, DragDropHandler.state)
-            this.ondrop.call(element, ev, DragDropHandler.state)
-        })
+    register() {
+        if (this.#registration) {
+            return this.#registration
+        }
+
+        const self = this, element = this.#element
+        function eventHandler(ev) {
+            // console.log(ev.type, element, ev, DragDropHandler.state)
+            self['on' + ev.type]?.call(element, ev, DragDropHandler.state)
+        }
+        element.addEventListener('dragenter', eventHandler)
+        element.addEventListener('dragleave', eventHandler)
+        element.addEventListener('drop', eventHandler)
+        return {
+            unregister: () => {
+                element.removeEventListener('dragenter', eventHandler)
+                element.removeEventListener('dragleave', eventHandler)
+                element.removeEventListener('drop', eventHandler)
+                self.#registration = null
+            }
+        }
+    }
+    unregister() {
+        this.#registration?.unregister()
     }
 
     ondragenter(ev, state) { }
@@ -262,13 +273,39 @@ export class DragDropHandler extends DropHandler {
         super(element)
         element.draggable = true
 
+        const self = this
+        function execFiltered(ev) {
+            const el = ev.composedPath().find(el => DragDropHandler.#currentState.dropTargetFilter(el))
+            if (!el) {
+                ev.preventDefault()
+                ev.stopPropagation()
+                ev.dataTransfer.dropEffect = 'none'
+                return
+            }
+
+            const clone = DragEvent.prototype.allKeys().reduce((o, k) => { o[k] = ev[k]; return o }, {})
+            clone.preventDefault = ev.preventDefault.bind(ev)
+            clone.target = el
+            self['on' + ev.type].call(element, clone, DragDropHandler.#currentState)
+        }
+
         element.addEventListener('dragstart', (ev) => {
             DragDropHandler.#currentState = this.ondragstart.call(element, ev)
-            // console.log('ondragstart', element, ev, DragDropHandler.state)
+            // console.log('ondragstart', element, ev, DragDropHandler.#currentState)
+
+            if (typeof DragDropHandler.#currentState.dropTargetFilter == 'function') {
+                super.unregister()
+                document.addEventListener('dragover', execFiltered)
+                document.addEventListener('drop', execFiltered)
+            }
         })
         element.addEventListener('dragend', (ev) => {
-            // console.log('ondragend', element, ev, DragDropHandler.state)
-            this.ondragend.call(element, ev, DragDropHandler.state)
+            // console.log('ondragend', element, ev, DragDropHandler.#currentState)
+            document.removeEventListener('dragover', execFiltered)
+            document.removeEventListener('drop', execFiltered)
+            super.register()
+
+            this.ondragend.call(element, ev, DragDropHandler.#currentState)
             DragDropHandler.#currentState = null
         })
     }

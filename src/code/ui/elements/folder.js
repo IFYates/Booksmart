@@ -171,30 +171,6 @@ export class FolderElement extends BaseHTMLElement {
                 }
             }
         }
-
-        // Bookmark dropping
-        if (!readonly) {
-            const drop = new DropHandler(host)
-            drop.ondragover = (ev, state) => {
-                const bookmark = state?.bookmark
-                if (bookmark) {
-                    if (bookmark.folderId == folder.id && folder.sortOrder != 0) return // Cannot reorder non-manual folder
-                    ev.preventDefault() // Can drop here
-                    ev.dataTransfer.dropEffect = bookmark.folderId != folder.id && (bookmark.readonly || ev.ctrlKey) ? 'copy' : 'move' // Can copy to another collection
-                }
-            }
-            drop.ondrop = async (ev, state) => {
-                var bookmark = state?.bookmark
-                if (!bookmark || state.dropped) {
-                    return
-                }
-                state.dropped = true
-
-                // Place bookmark
-                await state.element.moveTo(this, state.origin, bookmark.folderId != folder.id && ev.ctrlKey)
-                await State.save()
-            }
-        }
     }
 
     reindexBookmarks() {
