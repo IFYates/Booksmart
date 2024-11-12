@@ -11,15 +11,25 @@
 </head>
 
 <body>
-  <i class="fa-fw fa-2x fas fa-dumpster" id="trash" title="Drag items here to delete"></i>
-  <h1>Booksmart</h1>
+  <div id="head">
+    <h1>
+      Booksmart
+    </h1>
+    <div id="tags">
+      <span id="tagEdit">
+        <i class="fa-fw fas fa-tags" title="Tags"></i>
+        No tags
+      </span>
+    </div>
+    <i class="fa-fw fa-2x fas fa-dumpster" id="trash" title="Drag items here to delete"></i>
+  </div>
 
   <div class="actions">
     <i class="fa-fw fa-2x fas fa-gear" id="options" title="Options"></i>
     <i class="fa-fw fa-2x fas" id="editLock" title="Lock for edits"></i>
     <i class="fa-fw fa-2x fas fa-circle-info" id="info" title="Info"></i>
     <div style="flex-grow: 1"></div>
-    <bs-folder-add></bs-bookmark>
+    <bs-folder-add></bs-folder-add>
   </div>
 </body>
 

@@ -1,4 +1,6 @@
 
+import './elements/TagElement.js'
+
 import Dialogs from './dialogs.js'
 import { DropHandler } from '../common/html.js'
 import { FolderElement } from './elements/folder.js'
@@ -7,6 +9,7 @@ import { NoFoldersElement } from './elements/noFolders.js'
 import { SiteListElement } from './elements/sites.js'
 import { TabListElement } from './elements/TabListElement.js'
 import State from '../models/state.js'
+import TagElement from './elements/TagElement.js'
 
 export default class MainView {
     static elLayout
@@ -16,6 +19,26 @@ export default class MainView {
     static async init() {
         await State.init()
         MainView.setTheme()
+
+        document.getElementById('tagEdit').display((el) => {
+            el.onclick = async () => {
+                await Dialogs.tags()
+                el.layout()
+            }
+
+            if (State.options.tags?.length) {
+                while (el.firstChild) {
+                    el.firstChild.remove()
+                }
+                add('i', { className: 'fa-fw fas fa-tags', title: 'Manage tags' })
+
+                for (const tag of State.options.tags) {
+                    add(new TagElement(tag))
+                }
+
+                add(new TagElement({ id: -1, name: '(Untagged)', colour: '#808080' }))
+            }
+        })
 
         MainView.elTrash.display(function () {
             const drag = new DropHandler(this)

@@ -48,6 +48,10 @@ body>.actions * {
     pointer-events: auto;
 }
 
+#tagEdit {
+    cursor: pointer;
+}
+
 #trash {
     float: right;
     opacity: 0.1;

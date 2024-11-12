@@ -1,11 +1,12 @@
+import './icon.js'
+import "../../common/emojiHelpers.js"
+import "../../common/faHelpers.js"
+
 import { BaseHTMLElement, DropHandler, DragDropHandler } from "../../common/html.js"
 import { BookmarkAddElement } from './bookmarkAdd.js'
 import { BookmarkElement, } from './bookmark.js'
 import Dialogs from '../dialogs.js'
-import Emojis from "../../common/emojiHelpers.js"
-import FontAwesome from "../../common/faHelpers.js"
 import State from "../../models/state.js"
-import IconElement from './icon.js'
 
 const template = document.createElement('template')
 template.innerHTML = `

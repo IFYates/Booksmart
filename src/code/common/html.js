@@ -140,7 +140,7 @@ export class BaseHTMLElement extends HTMLElement {
         input = String(input)
         var m, result = ''
         while (m = BaseHTMLElement.TemplateRE.exec(input)) {
-            result += input.substring(0, m.index) + object[m[1]]
+            result += input.substring(0, m.index) + (object[m[1]] || '')
             input = input.substring(m.index + m[0].length)
         }
         return result + input

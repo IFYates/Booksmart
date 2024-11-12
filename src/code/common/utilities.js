@@ -119,6 +119,11 @@ Object.prototype.strip = function (keys) {
 }
 Object.defineProperty(Object.prototype, 'strip', { enumerable: false, writable: false, configurable: false })
 
+Math.rand = function (lowerInc, upperExc) {
+    return Math.floor(Math.random() * (upperExc - lowerInc)) + lowerInc
+}
+Object.defineProperty(Math, 'rand', { enumerable: false, writable: false, configurable: false })
+
 /**
  * Removes all keys from the object that don't match the given key list or
  * predicate.

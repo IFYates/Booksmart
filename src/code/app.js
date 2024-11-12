@@ -1,7 +1,6 @@
 import './common/html.js'
 import './common/utilities.js'
 import MainView from "./ui/main.js"
-import State from './models/state.js'
 
 await MainView.init()
 await MainView.fullRefresh()

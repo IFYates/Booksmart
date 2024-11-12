@@ -1,0 +1,41 @@
+:host {
+    --tag-colour: #ff0000;
+    --tag-colour-r: 255;
+    --tag-colour-g: 0;
+    --tag-colour-b: 0;
+    --tag-colour-darkest: rgb(calc(var(--tag-colour-r) * 0.2), calc(var(--tag-colour-g) * 0.2), calc(var(--tag-colour-b) * 0.2));
+
+    display: inline-block;
+}
+
+:host>div {
+    background-color: var(--tag-colour-darkest);
+    border-width: 1px !important;
+    border-color: var(--tag-colour);
+    border: 1px solid var(--tag-colour);
+    border-radius: 1em;
+    cursor: pointer;
+    padding: 2px 10px 2px 5px;
+    margin-left: 5px;
+}
+
+:host>div:hover {
+    filter: brightness(1.4);
+}
+
+:host>div:active {
+    filter: brightness(0.8);
+}
+
+:host(.off) {
+    filter: grayscale(0.6);
+    text-decoration: line-through;
+}
+
+* {
+    color: var(--tag-colour);
+}
+
+i.fa-tag {
+    opacity: 0.5;
+}

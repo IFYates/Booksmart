@@ -1,3 +1,5 @@
+import Tag from "./Tag.js"
+
 export default class Options {
     #accentColour
     get accentColour() { return this.#accentColour }
@@ -29,6 +31,9 @@ export default class Options {
     #showTopSites
     get showTopSites() { return this.#showTopSites }
     set showTopSites(value) { this.#showTopSites = !!value }
+    #tags = []
+    get tags() { return this.#tags }
+    set tags(value) { this.#tags = value || [] }
     #wrapTitles
     get wrapTitles() { return this.#wrapTitles }
     set wrapTitles(value) { this.#wrapTitles = !!value }
@@ -48,6 +53,7 @@ export default class Options {
         showFavicons: true,
         showTabList: true,
         showTopSites: false,
+        tags: [],
         wrapTitles: true
     }
     export() {
@@ -62,6 +68,7 @@ export default class Options {
             showFavicons: this.#showFavicons,
             showTabList: this.#showTabList,
             showTopSites: this.#showTopSites,
+            tags: this.#tags.map(t => t.export()),
             wrapTitles: this.#wrapTitles
         }.pick(Options.#defaults)
     }
@@ -77,6 +84,7 @@ export default class Options {
         this.showFavicons = data.showFavicons !== false
         this.showTabList = data.showTabList !== false
         this.showTopSites = !!data.showTopSites
+        this.tags = data.tags.map(t => Tag.import(t))
         this.wrapTitles = data.wrapTitles !== false
     }
 }

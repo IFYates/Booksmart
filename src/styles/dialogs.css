@@ -67,6 +67,23 @@ dialog#OptionsDialog form {
     grid-template-columns: 2fr 1fr 2fr 1fr 2fr 1fr;
 }
 
+dialog#TagsDialog {
+    width: 35%;
+}
+
+dialog#TagsDialog form {
+    display: grid;
+    grid-row-gap: 0.5em;
+    grid-column-gap: 0.5em;
+    grid-template-columns: 2fr 1fr 0fr;
+}
+
+dialog#TagsDialog button,
+dialog#TagsDialog input {
+    height: 100%;
+    margin: 0;
+}
+
 dialog button {
     margin: 0 5px;
     padding: 1px 2pc;

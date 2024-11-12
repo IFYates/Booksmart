@@ -1,11 +1,12 @@
-import Emojis from "../../common/emojiHelpers.js"
-import FontAwesome from "../../common/faHelpers.js"
+import './icon.js'
+import "../../common/emojiHelpers.js"
+import "../../common/faHelpers.js"
+
 import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
 import { Tabs } from "../../common/tabs.js"
 import State from "../../models/state.js"
 import Dialogs from '../dialogs.js'
 import { BookmarkAddElement } from "./bookmarkAdd.js"
-import IconElement from './icon.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -60,10 +61,7 @@ export class BookmarkElement extends BaseHTMLElement {
         bookmark.readonly = bookmark.readonly || !State.options.allowEdits || folder.readonly
 
         // Replace templates
-        var m
-        while (m = BaseHTMLElement.TemplateRE.exec(root.innerHTML)) {
-            root.innerHTML = String(root.innerHTML).replaceAll(m[0], bookmark[m[1]] || '')
-        }
+        root.innerHTML = BaseHTMLElement.replaceTemplates(root.innerHTML, bookmark)
 
         // Icon
         const icon = root.querySelector('bs-icon')
