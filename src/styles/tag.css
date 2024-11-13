@@ -6,6 +6,7 @@
     --tag-colour-darkest: rgb(calc(var(--tag-colour-r) * 0.2), calc(var(--tag-colour-g) * 0.2), calc(var(--tag-colour-b) * 0.2));
 
     display: inline-block;
+    color: var(--tag-colour) !important;
 }
 
 :host>div {
