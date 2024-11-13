@@ -1,5 +1,5 @@
 import { BaseHTMLElement } from "../../common/html.js"
-import Dialogs from '../dialogs.js'
+import EditBookmarkDialog from "../dialog/editBookmark.js"
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -20,7 +20,8 @@ export class BookmarkAddElement extends BaseHTMLElement {
         this.title = 'Add bookmark'
 
         this.addEventListener('click', (ev) => {
-            Dialogs.newBookmark(this.#folder).then(MainView.fullRefresh)
+            new EditBookmarkDialog('New bookmark').show(null, this.#folder)
+                .then(MainView.fullRefresh)
         })
     }
 }

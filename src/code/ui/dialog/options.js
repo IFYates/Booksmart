@@ -1,5 +1,5 @@
-//import MainView from '../main.js'
 import State from '../../models/state.js'
+import { SiteListElement } from '../elements/sites.js'
 import BaseDialog from './base.js'
 
 export default class OptionsDialog extends BaseDialog {
@@ -53,7 +53,7 @@ export default class OptionsDialog extends BaseDialog {
         checkbox('Open in new tab', () => State.options.openNewTab, (v) => State.options.openNewTab = v)
         checkbox('Show most visited sites', () => State.options.showTopSites, (v) => {
             State.options.showTopSites = v
-            MainView.fullRefresh() // TODO
+            SiteListElement.instance.refresh()
         })
         checkbox('Wrap long bookmark titles', () => State.options.wrapTitles, (v) => {
             State.options.wrapTitles = v

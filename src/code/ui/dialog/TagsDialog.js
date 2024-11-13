@@ -21,7 +21,6 @@ export default class TagsDialog extends BaseDialog {
         add('div')
 
         // Row per tag
-        console.log(State.options)
         for (const tag of State.options.tags.filter(t => t.id > 0)) {
             add('input', { type: 'text', maxlength: 20, value: tag.name }, (el) => {
                 el.addEventListener('blur', async () => {
@@ -50,7 +49,6 @@ export default class TagsDialog extends BaseDialog {
 
         // New tag
         var newColour = '#' + Math.rand(0, 256).toString(16).padStart(2, '0') + Math.rand(0, 256).toString(16).padStart(2, '0') + Math.rand(0, 256).toString(16).padStart(2, '0')
-        console.log(newColour)
         add('input', { type: 'text', maxlength: 20, placeholder: 'New tag' }, (el) => {
             el.addEventListener('keydown', async (ev) => {
                 el.value = el.value?.trim()

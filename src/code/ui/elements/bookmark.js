@@ -5,9 +5,9 @@ import "../../common/faHelpers.js"
 import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
 import { Tabs } from "../../common/tabs.js"
 import State from "../../models/state.js"
-import Dialogs from '../dialogs.js'
 import { BookmarkAddElement } from "./bookmarkAdd.js"
 import { FolderElement } from './folder.js'
+import EditBookmarkDialog from '../dialog/editBookmark.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -55,14 +55,15 @@ export class BookmarkElement extends BaseHTMLElement {
         }
     }
 
+    _prepareTemplate(template) {
+        return BaseHTMLElement.replaceTemplates(template, this.#bookmark)
+    }
+
     async _ondisplay(root, host) {
         const self = this
         const bookmark = this.#bookmark
         const folder = this.parentNode.host.folder
         bookmark.readonly = bookmark.readonly || !State.options.allowEdits || folder.readonly
-
-        // Replace templates
-        root.innerHTML = BaseHTMLElement.replaceTemplates(root.innerHTML, bookmark)
 
         // Icon
         const icon = root.querySelector('bs-icon')
@@ -124,7 +125,8 @@ export class BookmarkElement extends BaseHTMLElement {
             this.style.display = bookmark.readonly ? 'none' : ''
             this.onclick = (ev) => {
                 ev.stopPropagation()
-                Dialogs.editBookmark(bookmark, folder).then(() => host.parentNode.host.refresh())
+                new EditBookmarkDialog('Edit bookmark').show(bookmark, folder)
+                    .then(() => host.parentNode.host.refresh())
                 return false
             }
         })

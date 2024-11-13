@@ -16,17 +16,15 @@ export class TabListElement extends FolderElement {
     }
 
     static #instance
-    static get instance() { return TabListElement.#instance ??= new TabListElement() }
+    static get instance() { return TabListElement.#instance ??= document.getElementsByTagName(customElements.getName(TabListElement)) }
 
     constructor() {
         if (TabListElement.#instance) {
             throw new Error('Only one instance of SitesElement allowed')
         }
-
-        TabListElement.#tabsFolder.collapsed = !State.options.showTabList
+        
         super(TabListElement.#tabsFolder)
-
-        this.refresh()
+        TabListElement.#instance = this
         Tabs.subscribe(this.refresh.bind(this))
     }
 
@@ -56,6 +54,18 @@ export class TabListElement extends FolderElement {
     onShowOrHide() {
         State.options.showTabList = !TabListElement.#tabsFolder.collapsed
         State.save()
+    }
+
+    _ondisplay(root, host) {
+        TabListElement.#tabsFolder.collapsed = !State.options?.showTabList
+        host.classList.toggle('editable', State.options?.allowEdits)
+
+        if (!TabListElement.#tabsFolder.collapsed && !TabListElement.#tabsFolder.bookmarks.length) {
+            this.refresh()
+            return
+        }
+
+        super._ondisplay(root, host)
     }
 }
 customElements.define('bs-tab-list', TabListElement)

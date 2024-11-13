@@ -1,4 +1,3 @@
-import Folder from '../../models/folder.js'
 import State from '../../models/state.js'
 import BaseDialog from './base.js'
 

@@ -1,11 +1,11 @@
 import BaseDialog from './base.js'
 import FontAwesome from '../../common/faHelpers.js'
-import Dialogs from '../dialogs.js'
 import { FaconSelectorElement } from '../elements/faconSelector.js'
 import { EmojiSelectorElement } from '../elements/emojiSelector.js'
 import Emojis from '../../common/emojiHelpers.js'
 import State from '../../models/state.js'
 import Folder from '../../models/folder.js'
+import ImportBookmarkDialog from './importBookmark.js'
 
 export default class EditFolderDialog extends BaseDialog {
     constructor(title) {
@@ -301,7 +301,7 @@ export default class EditFolderDialog extends BaseDialog {
                     })
                     add('span', ' Add from browser bookmarks')
                 }).onclick = async () => {
-                    const result = await Dialogs.importBookmarks()
+                    const result = await new ImportBookmarkDialog().show()
                     if (result) {
                         dialog.close()
                     }

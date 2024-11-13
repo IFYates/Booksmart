@@ -1,3 +1,5 @@
+import State from "../models/state.js"
+
 function eventHandler(self, eventName, handler) {
     self.addEventListener(eventName, (ev) => handler.call(self, self.value, ev))
     handler.call(self, self.value, null)
@@ -154,8 +156,6 @@ export class BaseHTMLElement extends HTMLElement {
             this.#template = template
             this.#styles = styles || []
         }
-
-        this._reset()
     }
 
     refresh() {
@@ -170,8 +170,8 @@ export class BaseHTMLElement extends HTMLElement {
         }
 
         this.shadowRoot.innerHTML = ''
-
-        this.shadowRoot.appendChild(this.#template.content.cloneNode(true))
+        const template = this._prepareTemplate(this.#template.innerHTML)
+        this.shadowRoot.innerHTML = template
 
         if (!this.#styles) {
             // Apply main CSS to shadow
@@ -183,6 +183,13 @@ export class BaseHTMLElement extends HTMLElement {
         }
     }
 
+    _prepareTemplate(template) { return template }
+
+    attachInternals() {
+        super.attachInternals()
+        console.warn('attached', this)
+    }
+
     #displayed = false
     async connectedCallback() {
         if (this.#displayed) return
@@ -191,13 +198,14 @@ export class BaseHTMLElement extends HTMLElement {
 
         if (this.#template) {
             this.host.style.display = 'none !important'
-            await Promise.allSettled([
-                this._ondisplay(this.shadowRoot, this.host),
-                StyleManager.wait()
-            ])
-            if (this.host.style.display == 'none !important') {
-                this.host.style.display = null
-            }
+            requestAnimationFrame(async () => {
+                this._reset()
+                await StyleManager.wait()
+                await this._ondisplay(this.shadowRoot, this.host)
+                if (this.host.style.display == 'none !important') {
+                    this.host.style.display = null
+                }
+            })
         }
 
         if (typeof this.onclick == 'function') {
@@ -222,6 +230,7 @@ export class BaseHTMLElement extends HTMLElement {
     }
 }
 
+// TODO: obsolete
 export class DropHandler {
     #registration
     #element

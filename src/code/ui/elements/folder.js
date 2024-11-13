@@ -5,8 +5,9 @@ import "../../common/faHelpers.js"
 import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
 import { BookmarkAddElement } from './bookmarkAdd.js'
 import { BookmarkElement, } from './bookmark.js'
-import Dialogs from '../dialogs.js'
 import State from "../../models/state.js"
+import EditFolderDialog from '../dialog/editFolder.js'
+import ImportBookmarkDialog from '../dialog/importBookmark.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -33,7 +34,7 @@ template.innerHTML = `
 export class FolderElement extends BaseHTMLElement {
     #folder
     get folder() { return this.#folder }
-    get immobile() { return !State.options.allowEdits || this.#folder.immobile || this.#folder.readonly }
+    get immobile() { return !State.options?.allowEdits || this.#folder.immobile || this.#folder.readonly }
 
     get index() { return this.#folder.index }
     set index(value) { this.#folder.index = num(value) }
@@ -48,8 +49,8 @@ export class FolderElement extends BaseHTMLElement {
 
     setTheme() {
         const accentColour = this.#folder.accentColour
-        MainView.setTheme(accentColour, this.shadowRoot.host)
-        this.shadowRoot.host.style.backgroundColor = accentColour || State.options.backgroundImage ? 'var(--theme-colour-shade)' : 'rgb(0, 0, 0, 0.1)'
+        globalThis.MainView?.setTheme(accentColour, this.shadowRoot.host)
+        this.shadowRoot.host.style.backgroundColor = accentColour || State.options?.backgroundImage ? 'var(--theme-colour-shade)' : 'rgb(0, 0, 0, 0.1)'
         this.shadowRoot.host.style.backgroundImage = this.#folder.backgroundImage ? `url(${this.#folder.backgroundImage})` : null
     }
 
@@ -67,17 +68,19 @@ export class FolderElement extends BaseHTMLElement {
         }
     }
 
+    _prepareTemplate(template) {
+        return BaseHTMLElement.replaceTemplates(template, this.#folder)
+    }
+
     async _ondisplay(root, host) {
         const self = this
         const folder = this.#folder
-        const readonly = !State.options.allowEdits || folder.readonly
+        const readonly = !State.options?.allowEdits || folder.readonly
 
         host.style.gridRow = folder.height > 1 ? `span ${folder.height}` : ''
         host.style.gridColumn = folder.width > 1 ? `span ${folder.width}` : ''
         host.style.zoom = ((folder.scale || 100) != 100) ? `${folder.scale}%` : ''
 
-        // Replace templates
-        root.innerHTML = BaseHTMLElement.replaceTemplates(root.innerHTML, folder)
         this.setTheme()
 
         // Show/hide
@@ -136,7 +139,8 @@ export class FolderElement extends BaseHTMLElement {
             this.show(!readonly)
             this.onclick = (ev) => {
                 ev.stopPropagation()
-                Dialogs.editFolder(folder).then(MainView.fullRefresh)
+                new EditFolderDialog('Edit folder').show(folder, null)
+                    .then(MainView.fullRefresh)
             }
         })
         if (!folder.isOwned) {
@@ -145,7 +149,8 @@ export class FolderElement extends BaseHTMLElement {
                 this.style.display = ''
                 this.onclick = (ev) => {
                     ev.stopPropagation()
-                    Dialogs.importBookmarks().then(MainView.fullRefresh)
+                    new ImportBookmarkDialog().show()
+                        .then(MainView.fullRefresh)
                 }
             })
         }

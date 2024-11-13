@@ -1,6 +1,6 @@
 import State from "../../models/state.js"
-import { BookmarkElement } from "./bookmark.js"
 import { FolderElement } from "./folder.js"
+import { SiteElement } from "./SiteElement.js"
 
 export class SiteListElement extends FolderElement {
     static #sitesFolder = {
@@ -15,20 +15,25 @@ export class SiteListElement extends FolderElement {
     }
 
     static #instance
-    static get instance() { return SiteListElement.#instance ??= new SiteListElement() }
+    static get instance() { return SiteListElement.#instance ??= document.getElementsByTagName(customElements.getName(SiteListElement)) }
 
     constructor() {
         if (SiteListElement.#instance) {
             throw new Error('Only one instance of SitesElement allowed')
         }
 
-        SiteListElement.#sitesFolder.bookmarks.list = () => [...SiteListElement.#sitesFolder.bookmarks]
-
         super(SiteListElement.#sitesFolder)
-        this.refresh()
+        SiteListElement.#instance = this
     }
 
     refresh() {
+        if (!State.options.showTopSites) {
+            this.shadowRoot.host.style.display = 'none'
+            super.refresh()
+            return
+        }
+        this.shadowRoot.host.style.display = ''
+
         chrome.topSites.get().then((sites) => {
             SiteListElement.#sitesFolder.bookmarks.splice(0, SiteListElement.#sitesFolder.bookmarks.length)
             for (const site of sites.filter(s => s.url != document.location.href)) {
@@ -37,36 +42,14 @@ export class SiteListElement extends FolderElement {
             super.refresh()
         })
     }
+
+    _ondisplay(root, host) {
+        if (this.shadowRoot.host.style.display != 'none' && !SiteListElement.#sitesFolder.bookmarks.length) {
+            this.refresh()
+            return
+        }
+
+        super._ondisplay(root, host)
+    }
 }
 customElements.define('bs-site-list', SiteListElement)
-
-export class SiteElement extends BookmarkElement {
-    get site() { return super.bookmark }
-
-    constructor(site) {
-        super({
-            title: site.title,
-            url: site.url,
-            domain: isURL(site.url) ? new URL(site.url).origin : null,
-            altIcon: 'far fa-file-code',
-            icon: site.icon,
-            readonly: true,
-            immobile: true
-        })
-        this.removeAttribute('id')
-    }
-
-    async moveTo(folder, origin) {
-        const data = await State.createBookmark(folder.folder, this.site.title, this.site.url, { icon: this.site.icon })
-        const element = new BookmarkElement(data)
-        this.parentNode.insertBefore(element, this)
-        origin?.parentNode.insertBefore(this, origin)
-        folder.reindexBookmarks()
-    }
-
-    async _ondisplay(root, host) {
-        await super._ondisplay(root, host)
-        root.querySelector('.actions').remove()
-    }
-}
-customElements.define('bs-site', SiteElement)

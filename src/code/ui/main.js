@@ -129,21 +129,13 @@ export default class MainView {
         MainView.elEditLock.title = State.options.allowEdits ? 'Lock for edits' : 'Allow edits'
 
         document.body.display(() => {
-            add('layout', function () {
-                MainView.elLayout = this
+            MainView.elLayout = add('layout', function () {
                 if (!State.folderCount) {
                     this.appendChild(new NoFoldersElement())
                 }
                 for (const folder of Object.values(State.folders).sort((a, b) => a.index - b.index)) {
                     this.appendChild(new FolderElement(folder))
                 }
-                if (State.options.showTopSites) {
-                    this.appendChild(SiteListElement.instance)
-                    SiteListElement.instance.refresh()
-                }
-                this.appendChild(TabListElement.instance)
-                this.classList.toggle('editable', State.options.allowEdits)
-                TabListElement.instance.refresh()
             })
 
             // Swap
@@ -151,6 +143,9 @@ export default class MainView {
         })
 
         MainView.setTheme()
+
+        SiteListElement.instance.refresh()
+        TabListElement.instance.refresh()
 
         const drag = new DropHandler(MainView.elLayout)
         drag.ondragover = (ev, state) => {

@@ -15,11 +15,6 @@
     background-size: cover;
 }
 
-:host(#folder-tabs),
-:host(#folder-topSites) {
-    grid-column: 1 / -1;
-}
-
 i.action,
 .actions>i {
     cursor: pointer;
