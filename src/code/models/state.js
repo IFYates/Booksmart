@@ -139,7 +139,7 @@ export default class State {
         const folder = State.#folders[bookmark.folderId]
         folder?.bookmarks.splice(folder.bookmarks.indexOf(bookmark), 1)
         delete State.#bookmarks[bookmark.id]
-        await State.save()
+        await chrome.storage.sync.remove(`bookmark:${bookmark.uuid}`)
     }
 
     static async removeFolder(folder, deleteOwned = null) {
@@ -147,7 +147,7 @@ export default class State {
             await chrome.bookmarks.removeTree(folder.id)
         }
         delete State.#folders[folder.id]
-        await State.save()
+        await chrome.storage.sync.remove(`folder:${folder.uuid}`)
     }
 
     static folder(id) {

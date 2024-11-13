@@ -28,7 +28,6 @@ template.innerHTML = `
     
     <i class="action fa-fw fas fa-folder" title="This is a folder from your browser bookmarks" style="display:none"></i>
 </h1>
-<!-- Bookmarks -->
 `
 
 export class FolderElement extends BaseHTMLElement {
@@ -168,33 +167,71 @@ export class FolderElement extends BaseHTMLElement {
         }
 
         // Collection dragging
-        if (!this.immobile) {
+        if (!self.immobile) {
+            var sibling = null, dropped = false
             const drag = new DragDropHandler(root.querySelector('h1'))
             drag.ondragstart = (ev) => {
                 ev.stopPropagation()
                 ev.dataTransfer.effectAllowed = 'move'
-                host.style.opacity = 0.5 // TODO: class
-                MainView.elTrash.classList.add('active') // TODO: through global style?
-                return { folder: folder, element: this, origin: this.nextSibling }
+                self.classList.add('dragging')
+                document.body.classList.add('dragging')
+                sibling = self.nextSibling
+                dropped = false
             }
-            drag.ondragend = (ev, state) => {
-                if (state && !state.dropped) {
-                    state.origin.parentElement.insertBefore(this, state.origin)
+            drag.ondragend = () => {
+                self.classList.remove('dragging')
+                document.body.classList.remove('dragging')
+                document.body.classList.remove('over-trash')
+
+                if (!dropped) {
+                    sibling.parentElement.insertBefore(self, sibling)
                 }
-                host.style.opacity = null // TODO: class
-                MainView.elTrash.classList.remove('active') // TODO: through global style?
             }
-            drag.ondragenter = (ev, state) => {
-                if (state?.folder && this !== state.element) {
-                    const startIndex = Array.prototype.indexOf.call(this.parentElement.children, state.element)
-                    const targetIndex = Array.prototype.indexOf.call(this.parentElement.children, this)
+
+            // Trash drop
+            drag.subscribeDrop((el) => !folder.readonly && el === MainView.elTrash, {
+                ondragenter: () => {
+                    document.body.classList.add('over-trash')
+                },
+                ondragover: (ev) => {
+                    ev.preventDefault()
+                    ev.dataTransfer.dropEffect = 'move'
+                },
+                ondragleave: () => {
+                    document.body.classList.remove('over-trash')
+                },
+                ondrop: (ev) => {
+                    ev.stopPropagation()
+                    dropped = true
+                    self.remove()
+                    State.removeFolder(folder)
+                }
+            })
+
+            // Collection reorder
+            drag.subscribeDrop((el) => el === MainView.elLayout, {
+                ondragover: (ev) => {
+                    ev.preventDefault()
+                    ev.dataTransfer.dropEffect = 'move'
+                },
+                ondrop: async (ev) => {
+                    ev.stopPropagation()
+                    dropped = true
+                    self.reindexSiblings()
+                    await State.save()
+                }
+            })
+            drag.subscribeDrop((el) => el !== self && el instanceof FolderElement && !el.folder.immobile, {
+                ondragenter: (ev) => {
+                    const startIndex = Array.prototype.indexOf.call(ev.target.parentElement.children, self)
+                    const targetIndex = Array.prototype.indexOf.call(ev.target.parentElement.children, ev.target)
                     if (startIndex < 0 || startIndex > targetIndex) {
-                        this.parentElement.insertBefore(state.element, this)
+                        ev.target.parentElement.insertBefore(self, ev.target)
                     } else {
-                        this.insertAdjacentElement('afterend', state.element)
+                        ev.target.insertAdjacentElement('afterend', self)
                     }
                 }
-            }
+            })
         }
     }
 

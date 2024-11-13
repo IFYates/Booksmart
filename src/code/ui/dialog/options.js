@@ -88,20 +88,21 @@ export default class OptionsDialog extends BaseDialog {
 
         add('p', { classes: 'spanCols6' })
 
+        const currentImage = State.options.backgroundImage != 'daily' ? (State.options.backgroundImage || '') : ''
         add('label', 'Background image URL', { style: 'text-align:right; align-self:start' })
-        const bgImage = create('img', { style: 'max-width:100%;max-height:100%', src: State.options.backgroundImage || '' }, function () {
+        const bgImage = create('img', { style: 'max-width:100%;max-height:100%', src: currentImage }, function () {
             this.onload = () => {
                 MainView.setTheme()
             }
         })
         const bgType = add('select', { classes: 'spanCols4', style: 'width:100%' }, (el) => {
             add('option', 'None', { selected: !State.options.backgroundImage })
-            add('option', 'Custom', { selected: State.options.backgroundImage && State.options.backgroundImage != 'daily' })
+            add('option', 'Custom', { selected: currentImage })
             add('option', 'Daily', { selected: State.options.backgroundImage == 'daily' })
         })
         add(bgImage, { classes: 'spanRows2' })
         add('div')
-        const bgCustom = add('textarea', { classes: 'spanCols4', style: 'width:100%;height:100%;resize:none', value: State.options.backgroundImage != 'daily' ? (State.options.backgroundImage || '') : '' }, function () {
+        const bgCustom = add('textarea', { classes: 'spanCols4', style: 'width:100%;height:100%;resize:none', value: currentImage }, function () {
             this.onkeyup = () => {
                 bgImage.src = this.value
                 State.options.backgroundImage = this.value

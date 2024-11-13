@@ -22,7 +22,7 @@ export default class TagElement extends BaseHTMLElement {
 
     onclick(ev) {
         ev.stopPropagation()
-        
+
         this.#tag.visible = !this.#tag.visible
         this.shadowRoot.host.classList.toggle('off', !this.#tag.visible)
 
@@ -45,43 +45,45 @@ export default class TagElement extends BaseHTMLElement {
 
         if (State.options.allowEdits) {
             const drag = new DragDropHandler(host)
-
-            drag.ondragover = (ev) => {
-                const folder = ev.target.folder
-                if (self.#tag.id > 0 ? !folder.tags.includes(self.#tag) : folder.tags.length) {
-                    ev.preventDefault()
-                    ev.stopPropagation()
-                    MainView.elLayout.classList.add('dragging')
-                    ev.target.classList.add('tag-hover')
-                } else {
-                    ev.dataTransfer.dropEffect = 'none'
-                }
-            }
-            drag.ondragleave = (ev) => {
-                MainView.elLayout.classList.remove('dragging')
-                ev.target.classList.remove('tag-hover')
-            }
-            drag.ondrop = (ev) => {
-                const folder = ev.target.folder
-                if (self.#tag.id > 0) {
-                    folder.tags.push(self.#tag)
-                } else {
-                    folder.tags.splice(0, folder.tags.length)
-                }
-                State.updateEntry(folder)
-                document.getElementById('folder-' + folder.id).refresh()
-            }
-
             drag.ondragstart = (ev) => {
                 ev.stopPropagation()
                 ev.dataTransfer.effectAllowed = 'link'
                 host.classList.add('dragging')
-
-                return { dropTargetFilter: (el) => el instanceof FolderElement && el.folder && !el.folder.readonly }
-            }            
+            }
             drag.ondragend = (_) => {
                 host.classList.remove('dragging')
             }
+
+            drag.subscribeDrop((el) => el instanceof FolderElement && !el.folder.readonly, {
+                ondragover: (ev) => {
+                    const folder = ev.target.folder
+                    if (self.#tag.id > 0 ? !folder.tags.includes(self.#tag) : folder.tags.length) {
+                        ev.preventDefault()
+                        ev.stopPropagation()
+                        MainView.elLayout.classList.add('dragging')
+                        ev.target.classList.add('tag-hover')
+                    } else {
+                        ev.dataTransfer.dropEffect = 'none'
+                    }
+                },
+                ondragleave: (ev) => {
+                    MainView.elLayout.classList.remove('dragging')
+                    ev.target.classList.remove('tag-hover')
+                },
+                ondrop: (ev) => {
+                    MainView.elLayout.classList.remove('dragging')
+                    ev.target.classList.remove('tag-hover')
+                    
+                    const folder = ev.target.folder
+                    if (self.#tag.id > 0) {
+                        folder.tags.push(self.#tag)
+                    } else {
+                        folder.tags.splice(0, folder.tags.length)
+                    }
+                    State.updateEntry(folder)
+                    document.getElementById('folder-' + folder.id).refresh()
+                }
+            })
         }
     }
 }

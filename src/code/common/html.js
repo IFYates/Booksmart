@@ -1,5 +1,3 @@
-import State from "../models/state.js"
-
 function eventHandler(self, eventName, handler) {
     self.addEventListener(eventName, (ev) => handler.call(self, self.value, ev))
     handler.call(self, self.value, null)
@@ -230,100 +228,64 @@ export class BaseHTMLElement extends HTMLElement {
     }
 }
 
-// TODO: obsolete
-export class DropHandler {
-    #registration
+export class DragDropHandler {
     #element
     get element() { return this.#element }
 
     constructor(element) {
-        this.#element = element
-        this.#registration = this.register()
-    }
-
-    register() {
-        if (this.#registration) {
-            return this.#registration
-        }
-
-        const self = this, element = this.#element
-        function eventHandler(ev) {
-            // console.log(ev.type, element, ev, DragDropHandler.state)
-            self['on' + ev.type]?.call(element, ev, DragDropHandler.state)
-        }
-        element.addEventListener('dragenter', eventHandler)
-        element.addEventListener('dragleave', eventHandler)
-        element.addEventListener('drop', eventHandler)
-        return {
-            unregister: () => {
-                element.removeEventListener('dragenter', eventHandler)
-                element.removeEventListener('dragleave', eventHandler)
-                element.removeEventListener('drop', eventHandler)
-                self.#registration = null
-            }
-        }
-    }
-    unregister() {
-        this.#registration?.unregister()
-    }
-
-    ondragenter(ev, state) { }
-    ondragleave(ev, state) { }
-    ondragover(ev, state) { }
-    ondrop(ev, state) { }
-}
-
-export class DragDropHandler extends DropHandler {
-    // The current global drag state
-    static #currentState = null
-    static get state() { return DragDropHandler.#currentState }
-
-    constructor(element) {
-        super(element)
+        const self = this
+        self.#element = element
         element.draggable = true
 
-        const self = this
-        function execFiltered(ev) {
-            const el = ev.composedPath().find(el => DragDropHandler.#currentState.dropTargetFilter(el))
-            if (!el) {
-                ev.preventDefault()
-                ev.stopPropagation()
-                ev.dataTransfer.dropEffect = 'none'
-                return
+        function fireEvent(fn, ev, el) {
+            fn = fn['on' + ev.type]
+            if (fn) {
+                const clone = DragEvent.prototype.allKeys().reduce((o, k) => { o[k] = ev[k]; return o }, {})
+                clone.stopPropagation = ev.stopPropagation.bind(ev)
+                clone.target = el
+                clone.preventDefault = ev.preventDefault.bind(ev)
+                fn.call(element, clone)
             }
-
-            const clone = DragEvent.prototype.allKeys().reduce((o, k) => { o[k] = ev[k]; return o }, {})
-            clone.stopPropagation = ev.stopPropagation.bind(ev)
-            clone.target = el
-            clone.preventDefault = ev.preventDefault.bind(ev)
-            self['on' + ev.type].call(element, clone, DragDropHandler.#currentState)
+        }
+        function filteredEvent(ev) {
+            const subscribers = [...self.#subscribers]
+            for (const el of ev.composedPath()) {
+                for (var i = 0; i < subscribers.length; ++i) {
+                    if (subscribers[i].filter(el)) {
+                        fireEvent(subscribers[i].handler, ev, el)
+                        subscribers.splice(i, 1)
+                        --i
+                    }
+                }
+            }
         }
 
         element.addEventListener('dragstart', (ev) => {
-            DragDropHandler.#currentState = this.ondragstart.call(element, ev)
-            // console.log('ondragstart', element, ev, DragDropHandler.#currentState)
+            // console.log('ondragstart', element, ev)
 
-            if (typeof DragDropHandler.#currentState.dropTargetFilter == 'function') {
-                super.unregister()
-                document.addEventListener('dragenter', execFiltered)
-                document.addEventListener('dragleave', execFiltered)
-                document.addEventListener('dragover', execFiltered)
-                document.addEventListener('drop', execFiltered)
-            }
+            document.addEventListener('dragenter', filteredEvent)
+            document.addEventListener('dragleave', filteredEvent)
+            document.addEventListener('dragover', filteredEvent)
+            document.addEventListener('drop', filteredEvent)
         })
         element.addEventListener('dragend', (ev) => {
-            // console.log('ondragend', element, ev, DragDropHandler.#currentState)
-            document.removeEventListener('dragenter', execFiltered)
-            document.removeEventListener('dragleave', execFiltered)
-            document.removeEventListener('dragover', execFiltered)
-            document.removeEventListener('drop', execFiltered)
-            super.register()
+            // console.log('ondragend', element, ev)
+            document.removeEventListener('dragenter', filteredEvent)
+            document.removeEventListener('dragleave', filteredEvent)
+            document.removeEventListener('dragover', filteredEvent)
+            document.removeEventListener('drop', filteredEvent)
 
-            this.ondragend.call(element, ev, DragDropHandler.#currentState)
-            DragDropHandler.#currentState = null
+            self.ondragend.call(element, ev)
         })
     }
 
-    ondragstart(ev) { } // return the state object to share to other drag/drop events
-    ondragend(ev, state) { }
+    // filter: bool (el) { ... }
+    // handler: { ondragenter(ev), ondragleave(ev), ondragover(ev), ondrop(ev) }
+    subscribeDrop(filter, handler) {
+        this.#subscribers.push({ filter, handler })
+    }
+    #subscribers = []
+
+    ondragstart(ev) { }
+    ondragend(ev) { }
 }

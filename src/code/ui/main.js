@@ -2,7 +2,6 @@
 import './elements/TagElement.js'
 
 import Dialogs from './dialogs.js'
-import { DropHandler } from '../common/html.js'
 import { FolderElement } from './elements/folder.js'
 import { FolderAddElement } from './elements/folderAdd.js'
 import { NoFoldersElement } from './elements/noFolders.js'
@@ -35,27 +34,6 @@ export default class MainView {
                 }
             }
         })
-
-        MainView.elTrash.display(function () {
-            const drag = new DropHandler(this)
-            drag.ondragover = (ev, state) => {
-                const folder = state?.folder
-                if (folder) {
-                    ev.preventDefault()
-                    ev.dataTransfer.dropEffect = 'move'
-                }
-            }
-            drag.ondrop = (ev, state) => {
-                state.dropped = true
-
-                const folder = state?.folder
-                if (folder) {
-                    state.element.remove()
-                    return State.removeFolder(folder)
-                }
-            }
-        })
-
         document.getElementById('info')
             .onclick = () => Dialogs.info()
 
@@ -142,6 +120,7 @@ export default class MainView {
                 for (const folder of Object.values(State.folders).sort((a, b) => a.index - b.index)) {
                     this.appendChild(new FolderElement(folder))
                 }
+                this.appendChild(document.createElement('span')) // Dummy final element
             })
 
             // Swap
@@ -152,26 +131,6 @@ export default class MainView {
 
         SiteListElement.instance.refresh()
         TabListElement.instance.refresh()
-
-        const drag = new DropHandler(MainView.elLayout)
-        drag.ondragover = (ev, state) => {
-            const folder = state?.folder
-            if (folder) {
-                ev.preventDefault() // Can drop here
-                ev.dataTransfer.dropEffect = 'move'
-            }
-        }
-        drag.ondrop = async (_, state) => {
-            const folder = state?.folder
-            if (!folder) {
-                return
-            }
-            state.dropped = true
-
-            const folderEl = document.getElementsByTagName(customElements.getName(FolderElement))[0]
-            await folderEl.reindexSiblings()
-            await State.save()
-        }
     }
 }
 

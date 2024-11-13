@@ -41,6 +41,10 @@ i.action:hover,
     padding-bottom: 0;
 }
 
+:host(.dragging) {
+    opacity: 0.8;
+}
+
 h1 {
     background: var(--accent-colour);
     display: flex;
