@@ -296,12 +296,16 @@ export class DragDropHandler extends DropHandler {
 
             if (typeof DragDropHandler.#currentState.dropTargetFilter == 'function') {
                 super.unregister()
+                document.addEventListener('dragenter', execFiltered)
+                document.addEventListener('dragleave', execFiltered)
                 document.addEventListener('dragover', execFiltered)
                 document.addEventListener('drop', execFiltered)
             }
         })
         element.addEventListener('dragend', (ev) => {
             // console.log('ondragend', element, ev, DragDropHandler.#currentState)
+            document.removeEventListener('dragenter', execFiltered)
+            document.removeEventListener('dragleave', execFiltered)
             document.removeEventListener('dragover', execFiltered)
             document.removeEventListener('drop', execFiltered)
             super.register()

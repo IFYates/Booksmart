@@ -2,7 +2,7 @@ import './icon.js'
 import "../../common/emojiHelpers.js"
 import "../../common/faHelpers.js"
 
-import { BaseHTMLElement, DropHandler, DragDropHandler } from "../../common/html.js"
+import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
 import { BookmarkAddElement } from './bookmarkAdd.js'
 import { BookmarkElement, } from './bookmark.js'
 import Dialogs from '../dialogs.js'
