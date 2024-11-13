@@ -75,7 +75,7 @@ export default class OptionsDialog extends BaseDialog {
             this.oninput()
         })
 
-        add('div', { className: 'spanCols6', style: 'height: 1em' })
+        add('p', { classes: 'spanCols6' })
 
         // Theme
         add('label', 'Accent colour', { style: 'text-align:right' })
@@ -86,13 +86,22 @@ export default class OptionsDialog extends BaseDialog {
             }
         })
 
-        add('label', 'Background image URL', { style: 'text-align:right' })
+        add('p', { classes: 'spanCols6' })
+
+        add('label', 'Background image URL', { style: 'text-align:right; align-self:start' })
         const bgImage = create('img', { style: 'max-width:100%;max-height:100%', src: State.options.backgroundImage || '' }, function () {
             this.onload = () => {
                 MainView.setTheme()
             }
         })
-        add('textarea', { classes: 'spanCols3', style: 'width:100%;height:100%;resize:none', value: State.options.backgroundImage || '' }, function () {
+        const bgType = add('select', { classes: 'spanCols4', style: 'width:100%' }, (el) => {
+            add('option', 'None', { selected: !State.options.backgroundImage })
+            add('option', 'Custom', { selected: State.options.backgroundImage && State.options.backgroundImage != 'daily' })
+            add('option', 'Daily', { selected: State.options.backgroundImage == 'daily' })
+        })
+        add(bgImage, { classes: 'spanRows2' })
+        add('div')
+        const bgCustom = add('textarea', { classes: 'spanCols4', style: 'width:100%;height:100%;resize:none', value: State.options.backgroundImage != 'daily' ? (State.options.backgroundImage || '') : '' }, function () {
             this.onkeyup = () => {
                 bgImage.src = this.value
                 State.options.backgroundImage = this.value
@@ -101,7 +110,21 @@ export default class OptionsDialog extends BaseDialog {
                 }
             }
         })
-        add(bgImage, { classes: 'spanCols2' })
+        bgType.on_change(async (value) => {
+            bgImage.show(value != 'None')
+            bgCustom.show(value == 'Custom')
+
+            if (value == 'Daily') {
+                State.options.backgroundImage = 'daily'
+                bgImage.src = await State.options.getDailyBackgroundUrl()
+            } else if (value == 'Custom') {
+                bgCustom.onkeyup()
+            } else {
+                State.options.backgroundImage = ''
+            }
+
+            MainView.setTheme()
+        })
 
         add('p', { classes: 'spanCols6' })
 

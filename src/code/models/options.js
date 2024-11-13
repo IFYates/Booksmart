@@ -41,6 +41,24 @@ export default class Options {
         this.import(data)
     }
 
+    static #dailyBackgroundProviderUrl = 'https://corsproxy.io/?https://bing.gifposter.com';
+    static #dailyBackgroundUrlRegex = /<meta.*?property="og:image".*?content="(.*?\.jpe?g)"\s*\/?>/
+    async getDailyBackgroundUrl() {
+        const cache = await chrome.storage.local.get('dailyBackgroundUrl')
+        if (cache?.dailyBackgroundUrl?.date == new Date().toDateString()) {
+            return cache.dailyBackgroundUrl.url
+        }
+
+        const response = await fetch(Options.#dailyBackgroundProviderUrl)
+        const body = await response.text()
+        const match = body?.match(Options.#dailyBackgroundUrlRegex)
+        if (match) {
+            const url = match[1]
+            await chrome.storage.local.set({ dailyBackgroundUrl: { date: new Date().toDateString(), url } })
+            return url
+        }
+    }
+
     static #defaults = {
         accentColour: v => !v || v == '#4F4F78',
         allowEdits: true,
