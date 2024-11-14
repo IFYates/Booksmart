@@ -111,13 +111,22 @@ export default class OptionsDialog extends BaseDialog {
                 }
             }
         })
+        const btnRefresh = add('button', { type: 'button', style: 'padding: 0' }, (el) => {
+            add('i', { className: 'fa-fw fas fa-sync' })
+            add('span', ' Refresh')
+
+            el.onclick = async () => {
+                bgImage.src = (await State.options.resolveDailyBackground(true)).url
+            }
+        })
         bgType.on_change(async (value) => {
             bgImage.show(value != 'None')
             bgCustom.show(value == 'Custom')
+            btnRefresh.show(value == 'Daily')
 
             if (value == 'Daily') {
                 State.options.backgroundImage = 'daily'
-                bgImage.src = await State.options.getDailyBackgroundUrl()
+                bgImage.src = (await State.options.resolveDailyBackground()).url
             } else if (value == 'Custom') {
                 bgCustom.onkeyup()
             } else {

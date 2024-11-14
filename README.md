@@ -13,8 +13,10 @@ A bookmark management tool and customisable homepage.
 - Open bookmarks in same or new tab
 - Give quick list of most visited sites
 - Style with accent colour and background image
+  - Daily changing background image with accent
 - Export and reimport all settings
 - Lock for edits
+- Toggle tag visibility
 
 ## Folders (Group of bookmarks)
 - Change title
@@ -28,6 +30,7 @@ A bookmark management tool and customisable homepage.
 - Choose bookmark sort order
 - Export folder
 - Display existing bookmarks folder
+- Folder tags
 
 ## Bookmarks
 - Change title
@@ -36,8 +39,6 @@ A bookmark management tool and customisable homepage.
 - Add notes
 
 # Future possible features
-- Folder tags
-  - Toggle tag visibility
 - Open folder as tab group
 - Folder description (visible)
 - Improved edit UI

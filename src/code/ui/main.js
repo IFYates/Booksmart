@@ -51,9 +51,35 @@ export default class MainView {
         }
     }
 
+    static #count = 100
     static setTheme(accentColour = null, element = null) {
         element ??= document.documentElement
-        accentColour ??= State.options.accentColour
+
+        if (element == document.documentElement) {
+            element.style.setProperty('--layout-columns', State.options.columns == -1 ? '100%' : State.options.columns + 'px')
+            if (document.getElementsByTagName('layout')[0]) {
+                document.getElementsByTagName('layout')[0].style.zoom = (State.options.scale && State.options.scale != 100) ? `${State.options.scale}%` : ''
+            }
+
+            if (State.options.backgroundImage == 'daily') {
+                const bg = State.options.getDailyBackground()
+                if (!bg) {
+                    State.options.resolveDailyBackground()
+                        .then(() => {
+                            if (--MainView.#count > 0) {
+                                this.setTheme(accentColour, element)
+                            }
+                        })
+                } else {
+                    document.body.style.backgroundImage = `url(${bg.url})`
+                    accentColour = bg.accentColour
+                }
+            } else {
+                document.body.style.backgroundImage = State.options.backgroundImage ? `url(${State.options.backgroundImage})` : null
+            }
+            accentColour ??= State.options.accentColour
+        }
+
         if (accentColour) {
             element.style.setProperty('--accent-colour', accentColour)
             element.style.setProperty('--accent-colour-r', parseInt(accentColour.substring(1, 3), 16))
@@ -89,20 +115,6 @@ export default class MainView {
             element.style.setProperty('--accent-colour-b', null)
             element.style.setProperty('--theme-colour-darkest', null)
             element.style.setProperty('--theme-colour-lighter', null)
-        }
-
-        if (element == document.documentElement) {
-            element.style.setProperty('--layout-columns', State.options.columns == -1 ? '100%' : State.options.columns + 'px')
-            if (document.getElementsByTagName('layout')[0]) {
-                document.getElementsByTagName('layout')[0].style.zoom = (State.options.scale && State.options.scale != 100) ? `${State.options.scale}%` : ''
-            }
-
-            if (State.options.backgroundImage == 'daily') {
-                State.options.getDailyBackgroundUrl()
-                    .then(url => document.body.style.backgroundImage = `url(${url})`)
-            } else {
-                document.body.style.backgroundImage = State.options.backgroundImage ? `url(${State.options.backgroundImage})` : null
-            }
         }
     }
 

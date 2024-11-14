@@ -11,7 +11,7 @@ import EditBookmarkDialog from '../dialog/editBookmark.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
-<za href="<!--$ url $-->" title="<!--$ url $-->">
+<a href="<!--$ url $-->" title="<!--$ url $-->">
     <bs-icon altIcon="far fa-bookmark"></bs-icon>
 
     <div class="favourite">
