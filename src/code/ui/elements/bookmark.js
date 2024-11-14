@@ -2,7 +2,8 @@ import './icon.js'
 import "../../common/emojiHelpers.js"
 import "../../common/faHelpers.js"
 
-import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
+import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
+import DragDropHandler from "../../common/DragDropHandler.js"
 import { Tabs } from "../../common/tabs.js"
 import State from "../../models/state.js"
 import { BookmarkAddElement } from "./bookmarkAdd.js"

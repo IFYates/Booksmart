@@ -27,7 +27,7 @@ export default class ImportBookmarkDialog extends BaseDialog {
                 showHide.classList.toggle('fa-chevron-down', !showHide.value)
                 showHide.classList.toggle('fa-chevron-right', !!showHide.value)
             }
-            showHide.hide = () => !!showHide.value || parentShowHide?.hide()
+            showHide.visible = () => !!showHide.value || parentShowHide?.visible()
 
             var el = add('div', { className: 'folder', style: `margin-left: ${depth}px` }, () => {
                 add(showHide)
@@ -47,7 +47,7 @@ export default class ImportBookmarkDialog extends BaseDialog {
             }
 
             el.update = () => {
-                el.style.display = parentShowHide.hide() ? 'none' : ''
+                el.show(!parentShowHide.visible())
                 for (const child of children) {
                     child.update()
                 }

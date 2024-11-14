@@ -2,7 +2,8 @@ import './icon.js'
 import "../../common/emojiHelpers.js"
 import "../../common/faHelpers.js"
 
-import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
+import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
+import DragDropHandler from "../../common/DragDropHandler.js"
 import { BookmarkAddElement } from './bookmarkAdd.js'
 import { BookmarkElement, } from './bookmark.js'
 import State from "../../models/state.js"
@@ -139,7 +140,7 @@ export class FolderElement extends BaseHTMLElement {
             this.onclick = (ev) => {
                 ev.stopPropagation()
                 new EditFolderDialog('Edit folder').show(folder, null)
-                    .then(MainView.fullRefresh)
+                    .then(() => self.refresh())
             }
         })
         if (!folder.isOwned) {

@@ -1,5 +1,5 @@
 import Emojis from "../../common/emojiHelpers.js"
-import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
+import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 
 const template = document.createElement('template')
 template.innerHTML = `

@@ -1,6 +1,6 @@
 import Emojis from "../../common/emojiHelpers.js"
 import FontAwesome from "../../common/faHelpers.js"
-import { BaseHTMLElement } from "../../common/html.js"
+import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 
 // supports altIcon and favicon for domain
 export default class IconElement extends BaseHTMLElement {

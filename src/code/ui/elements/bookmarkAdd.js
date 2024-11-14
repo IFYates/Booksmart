@@ -1,4 +1,4 @@
-import { BaseHTMLElement } from "../../common/html.js"
+import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 import EditBookmarkDialog from "../dialog/editBookmark.js"
 
 const template = document.createElement('template')

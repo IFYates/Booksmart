@@ -1,4 +1,4 @@
-import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
+import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 import FontAwesome from "../../common/faHelpers.js"
 
 const template = document.createElement('template')

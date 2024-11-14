@@ -1,4 +1,5 @@
-import { BaseHTMLElement, DragDropHandler } from "../../common/html.js"
+import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
+import DragDropHandler from "../../common/DragDropHandler.js"
 import State from "../../models/state.js"
 import { FolderElement } from "./folder.js"
 

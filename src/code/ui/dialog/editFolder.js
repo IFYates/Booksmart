@@ -222,13 +222,10 @@ export default class EditFolderDialog extends BaseDialog {
         var defaultAccent = !folder.accentColour
         add('label', 'Accent colour')
         const accountColourPicker = add('input', { type: 'color', classes: 'spanCols2', value: !defaultAccent ? folder.accentColour : State.options.accentColour }, function () {
-            this.on_change(() => {
+            this.addEventListener('change', () => {
                 defaultAccent = false
-                if (folder.id) {
-                    folder.accentColour = this.value
-                }
+                BaseDialog.setTheme(this.value)
             })
-            BaseDialog.setTheme(folder.accentColour)
         })
         add('button', { type: 'button' }, () => {
             add('i', { className: 'fa-fw fas fa-xmark' })
@@ -236,9 +233,9 @@ export default class EditFolderDialog extends BaseDialog {
         }).onclick = async () => {
             accountColourPicker.value = State.options.accentColour
             defaultAccent = true
-            BaseDialog.setTheme(folder.accentColour)
-            folder.accentColour = null
+            BaseDialog.setTheme(null)
         }
+        BaseDialog.setTheme(folder.accentColour)
 
         // Background
         add('label', 'Background image URL')
