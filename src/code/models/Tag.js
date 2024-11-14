@@ -26,8 +26,8 @@ export default class Tag {
     export() {
         return {
             id: this.#id,
-            name: this.#name,
-            colour: this.#colour,
+            name: this.#id > 0 ? this.#name : null,
+            colour: this.#id > 0 ? this.#colour : null,
             visible: this.#visible
         }.pick(Tag.#defaults)
     }

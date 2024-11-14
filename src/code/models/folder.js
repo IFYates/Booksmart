@@ -135,7 +135,7 @@ export default class Folder {
         this.#icon = data.icon
         this.#scale = num(data.scale, 100)
         this.#sortOrder = num(data.sortOrder)
-        this.#tags = data.tags?.map(d => State.options.tags.find(t => t.id == d)) || []
+        this.#tags = data.tags?.map(d => State.options.tags.find(t => t.id == d)).filter(t => t) || []
         this.#width = num(data.width)
     }
 }

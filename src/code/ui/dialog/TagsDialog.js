@@ -42,20 +42,27 @@ export default class TagsDialog extends BaseDialog {
                     add('i', { className: 'fa-fw fas fa-trash-can', title: 'Delete tag' })
                 }).onclick = async () => {
                     // TODO: remove from all folders
-                    console.error('Not implemented')
+                    State.options.tags.splice(State.options.tags.indexOf(tag), 1)
+                    await State.save()
+                    this._refresh(dialog)
                 }
             })
         }
 
         // New tag
+        async function createNewTag() {
+            txtNewTag.value = txtNewTag.value?.trim()
+            if (txtNewTag.value.length) {
+                const maxId = State.options.tags.reduce((a, b) => a > b.id ? a : b.id, 0)
+                State.options.tags.push(new Tag(maxId + 1, txtNewTag.value, newColour))
+                await State.save()
+            }
+        }
         var newColour = '#' + Math.rand(0, 256).toString(16).padStart(2, '0') + Math.rand(0, 256).toString(16).padStart(2, '0') + Math.rand(0, 256).toString(16).padStart(2, '0')
-        add('input', { type: 'text', maxlength: 20, placeholder: 'New tag' }, (el) => {
+        const txtNewTag = add('input', { type: 'text', maxlength: 20, placeholder: 'New tag' }, (el) => {
             el.addEventListener('keydown', async (ev) => {
-                el.value = el.value?.trim()
-                if (el.value.length && ev.key == 'Enter') {
-                    const maxId = State.options.tags.reduce((a, b) => a > b.id ? a : b.id, 0)
-                    State.options.tags.push(new Tag(maxId + 1, el.value, newColour))
-                    await State.save()
+                if (ev.key == 'Enter') {
+                    await createNewTag()
                     this._refresh(dialog)
                 }
             })
@@ -69,6 +76,7 @@ export default class TagsDialog extends BaseDialog {
 
         add('div', { className: 'spanCols3', style: 'text-align: right' }, () => {
             add('button', 'Close', { type: 'button' }).onclick = async () => {
+                await createNewTag()
                 dialog.close()
             }
         })

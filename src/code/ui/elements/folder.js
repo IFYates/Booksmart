@@ -63,7 +63,7 @@ export class FolderElement extends BaseHTMLElement {
         if (num(folder.id) == folder.id) {
             const visible = folder.tags.length
                 ? folder.tags.some(t => t.visible)
-                : State.options.tags.find(t => t.id == 0).visible
+                : State.options.tags.find(t => t.id == 0)?.visible !== false
             this.shadowRoot.host.style.display = !visible ? 'none' : ''
         }
     }

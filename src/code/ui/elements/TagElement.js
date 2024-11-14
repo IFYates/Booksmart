@@ -44,48 +44,50 @@ export default class TagElement extends BaseHTMLElement {
         this.shadowRoot.host.classList.toggle('off', !this.#tag.visible)
         root.innerHTML = BaseHTMLElement.replaceTemplates(root.innerHTML, this)
 
-        if (State.options.allowEdits) {
-            const drag = new DragDropHandler(host)
-            drag.ondragstart = (ev) => {
-                ev.stopPropagation()
+        const drag = new DragDropHandler(host)
+        drag.ondragstart = (ev) => {
+            ev.stopPropagation()
+            if (State.options.allowEdits) {
                 ev.dataTransfer.effectAllowed = 'link'
                 host.classList.add('dragging')
+            } else {
+                ev.dataTransfer.effectAllowed = 'none'
             }
-            drag.ondragend = (_) => {
-                host.classList.remove('dragging')
-            }
-
-            drag.subscribeDrop((el) => el instanceof FolderElement && !el.folder.readonly, {
-                ondragover: (ev) => {
-                    const folder = ev.target.folder
-                    if (self.#tag.id > 0 ? !folder.tags.includes(self.#tag) : folder.tags.length) {
-                        ev.preventDefault()
-                        ev.stopPropagation()
-                        MainView.elLayout.classList.add('dragging')
-                        ev.target.classList.add('tag-hover')
-                    } else {
-                        ev.dataTransfer.dropEffect = 'none'
-                    }
-                },
-                ondragleave: (ev) => {
-                    MainView.elLayout.classList.remove('dragging')
-                    ev.target.classList.remove('tag-hover')
-                },
-                ondrop: (ev) => {
-                    MainView.elLayout.classList.remove('dragging')
-                    ev.target.classList.remove('tag-hover')
-                    
-                    const folder = ev.target.folder
-                    if (self.#tag.id > 0) {
-                        folder.tags.push(self.#tag)
-                    } else {
-                        folder.tags.splice(0, folder.tags.length)
-                    }
-                    State.updateEntry(folder)
-                    document.getElementById('folder-' + folder.id).refresh()
-                }
-            })
         }
+        drag.ondragend = (_) => {
+            host.classList.remove('dragging')
+        }
+
+        drag.subscribeDrop((el) => el instanceof FolderElement && !el.folder.readonly, {
+            ondragover: (ev) => {
+                const folder = ev.target.folder
+                if (self.#tag.id > 0 ? !folder.tags.includes(self.#tag) : folder.tags.length) {
+                    ev.preventDefault()
+                    ev.stopPropagation()
+                    MainView.elLayout.classList.add('dragging')
+                    ev.target.classList.add('tag-hover')
+                } else {
+                    ev.dataTransfer.dropEffect = 'none'
+                }
+            },
+            ondragleave: (ev) => {
+                MainView.elLayout.classList.remove('dragging')
+                ev.target.classList.remove('tag-hover')
+            },
+            ondrop: (ev) => {
+                MainView.elLayout.classList.remove('dragging')
+                ev.target.classList.remove('tag-hover')
+
+                const folder = ev.target.folder
+                if (self.#tag.id > 0) {
+                    folder.tags.push(self.#tag)
+                } else {
+                    folder.tags.splice(0, folder.tags.length)
+                }
+                State.updateEntry(folder)
+                document.getElementById('folder-' + folder.id).refresh()
+            }
+        })
     }
 }
 customElements.define('bs-tag', TagElement)

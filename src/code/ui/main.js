@@ -9,6 +9,7 @@ import { SiteListElement } from './elements/sites.js'
 import { TabListElement } from './elements/TabListElement.js'
 import State from '../models/state.js'
 import TagElement from './elements/TagElement.js'
+import TagsDialog from './dialog/TagsDialog.js'
 
 export default class MainView {
     static elLayout
@@ -21,14 +22,16 @@ export default class MainView {
 
         document.getElementById('tagEdit').display((el) => {
             el.onclick = async () => {
-                await Dialogs.tags()
+                await new TagsDialog().show()
                 el.layout()
+                MainView.fullRefresh()
             }
 
-            if (State.options.tags?.length) {
-                el.clearChildren()
-                add('i', { className: 'fa-fw fas fa-tags', title: 'Manage tags' })
-
+            el.clearChildren()
+            add('i', { className: 'fa-fw fas fa-tags', title: 'Manage tags' })
+            if (!State.options.tags?.length) {
+                add('span', ' No tags')
+            } else {
                 for (const tag of State.options.tags.sort((a, b) => a.name.localeCompare(b.name))) {
                     add(new TagElement(tag))
                 }
@@ -132,7 +135,6 @@ export default class MainView {
                 for (const folder of Object.values(State.folders).sort((a, b) => a.index - b.index)) {
                     this.appendChild(new FolderElement(folder))
                 }
-                this.appendChild(document.createElement('span')) // Dummy final element
             })
 
             // Swap

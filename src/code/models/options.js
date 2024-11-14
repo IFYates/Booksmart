@@ -90,6 +90,21 @@ export default class Options {
         }
     }
 
+    #ensureTags() {
+        const notag = this.tags?.find(t => t.id == 0)
+        if (notag) {
+            if (this.tags.length == 1) {
+                this.tags.splice(0, 1)
+            } else {
+                notag.name = '(Untagged)'
+                notag.colour = '#808080'
+            }
+        }
+        else if (this.tags.length) {
+            this.tags.push(Tag.import({ id: 0, name: '(Untagged)', colour: '#808080' }))
+        }
+    }
+
     static #defaults = {
         accentColour: v => !v || v == '#4F4F78',
         allowEdits: true,
@@ -105,6 +120,7 @@ export default class Options {
         wrapTitles: true
     }
     export() {
+        this.#ensureTags()
         return {
             accentColour: this.#accentColour,
             allowEdits: this.#allowEdits,
@@ -116,12 +132,15 @@ export default class Options {
             showFavicons: this.#showFavicons,
             showTabList: this.#showTabList,
             showTopSites: this.#showTopSites,
-            tags: this.#tags.map(t => t.export()),
+            tags: this.#tags.reduce((o, t) => { o[t.id] = t.export(); return o }, {}),
             wrapTitles: this.#wrapTitles
         }.pick(Options.#defaults)
     }
 
     import(data) {
+        if (!Array.isArray(data.tags)) {
+            data.tags = Object.values(data.tags)
+        }
         this.accentColour = data.accentColour || '#4F4F78'
         this.allowEdits = data.allowEdits !== false
         this.backgroundImage = data.backgroundImage
@@ -132,10 +151,8 @@ export default class Options {
         this.showFavicons = data.showFavicons !== false
         this.showTabList = data.showTabList !== false
         this.showTopSites = !!data.showTopSites
-        this.#tags = data.tags?.filter(t => t.id > 0).map(t => Tag.import(t)) || []
+        this.#tags = data.tags?.map(t => Tag.import(t)) || []
         this.wrapTitles = data.wrapTitles !== false
-
-        const notag = data.tags?.find(t => t.id == 0)
-        this.tags.push(Tag.import({ id: 0, name: '(Untagged)', colour: '#808080', visible: notag?.visible }))
+        this.#ensureTags()
     }
 }
