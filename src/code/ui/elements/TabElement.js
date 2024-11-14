@@ -30,16 +30,12 @@ export class TabElement extends BookmarkElement {
         await this.#tab.focus()
     }
 
-    async moveTo(folder, origin) {
-        const data = await State.createBookmark(folder.folder, this.tab.title, this.tab.url, { icon: this.tab.icon })
+    async applyFolderChange(dropElement) {
+        const toFolder = dropElement.parentNode.host
+        const data = await State.createBookmark(toFolder.folder, this.#tab.title, this.#tab.url, { icon: this.#tab.icon })
         const element = new BookmarkElement(data)
-        this.parentNode.insertBefore(element, this)
-        if (origin instanceof TabElement) {
-            origin.parentNode?.insertBefore(this, origin)
-        } else {
-            origin?.appendChild(this)
-        }
-        folder.reindexBookmarks()
+        dropElement.replaceWith(element)
+        toFolder.reindexBookmarks()
     }
 
     async _ondisplay(root, host) {

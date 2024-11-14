@@ -237,6 +237,7 @@ export class DragDropHandler {
         self.#element = element
         element.draggable = true
 
+        const subscribedElements = []
         function fireEvent(fn, ev, el) {
             fn = fn['on' + ev.type]
             if (fn) {
@@ -248,33 +249,42 @@ export class DragDropHandler {
             }
         }
         function filteredEvent(ev) {
-            const subscribers = [...self.#subscribers]
-            for (const el of ev.composedPath()) {
-                for (var i = 0; i < subscribers.length; ++i) {
-                    if (subscribers[i].filter(el)) {
-                        fireEvent(subscribers[i].handler, ev, el)
-                        subscribers.splice(i, 1)
-                        --i
-                    }
+            if (ev.target.shadowRoot && !subscribedElements.includes(ev.target.shadowRoot)) {
+                subscribeEvents(ev.target.shadowRoot)
+            }
+            for (const sub of self.#subscribers) {
+                const el = ev.composedPath().find(sub.filter)
+                if (el) {
+                    fireEvent(sub.handler, ev, el)
                 }
+            }
+        }
+        function subscribeEvents(element) {
+            subscribedElements.push(element)
+            element.addEventListener('dragenter', filteredEvent)
+            element.addEventListener('dragleave', filteredEvent)
+            element.addEventListener('dragover', filteredEvent)
+            element.addEventListener('drop', filteredEvent)
+        }
+        function unsubscribeEvents() {
+            const copy = [...subscribedElements]
+            subscribedElements.splice(0, subscribedElements.length)
+            for (const element of copy) {
+                element.removeEventListener('dragenter', filteredEvent)
+                element.removeEventListener('dragleave', filteredEvent)
+                element.removeEventListener('dragover', filteredEvent)
+                element.removeEventListener('drop', filteredEvent)
             }
         }
 
         element.addEventListener('dragstart', (ev) => {
             // console.log('ondragstart', element, ev)
-
-            document.addEventListener('dragenter', filteredEvent)
-            document.addEventListener('dragleave', filteredEvent)
-            document.addEventListener('dragover', filteredEvent)
-            document.addEventListener('drop', filteredEvent)
+            subscribeEvents(document)
+            self.ondragstart.call(element, ev)
         })
         element.addEventListener('dragend', (ev) => {
             // console.log('ondragend', element, ev)
-            document.removeEventListener('dragenter', filteredEvent)
-            document.removeEventListener('dragleave', filteredEvent)
-            document.removeEventListener('dragover', filteredEvent)
-            document.removeEventListener('drop', filteredEvent)
-
+            unsubscribeEvents()
             self.ondragend.call(element, ev)
         })
     }

@@ -38,8 +38,8 @@ export default class State {
         }
         State.#booksmartRootId = booksmartRoot.id
 
-        const keys = await chrome.storage.sync.getKeys()
-        const state = await chrome.storage.sync.get(keys)
+        const state = await chrome.storage.sync.get()
+        const keys = Object.keys(state)
         State.#options = new Options(state.options || {})
         const folders = {}
         for (const key of keys.filter(k => k.startsWith('folder.'))) { // TODO: old: remove

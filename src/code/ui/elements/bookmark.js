@@ -11,7 +11,7 @@ import EditBookmarkDialog from '../dialog/editBookmark.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
-<a href="<!--$ url $-->" title="<!--$ url $-->">
+<za href="<!--$ url $-->" title="<!--$ url $-->">
     <bs-icon altIcon="far fa-bookmark"></bs-icon>
 
     <div class="favourite">
@@ -132,38 +132,34 @@ export class BookmarkElement extends BaseHTMLElement {
         })
 
         // Dragging
-        var sibling = null, dropped = false
+        var dragCopy = null
         const drag = new DragDropHandler(host)
         drag.ondragstart = (ev) => {
             ev.stopPropagation()
 
-            ev.dataTransfer.effectAllowed = bookmark.readonly ? 'copy' : 'copyMove'
-            this.classList.add('dragging')
-            document.body.classList.add('dragging')
+            dragCopy = new BookmarkElement(this.#bookmark)
 
-            sibling = self.nextSibling
-            dropped = false
+            ev.dataTransfer.effectAllowed = bookmark.readonly ? 'copy' : 'copyMove'
+            self.classList.add('dragging')
+            dragCopy.classList.add('dragging')
+            if (!bookmark.readonly) {
+                document.body.classList.add('dragging')
+            }
         }
-        drag.ondragend = () => {
-            this.classList.remove('dragging')
+        drag.ondragend = (ev) => {
+            this.style.display = ''
+            dragCopy?.remove()
+            self.classList.remove('dragging')
             document.body.classList.remove('dragging')
             document.body.classList.remove('over-trash')
-
-            // Didn't drop on folder, so reset
-            if (!dropped) {
-                self.remove()
-                if (sibling instanceof BookmarkElement || sibling instanceof BookmarkAddElement) {
-                    sibling.parentNode.insertBefore(this, sibling)
-                } else {
-                    sibling.appendChild(this)
-                }
-            }
         }
 
         // Trash drop
         drag.subscribeDrop((el) => !bookmark.readonly && el === MainView.elTrash, {
             ondragenter: () => {
+                dragCopy.remove()
                 document.body.classList.add('over-trash')
+                self.style.display = 'none'
             },
             ondragover: (ev) => {
                 ev.preventDefault()
@@ -171,10 +167,10 @@ export class BookmarkElement extends BaseHTMLElement {
             },
             ondragleave: () => {
                 document.body.classList.remove('over-trash')
+                self.style.display = ''
             },
             ondrop: (ev) => {
                 ev.stopPropagation()
-                dropped = true
                 self.remove()
                 State.deleteBookmark(bookmark)
             }
@@ -183,14 +179,19 @@ export class BookmarkElement extends BaseHTMLElement {
         // Bookmark move/reorder
         drag.subscribeDrop((el) => el instanceof FolderElement && !el.folder.readonly, {
             ondragenter: (ev) => {
-                if (ev.target.folder.id == folder.id && folder.sortOrder !== 0) {
-                    return // Cannot reorder non-manual folder
+                if (ev.target.folder.id == folder.id) {
+                    dragCopy.remove()
+                    return
                 }
 
                 if (bookmark.favourite || !ev.target.folder.bookmarks.length) {
                     // At start
                     const head = ev.target.shadowRoot.querySelector('h1')
-                    head.insertAdjacentElement('afterend', self)
+                    head.insertAdjacentElement('afterend', dragCopy)
+                } else {
+                    // At end
+                    const addButton = ev.target.shadowRoot.querySelector('.add')
+                    ev.target.shadowRoot.insertBefore(dragCopy, addButton)
                 }
             },
             ondragover: (ev) => {
@@ -203,25 +204,30 @@ export class BookmarkElement extends BaseHTMLElement {
                     ev.preventDefault() // Can drop here
                     ev.dataTransfer.dropEffect = 'move' // Can reorder same collection
                 }
+                self.show(ev.target.folder.id == folder.id || ev.dataTransfer.dropEffect == 'copy')
+            },
+            ondragleave: () => {
+                dragCopy.remove()
+                self.style.display = ''
             },
             ondrop: async (ev) => {
                 // Move/copy bookmark to the folder
-                if (!dropped) {
-                    dropped = true
-                    await self.moveTo(ev.target, sibling, bookmark.folderId != ev.target.folder.id && ev.ctrlKey)
-                    await State.save()
-                }
+                ev.stopPropagation()
+                const dropElement = dragCopy
+                dragCopy = null
+                await self.applyFolderChange(dropElement, bookmark.folderId != ev.target.folder.id && ev.ctrlKey)
+                await State.save()
             }
         })
-        drag.subscribeDrop((el) => el !== self && el instanceof BookmarkElement && !el.bookmark.readonly && (bookmark.favourite == el.bookmark.favourite) && (el.folder.id != folder.id || folder.sortOrder == 0), {
-            ondragover: (ev) => {
+        drag.subscribeDrop((el) => el !== dragCopy && el !== self && el instanceof BookmarkElement && el.folder && !el.folder.readonly && (!bookmark.favourite == !el.bookmark.favourite) && (el.folder.id != folder.id || folder.sortOrder == 0), {
+            ondragenter: (ev) => {
                 // Shift bookmarks as you drag over
-                const startIndex = Array.prototype.indexOf.call(ev.target.parentNode.children, self)
+                const startIndex = Array.prototype.indexOf.call(ev.target.parentNode.children, dragCopy)
                 const targetIndex = Array.prototype.indexOf.call(ev.target.parentNode.children, ev.target)
                 if (startIndex < 0 || startIndex > targetIndex) {
-                    ev.target.parentNode.insertBefore(self, ev.target)
+                    ev.target.parentNode.insertBefore(dragCopy, ev.target)
                 } else {
-                    ev.target.insertAdjacentElement('afterend', self)
+                    ev.target.insertAdjacentElement('afterend', dragCopy)
                 }
             }
         })
@@ -232,20 +238,16 @@ export class BookmarkElement extends BaseHTMLElement {
         Tabs.find(this.#bookmark.url).then(t => this.#lastTab = t)
     }
 
-    async moveTo(toFolder, origin, doCopy) {
-        if (this.#bookmark.folderId === toFolder.folder.id) {
-            if (doCopy || this.readonly) {
-                // Place copy where original has been dropped
-                const element = new BookmarkElement(await this.#bookmark.duplicate())
-                await element.bookmark.moveTo(toFolder.folder)
-                toFolder.shadowRoot.insertBefore(element, this)
-
-                origin?.parentNode.insertBefore(this, origin) // Put original back
-            }
-            else {
-                await this.#bookmark.moveTo(toFolder.folder)
-                origin?.parentNode.host.reindexBookmarks()
-            }
+    async applyFolderChange(dropElement, asCopy) {
+        const fromFolder = this.parentNode.host
+        const toFolder = dropElement.parentNode.host
+        const element = (asCopy || this.readonly) && this.#bookmark.folderId != toFolder.folder.id
+            ? new BookmarkElement(await this.#bookmark.duplicate()) // Replace with duplicate
+            : this
+        dropElement.replaceWith(element)
+        await element.bookmark.moveTo(element.folder)
+        if (fromFolder != toFolder) {
+            fromFolder?.reindexBookmarks?.call(fromFolder)
         }
         toFolder.reindexBookmarks()
     }
