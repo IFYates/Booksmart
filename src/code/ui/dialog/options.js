@@ -195,7 +195,7 @@ export default class OptionsDialog extends BaseDialog {
                 }
 
                 // Full delete
-                await chrome.bookmarks.removeTree(State.stateId)
+                await chrome.storage.sync.clear()
                 document.location.reload()
             }
         })
