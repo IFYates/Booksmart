@@ -38,20 +38,27 @@ export default class State {
         }
         State.#booksmartRootId = booksmartRoot.id
 
+        function score(item, getter, uuid) {
+            const idMatch = item.id == uuid[1]
+            const dateMatch = item.dateAdded && item.dateAdded == uuid[2]
+            const internal = item.parentId == State.#booksmartRootId ? 5 : 0
+            return idMatch === dateMatch
+                ? (idMatch ? 10 + internal : 0)
+                : (getter(item)?.hashCode() == uuid[3] ? 5 + internal : 0)
+        }
+        function findBestMatch(uuid, getter) {
+            return allItems.map(item => ({ item, v: score(item, getter, uuid) }))
+                .sort((a, b) => a.v - b.v)
+                .find(f => f.v > 0)?.item
+        }
+
         const state = await chrome.storage.sync.get()
         const keys = Object.keys(state)
         State.#options = new Options(state.options || {})
         const folders = {}
-        function matchTwo(item, hasher, uuid) {
-            const idMatch = item.id == uuid[1]
-            const dateMatch = item.dateAdded == uuid[2]
-            return idMatch === dateMatch
-                ? idMatch
-                : hasher?.(item.title) == uuid[3]
-        }
         for (const key of keys.filter(k => k.startsWith('folder:'))) {
             const uuid = key.split(':')
-            const match = allItems.find(f => matchTwo(f, f.title.hashCode, uuid))
+            const match = findBestMatch(uuid, f => f.title)
             if (match) {
                 folders[match.id] = state[key]
             } else {
@@ -61,7 +68,7 @@ export default class State {
         const bookmarks = {}
         for (const key of keys.filter(k => k.startsWith('bookmark:'))) {
             const uuid = key.split(':')
-            const match = allItems.find(b => matchTwo(b, b.url?.hashCode, uuid))
+            const match = findBestMatch(uuid, b => b.url)
             if (match) {
                 bookmarks[match.id] = state[key]
             } else {
@@ -147,7 +154,7 @@ export default class State {
 
     static importFolder(item, data = null, bookmarkStore = null) {
         bookmarkStore ??= State.#bookmarks
-        const folder = State.#folders[item.id] ??= new Folder(item, data)
+        const folder = State.#folders[item.id] ??= new Folder(item)
         if (data) {
             folder.import(data)
         }
