@@ -47,14 +47,17 @@ export class FolderElement extends BaseHTMLElement {
         this.#folder = folder
         this.id = 'folder-' + folder.id
 
-        document.body.on_class(() => this.#refreshStyles())
+        document.body.on_class((cl) => this.#refreshStyles(cl))
     }
 
-    #refreshStyles() {
-        const readonly = document.body.classList.contains('readonly')
+    #refreshStyles(cl) {
+        const readonly = cl.includes('readonly')
         this.classList.toggle('readonly', readonly)
         this.shadowRoot.querySelectorAll(customElements.getName(BookmarkElement)).forEach(el => el.classList.toggle('readonly', readonly))
         this.shadowRoot.querySelectorAll(customElements.getName(BookmarkAddElement)).forEach(el => el.classList.toggle('readonly', readonly))
+
+        const tagId = cl.find(c => c.startsWith('tagging-'))?.substring(8)
+        this.classList.toggle('tag-nodrop', !this.#folder.tags?.length ? tagId == 0 : this.#folder.tags.some(t => t.id == tagId))
     }
 
     setTheme() {
@@ -172,7 +175,7 @@ export class FolderElement extends BaseHTMLElement {
 
             root.appendChild(new BookmarkAddElement(folder))
 
-            this.#refreshStyles()
+            this.#refreshStyles([...document.body.classList])
         }
 
         // Collection dragging

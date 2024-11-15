@@ -103,6 +103,7 @@ layout {
     grid-column: span 2;
 }
 
+bs-folder.tag-nodrop,
 layout.dragging bs-folder {
     opacity: 0.5;
     transition: opacity 0.2s ease-in-out;

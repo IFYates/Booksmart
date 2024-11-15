@@ -53,9 +53,12 @@ export default class TagElement extends BaseHTMLElement {
             } else {
                 ev.dataTransfer.effectAllowed = 'none'
             }
+
+            document.body.classList.add('tagging-' + self.#tag.id)
         }
         drag.ondragend = (_) => {
             host.classList.remove('dragging')
+            document.body.classList.remove('tagging-' + self.#tag.id)
         }
 
         drag.subscribeDrop((el) => el instanceof FolderElement && !el.folder.readonly, {
