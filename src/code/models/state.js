@@ -42,17 +42,16 @@ export default class State {
         const keys = Object.keys(state)
         State.#options = new Options(state.options || {})
         const folders = {}
-        for (const key of keys.filter(k => k.startsWith('folder.'))) { // TODO: old: remove
-            const id = key.substring(7)
-            if (everything.hasOwnProperty(id) && !everything[id].url) {
-                folders[id] = state[key]
-            } else {
-                delete state[key]
-            }
+        function matchTwo(item, hasher, uuid) {
+            const idMatch = item.id == uuid[1]
+            const dateMatch = item.dateAdded == uuid[2]
+            return idMatch === dateMatch
+                ? idMatch
+                : hasher?.(item.title) == uuid[3]
         }
         for (const key of keys.filter(k => k.startsWith('folder:'))) {
             const uuid = key.split(':')
-            const match = allItems.find(f => (f.id == uuid[1] || f.dateAdded == uuid[2]) && f.title.hashCode() == uuid[3] && !f.url)
+            const match = allItems.find(f => matchTwo(f, f.title.hashCode, uuid))
             if (match) {
                 folders[match.id] = state[key]
             } else {
@@ -60,17 +59,9 @@ export default class State {
             }
         }
         const bookmarks = {}
-        for (const key of keys.filter(k => k.startsWith('bookmark.'))) { // TODO: old: remove
-            const id = key.substring(9)
-            if (everything.hasOwnProperty(id) && everything[id].url) {
-                bookmarks[id] = state[key]
-            } else {
-                delete state[key]
-            }
-        }
         for (const key of keys.filter(k => k.startsWith('bookmark:'))) {
             const uuid = key.split(':')
-            const match = allItems.find(b => (b.id == uuid[1] || b.dateAdded == uuid[2]) && b.url?.hashCode() == uuid[3])
+            const match = allItems.find(b => matchTwo(b, b.url?.hashCode, uuid))
             if (match) {
                 bookmarks[match.id] = state[key]
             } else {
