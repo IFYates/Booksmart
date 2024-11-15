@@ -58,11 +58,8 @@ export class TabListElement extends FolderElement {
 
     _ondisplay(root, host) {
         TabListElement.#tabsFolder.collapsed = !State.options?.showTabList
-        host.classList.toggle('editable', State.options?.allowEdits)
-
         if (!TabListElement.#tabsFolder.collapsed && !TabListElement.#tabsFolder.bookmarks.length) {
             this.refresh()
-            return
         }
 
         super._ondisplay(root, host)

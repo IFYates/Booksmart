@@ -51,7 +51,7 @@ export class FolderElement extends BaseHTMLElement {
     }
 
     #refreshStyles(cl) {
-        const readonly = cl.includes('readonly')
+        const readonly = this.#folder.readonly || cl.includes('readonly')
         this.classList.toggle('readonly', readonly)
         this.shadowRoot.querySelectorAll(customElements.getName(BookmarkElement)).forEach(el => el.classList.toggle('readonly', readonly))
         this.shadowRoot.querySelectorAll(customElements.getName(BookmarkAddElement)).forEach(el => el.classList.toggle('readonly', readonly))
