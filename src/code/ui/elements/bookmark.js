@@ -8,6 +8,7 @@ import { Tabs } from "../../common/tabs.js"
 import State from "../../models/state.js"
 import { FolderElement } from './folder.js'
 import EditBookmarkDialog from '../dialog/editBookmark.js'
+import { BookmarkAddElement } from './bookmarkAdd.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -34,6 +35,7 @@ export class BookmarkElement extends BaseHTMLElement {
     get bookmark() { return this.#bookmark }
     get folder() { return this.parentNode?.host.folder || this.#bookmark.folder }
     get parent() { return this.parentNode?.host }
+    get readonly() { return this.#bookmark.readonly || this.parent.readonly }
 
     get index() { return this.#bookmark.index }
     set index(value) { this.#bookmark.index = num(value) }
@@ -132,19 +134,14 @@ export class BookmarkElement extends BaseHTMLElement {
         var dragCopy = null
         const drag = new DragDropHandler(host)
         drag.ondragstart = (ev) => {
-            if (this.parent.readonly) {
-                ev.preventDefault()
-                return
-            }
-
             ev.stopPropagation()
 
             dragCopy = new BookmarkElement(this.#bookmark)
 
-            ev.dataTransfer.effectAllowed = bookmark.readonly ? 'copy' : 'copyMove'
+            ev.dataTransfer.effectAllowed = this.readonly ? 'copy' : 'copyMove'
             self.classList.add('dragging')
             dragCopy.classList.add('dragging')
-            if (!bookmark.readonly) {
+            if (!this.readonly) {
                 document.body.classList.add('dragging')
             }
         }
@@ -157,7 +154,7 @@ export class BookmarkElement extends BaseHTMLElement {
         }
 
         // Trash drop
-        drag.subscribeDrop((el) => !bookmark.readonly && el === MainView.elTrash, {
+        drag.subscribeDrop((el) => !this.readonly && el === MainView.elTrash, {
             ondragenter: () => {
                 dragCopy.remove()
                 document.body.classList.add('over-trash')
@@ -187,7 +184,7 @@ export class BookmarkElement extends BaseHTMLElement {
                     head.insertAdjacentElement('afterend', dragCopy)
                 } else {
                     // At end
-                    const addButton = ev.target.shadowRoot.querySelector('.add')
+                    const addButton = ev.target.shadowRoot.querySelector(customElements.getName(BookmarkAddElement))
                     ev.target.shadowRoot.insertBefore(dragCopy, addButton)
                 }
             },
@@ -195,7 +192,7 @@ export class BookmarkElement extends BaseHTMLElement {
                 // Folder (other or manual sort)
                 if (bookmark.folderId != ev.target.folder.id) {
                     ev.preventDefault() // Can drop here
-                    ev.dataTransfer.dropEffect = bookmark.readonly || ev.ctrlKey ? 'copy' : 'move' // Can copy to another collection
+                    ev.dataTransfer.dropEffect = this.readonly || ev.ctrlKey ? 'copy' : 'move' // Can copy to another collection
                 }
                 else if (ev.target.folder.sortOrder == 0) {
                     ev.preventDefault() // Can drop here

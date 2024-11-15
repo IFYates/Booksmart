@@ -91,9 +91,9 @@ export default class MainView {
             // element.style.setProperty('--accent-colour-hue', State.options.themeAccent[0])
             // element.style.setProperty('--accent-colour-saturation', `${State.options.themeAccent[1]}%`)
             // element.style.setProperty('--accent-colour-lightness', '24%')
-            element.style.setProperty('--theme-colour-shade', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585), 0.5)')
-            element.style.setProperty('--theme-colour-darkest', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585))')
-            element.style.setProperty('--theme-colour-lighter', 'rgb(calc(var(--accent-colour-r) * 1.5), calc(var(--accent-colour-g) * 1.5), calc(var(--accent-colour-b) * 1.5))')
+            // element.style.setProperty('--theme-colour-shade', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585), 0.5)')
+            // element.style.setProperty('--theme-colour-darkest', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585))')
+            // element.style.setProperty('--theme-colour-lighter', 'rgb(calc(var(--accent-colour-r) * 1.5), calc(var(--accent-colour-g) * 1.5), calc(var(--accent-colour-b) * 1.5))')
 
             // TODO: tidier
             function calculateRelativeLuminance(r, g, b) {
