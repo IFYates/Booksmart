@@ -138,7 +138,7 @@ export default class Options {
     }
 
     import(data) {
-        if (!Array.isArray(data.tags)) {
+        if (data.tags && !Array.isArray(data.tags)) {
             data.tags = Object.values(data.tags)
         }
         this.accentColour = data.accentColour || '#4F4F78'

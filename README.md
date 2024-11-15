@@ -46,6 +46,9 @@ A bookmark management tool and customisable homepage.
 - Use browser history to suggest URL on bookmark creation
 - Popup
   - Quick list of favourites / last used bookmarks
+  - Tree of folders > bookmarks
+- Show bookmarks as "cards" (large squares of just icon)
+- Bookmarks _may_ have a thumbnail
 - ? Show if bookmark is open
 - ? Show preview image
 - ? Side panel add-on (https://developer.chrome.com/docs/extensions/develop/ui#side-panels)
