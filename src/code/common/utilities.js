@@ -50,6 +50,19 @@ globalThis.extend(
     }
 )
 
+Array.prototype.extend(
+    function clear() {
+        this.splice(0, this.length)
+    },
+
+    function remove(item) {
+        const idx = this.indexOf(item)
+        if (idx > -1) {
+            return this.splice(idx, 1)
+        }
+    }
+)
+
 Math.extend(
     function rand(lowerInc, upperExc) {
         return Math.floor(Math.random() * (upperExc - lowerInc)) + lowerInc

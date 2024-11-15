@@ -2,32 +2,48 @@ import Bookmark from "./bookmark.js"
 import Folder from "./folder.js"
 import Options from "./options.js"
 
+var _booksmartRootId = -1
+
+async function _getFullTree() {
+    const root = (await chrome.bookmarks.getTree())[0]
+    const fullTree = []
+    function flattenTree(item) {
+        if (item.id) {
+            fullTree.push(item)
+        }
+        if (!item.url) {
+            item.children?.forEach(flattenTree)
+        }
+    }
+    flattenTree(root)
+    return fullTree
+}
+
+// Must match at id and dateAdded, otherwise text (title / url)
+// Prefer items in the Booksmart folder
+function _findBestMatch(items, textGetter, id, dateAdded, hashCode) {
+    function score(item) {
+        const score = (item.id == id ? 2 : -1) // id
+            + (item.dateAdded > 0 && item.dateAdded == dateAdded ? 1 : -1) // dateAdded
+            + (textGetter(item)?.hashCode() == hashCode ? 3 : -2) // hash of item text
+            + (item.parentId == _booksmartRootId ? 1 : 0) // Is Booksmart folder
+        return score
+    }
+
+    return items.map(item => ({ item, v: score(item) }))
+        .sort((a, b) => b.v - a.v)
+        .find(f => f.v > 0)?.item
+}
+
 export default class State {
     static get Title() { return '(Booksmart)' }
 
-    static async #getEverything() {
-        const root = (await chrome.bookmarks.getTree())[0]
-        const everything = {}
-        function flattenTree(item) {
-            if (item.id) {
-                everything[item.id] = item
-            }
-            if (!item.url) {
-                item.children?.forEach(flattenTree)
-            }
-        }
-        flattenTree(root)
-        return everything
-    }
-
     static async init() {
-        const everything = await State.#getEverything()
-        const allItems = Object.values(everything)
-
-        var booksmartRoot = Object.values(everything).find(b => b.title == State.Title && !b.url)
+        const fullTree = await _getFullTree()
+        var booksmartRoot = fullTree.find(b => b.title == State.Title && !b.url)
         if (!booksmartRoot) {
-            const bookmarkRoot = Object.values(everything).find(b => b.parentId == 0 && b.title == 'Bookmarks' && !b.url)
-                || Object.values(everything).find(b => b.parentId == 0 && b.title == 'Other bookmarks' && !b.url)
+            const bookmarkRoot = fullTree.find(b => b.parentId == 0 && b.title == 'Bookmarks' && !b.url)
+                || fullTree.find(b => b.parentId == 0 && b.title == 'Other bookmarks' && !b.url)
             if (!bookmarkRoot) {
                 console.error('Unable to find viable root folder')
             }
@@ -36,21 +52,7 @@ export default class State {
                 title: State.Title
             })
         }
-        State.#booksmartRootId = booksmartRoot.id
-
-        function score(item, getter, uuid) {
-            const idMatch = item.id == uuid[1]
-            const dateMatch = item.dateAdded && item.dateAdded == uuid[2]
-            const internal = item.parentId == State.#booksmartRootId ? 5 : 0
-            return idMatch === dateMatch
-                ? (idMatch ? 10 + internal : 0)
-                : (getter(item)?.hashCode() == uuid[3] ? 5 + internal : 0)
-        }
-        function findBestMatch(uuid, getter) {
-            return allItems.map(item => ({ item, v: score(item, getter, uuid) }))
-                .sort((a, b) => a.v - b.v)
-                .find(f => f.v > 0)?.item
-        }
+        _booksmartRootId = booksmartRoot.id
 
         const state = await chrome.storage.sync.get()
         const keys = Object.keys(state)
@@ -58,7 +60,7 @@ export default class State {
         const folders = {}
         for (const key of keys.filter(k => k.startsWith('folder:'))) {
             const uuid = key.split(':')
-            const match = findBestMatch(uuid, f => f.title)
+            const match = _findBestMatch(fullTree, f => f.title, uuid[1], uuid[2], uuid[3])
             if (match) {
                 folders[match.id] = state[key]
             } else {
@@ -68,7 +70,7 @@ export default class State {
         const bookmarks = {}
         for (const key of keys.filter(k => k.startsWith('bookmark:'))) {
             const uuid = key.split(':')
-            const match = findBestMatch(uuid, b => b.url)
+            const match = _findBestMatch(fullTree, b => b.url, uuid[1], uuid[2], uuid[3])
             if (match) {
                 bookmarks[match.id] = state[key]
             } else {
@@ -85,16 +87,16 @@ export default class State {
 
         // Map all included folders
         for (const [id, data] of Object.entries(folders)) {
-            if (everything[id]) {
-                State.importFolder(everything[id], data, bookmarks)
+            const folder = fullTree.find(f => f.id == id)
+            if (folder) {
+                State.importFolder(folder, data, bookmarks)
             } else {
                 delete folders[id]
             }
         }
     }
 
-    static #booksmartRootId = -1
-    static get booksmartRootId() { return State.#booksmartRootId }
+    static get booksmartRootId() { return _booksmartRootId }
 
     static #options // Options
     static get options() { return State.#options }
@@ -124,7 +126,7 @@ export default class State {
 
     static async createFolder(title, data = {}) {
         const item = await chrome.bookmarks.create({
-            parentId: State.#booksmartRootId,
+            parentId: _booksmartRootId,
             title: title
         })
         const folder = new Folder(item, data)
@@ -135,7 +137,7 @@ export default class State {
     static async deleteBookmark(bookmark) {
         await chrome.bookmarks.remove(bookmark.id)
         const folder = State.#folders[bookmark.folderId]
-        folder?.bookmarks.splice(folder.bookmarks.indexOf(bookmark), 1)
+        folder?.bookmarks.remove(bookmark)
         delete State.#bookmarks[bookmark.id]
         await chrome.storage.sync.remove(bookmark.uuid)
     }
@@ -159,7 +161,7 @@ export default class State {
             folder.import(data)
         }
         State.#folders[folder.id] = folder
-        folder.bookmarks.splice(0, folder.bookmarks.length)
+        folder.bookmarks.clear()
         for (const child of (item.children || []).filter(c => c.url)) {
             const bookmark = new Bookmark(child, bookmarkStore[child.id] ?? {})
             folder.bookmarks.push(bookmark)
@@ -223,71 +225,46 @@ export default class State {
 
         State.#options.import(data.options)
 
-        const everything = Object.values(await State.#getEverything())
-        const folders = everything.filter(e => !e.url).map(f => new Folder(f))
-            .reduce((obj, f) => { obj[f.id] = f; return obj }, {})
+        const fullTree = await _getFullTree()
+        const folders = fullTree.filter(e => !e.url).map(f => new Folder(f))
 
-        // Match existing folders by id and title
+        // Match existing folders
         for (const [id, item] of Object.entries(data.folders)) {
-            const match = folders[id]
-            if (match?.title.localeCompare(item.title) == 0) {
-                const folder = await State.importFolder(match, item)
-                await State.updateEntry(folder)
-                delete data.folders[id]
-                delete folders[folder.id]
-                await importBookmarks(folder, item.children)
-            }
-        }
-
-        // Match existing folders by just title
-        for (const [id, item] of Object.entries(data.folders)) {
-            const match = Object.values(folders).find(f => f.title.localeCompare(item.title) == 0)
+            const match = _findBestMatch(folders, f => f.title, id, null, item.title.hashCode())
             if (match) {
-                const folder = await State.importFolder(match, item)
-                await State.updateEntry(folder)
-                delete data.folders[id]
-                delete folders[folder.id]
-                await importBookmarks(folder, item.children)
+                const folder = State.importFolder(match, item)
+                await State.updateEntry(folder, false)
+                delete data.folders[item.id || id]
+                folders.remove(match)
+                await importFolder(folder, item.children)
             }
         }
 
         // Create new folders
         for (const item of Object.values(data.folders)) {
             const folder = await State.createFolder(item.title, item)
-            await importBookmarks(folder, item.children)
+            await importFolder(folder, item.children)
         }
 
         await State.save()
         document.location.reload()
 
-        async function importBookmarks(folder, bookmarks) {
-            // Match existing bookmarks by id and url
-            const children = everything.filter(b => b.parentId == folder.id && b.url)
+        async function importFolder(folder, children) {
+            // Match existing bookmarks (can only do by URL)
+            const bookmarks = fullTree.filter(b => b.parentId == folder.id && b.url)
                 .reduce((obj, b) => { obj[b.id] = new Bookmark(b); return obj }, {})
-            for (const [id, item] of Object.entries(bookmarks)) {
-                const bookmark = children[id]
-                if (bookmark?.url.localeCompare(item.url) == 0) {
-                    bookmark.import(item)
-                    await State.updateEntry(bookmark)
-                    delete bookmarks[id]
-                    delete children[id]
-                }
-            }
-
-            // Match existing bookmarks by just url
-            for (const [id, item] of Object.entries(bookmarks)) {
-                const bookmark = Object.values(children)
-                    .find(b => b.url.localeCompare(item.url) == 0)
+            for (const item of [...children]) {
+                const bookmark = _findBestMatch(Object.values(bookmarks), b => b.url, -1, null, item.url.hashCode())
                 if (bookmark) {
                     bookmark.import(item)
-                    await State.updateEntry(bookmark)
-                    delete bookmarks[id]
-                    delete children[bookmark.id]
+                    await State.updateEntry(bookmark, false)
+                    children.remove(item)
+                    delete bookmarks[bookmark.id]
                 }
             }
 
             // Create new bookmarks
-            for (const item of Object.values(bookmarks)) {
+            for (const item of Object.values(children)) {
                 await State.createBookmark(folder.id, item.title, item.url, item)
             }
         }
@@ -300,13 +277,14 @@ export default class State {
     static async save() {
         const state = State.#getData(false)
         await chrome.storage.sync.set(state)
+        console.log(state)
         const keys = await chrome.storage.sync.getKeys()
         for (const key of keys.filter(k => !state.hasOwnProperty(k))) {
             await chrome.storage.sync.remove(key)
         }
     }
 
-    static async updateEntry(entry) {
+    static async updateEntry(entry, standalone = true) {
         const data = entry.export?.(false)
         try {
             await chrome.bookmarks.update(entry.id, { title: entry.title, url: entry.url })
@@ -316,6 +294,8 @@ export default class State {
             entry.title = item[0]?.title || entry.title
             if (entry.url) entry.url = item[0]?.url || entry.url
         }
-        await chrome.storage.sync.set({ [entry.uuid]: data })
+        if (standalone) {
+            await chrome.storage.sync.set({ [entry.uuid]: data })
+        }
     }
 }
