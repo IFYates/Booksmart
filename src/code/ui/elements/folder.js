@@ -200,7 +200,11 @@ export class FolderElement extends BaseHTMLElement {
             document.body.classList.remove('over-trash')
 
             if (!dropped) {
-                sibling.parentElement.insertBefore(self, sibling)
+                if (sibling) {
+                    self.parentElement.insertBefore(self, sibling)
+                } else {
+                    self.parentElement.appendChild(self)
+                }
             }
         }
 

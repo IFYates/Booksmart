@@ -115,7 +115,7 @@ Object.prototype.extend(
         const result = {}
         for (const [key, value] of this.allKeys().map(k => [k, this[k]])) {
             if ((defaults.hasOwnProperty(key) && !(typeof defaults[key] != 'function' ? areEquivalent.call(defaults[key], value) : defaults[key](value, key)))
-                || (!defaults.hasOwnProperty(key) && excludeOtherPredicate?.call(this, value, key) === false)) {
+                || (!defaults.hasOwnProperty(key) && excludeOtherPredicate?.(value, key) === false)) {
                 result[key] = value
             }
         }
@@ -152,7 +152,7 @@ Object.prototype.extend(
         }
 
         for (const [key, value] of Object.entries(this)) {
-            if ((!defaults.hasOwnProperty(key) && excludeOtherPredicate?.call(this, value, key) === true)
+            if ((!defaults.hasOwnProperty(key) && excludeOtherPredicate?.(value, key) === true)
                 || areEquivalent.call(defaults[key], value)
                 || (typeof defaults[key] == 'function' && defaults[key](value, key) === true)) {
                 delete this[key]

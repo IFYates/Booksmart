@@ -130,7 +130,7 @@ export default class State {
         const folder = State.#folders[bookmark.folderId]
         folder?.bookmarks.splice(folder.bookmarks.indexOf(bookmark), 1)
         delete State.#bookmarks[bookmark.id]
-        await chrome.storage.sync.remove(`bookmark:${bookmark.uuid}`)
+        await chrome.storage.sync.remove(bookmark.uuid)
     }
 
     static async removeFolder(folder, deleteOwned = null) {
@@ -138,7 +138,7 @@ export default class State {
             await chrome.bookmarks.removeTree(folder.id)
         }
         delete State.#folders[folder.id]
-        await chrome.storage.sync.remove(`folder:${folder.uuid}`)
+        await chrome.storage.sync.remove(folder.uuid)
     }
 
     static folder(id) {
@@ -173,10 +173,10 @@ export default class State {
             options: State.#options.export()
         }
         for (const folder of Object.values(State.#folders)) {
-            state[`folder:${folder.uuid}`] = folder.export(false)
+            state[folder.uuid] = folder.export(false)
         }
         for (const bookmark of Object.values(State.#bookmarks)) {
-            state[`bookmark:${bookmark.uuid}`] = bookmark.export(false)
+            state[bookmark.uuid] = bookmark.export(false)
         }
         return state
     }
@@ -300,13 +300,15 @@ export default class State {
     }
 
     static async updateEntry(entry) {
-        const data = entry.export?.call(entry, false)
-        if (entry.url) {
+        const data = entry.export?.(false)
+        try {
             await chrome.bookmarks.update(entry.id, { title: entry.title, url: entry.url })
-            await chrome.storage.sync.set({ [`bookmark.${entry.uuid}`]: data })
-        } else {
-            await chrome.bookmarks.update(entry.id, { title: entry.title })
-            await chrome.storage.sync.set({ [`folder:${entry.uuid}`]: data })
+        } catch (e) {
+            console.error(e)
+            const item = await chrome.bookmarks.get(entry.id)
+            entry.title = item[0]?.title || entry.title
+            if (entry.url) entry.url = item[0]?.url || entry.url
         }
+        await chrome.storage.sync.set({ [entry.uuid]: data })
     }
 }

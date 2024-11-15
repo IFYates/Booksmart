@@ -57,7 +57,7 @@ export default class IconElement extends BaseHTMLElement {
                     this.querySelector('i.icon')?.remove()
                     if (ev.target.src != this.#icon) {
                         this.#icon = ev.target.src
-                        this.onchange?.call(this)
+                        this.onchange?.()
                     }
                 }
         }

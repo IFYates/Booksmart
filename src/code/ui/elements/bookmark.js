@@ -244,7 +244,7 @@ export class BookmarkElement extends BaseHTMLElement {
         dropElement.replaceWith(element)
         await element.bookmark.moveTo(element.folder)
         if (fromFolder != toFolder) {
-            fromFolder?.reindexBookmarks?.call(fromFolder)
+            fromFolder?.reindexBookmarks?.()
         }
         toFolder.reindexBookmarks()
     }

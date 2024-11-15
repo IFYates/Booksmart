@@ -13,7 +13,7 @@ export default class Folder {
     }
 
     get isOwned() { return this.#parentId == State.booksmartRootId }
-    get uuid() { return `${this.#id}:${this.#dateAdded}:${this.#title.hashCode()}` }
+    get uuid() { return `folder:${this.#id}:${this.#dateAdded}:${this.#title.hashCode()}` }
 
     #parentId
     get parentId() { return this.#parentId }
