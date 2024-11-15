@@ -8,6 +8,28 @@ function addToElement(type, text, args, logic) { // Scoped
     return el
 }
 
+/**
+ * Invoked on subscription and when the class list of the element changes.
+ * @param {function} handler The handler function for the event. Takes the class list as an argument.
+ */
+function on_class(handler) {
+    const observer = _observers[this]?.observer || new MutationObserver(classMutationObserver.bind(this))
+    if (!_observers[this]) {
+        _observers[this] = []
+    } else {
+        _observers[this].push(handler)
+    }
+    observer.observe(this, { attributes: true, attributeFilter: ['class'] })
+    handler.call(this, [...this.classList])
+}
+function classMutationObserver(mutations) {
+    const handlers = _observers[this]
+    if (handlers && mutations.some(m => m.type == 'attributes' && m.attributeName == 'class')) {
+        handlers.forEach(h => h.call(this, [...this.classList]))
+    }
+}
+const _observers = {}
+
 function eventHandler(self, eventName, handler) {
     self.addEventListener(eventName, (ev) => handler.call(self, self.value, ev))
     handler.call(self, self.value, null)
@@ -16,6 +38,7 @@ HTMLElement.prototype.extend(
     // Events
     function on_change(handler) { eventHandler(this, 'change', handler) },
     function on_click(handler) { eventHandler(this, 'click', handler) },
+    on_class,
 
     // Elements
     function add() { return addToElement.apply(this, arguments) },

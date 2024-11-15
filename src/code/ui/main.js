@@ -10,6 +10,7 @@ import { TabListElement } from './elements/TabListElement.js'
 import State from '../models/state.js'
 import TagElement from './elements/TagElement.js'
 import TagsDialog from './dialog/TagsDialog.js'
+import { BookmarkElement } from './elements/bookmark.js'
 
 export default class MainView {
     static elLayout
@@ -44,13 +45,12 @@ export default class MainView {
             .onclick = () => Dialogs.options() // TODO: .then(() => State.options.reload()
                 .then(MainView.fullRefresh)
 
-        MainView.elEditLock.onclick = () => {
+        document.body.classList.toggle('readonly', !State.options.allowEdits)
+        MainView.elEditLock.onclick = async () => {
             State.options.allowEdits = !State.options.allowEdits
-            State.save()
-            MainView.fullRefresh()
+            document.body.classList.toggle('readonly', !State.options.allowEdits)
 
-            document.getElementsByTagName(customElements.getName(FolderAddElement))[0]
-                .style.visibility = !State.options.allowEdits ? 'hidden' : null
+            await State.save()
         }
     }
 
@@ -122,11 +122,6 @@ export default class MainView {
     }
 
     static async fullRefresh() {
-        MainView.elTrash.style.visibility = State.options.allowEdits ? null : 'hidden'
-        MainView.elEditLock.classList.toggle('fa-lock', !State.options.allowEdits)
-        MainView.elEditLock.classList.toggle('fa-unlock', State.options.allowEdits)
-        MainView.elEditLock.title = State.options.allowEdits ? 'Lock for edits' : 'Allow edits'
-
         document.body.display(() => {
             MainView.elLayout = add('layout', function () {
                 if (!State.folderCount) {

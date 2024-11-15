@@ -13,16 +13,12 @@ export class BookmarkAddElement extends BaseHTMLElement {
     constructor(folder) {
         super(template, ['/styles/common.css', '/styles/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
         this.#folder = folder
+        this.title = 'Add bookmark'
     }
 
-    _ondisplay() {
-        this.classList.add('add')
-        this.title = 'Add bookmark'
-
-        this.addEventListener('click', (ev) => {
-            new EditBookmarkDialog('New bookmark').show(null, this.#folder)
-                .then(MainView.fullRefresh)
-        })
+    onclick() {
+        new EditBookmarkDialog('New bookmark').show(null, this.#folder)
+            .then(MainView.fullRefresh)
     }
 }
 customElements.define('bs-bookmark-add', BookmarkAddElement)

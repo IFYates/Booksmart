@@ -35,6 +35,7 @@ export class FolderElement extends BaseHTMLElement {
     #folder
     get folder() { return this.#folder }
     get immobile() { return !State.options?.allowEdits || this.#folder.immobile || this.#folder.readonly }
+    get readonly() { return this.classList.contains('readonly') || this.#folder.readonly }
 
     get index() { return this.#folder.index }
     set index(value) { this.#folder.index = num(value) }
@@ -45,6 +46,15 @@ export class FolderElement extends BaseHTMLElement {
         super(template, ['/styles/common.css', '/styles/folder.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
         this.#folder = folder
         this.id = 'folder-' + folder.id
+
+        document.body.on_class(() => this.#refreshStyles())
+    }
+
+    #refreshStyles() {
+        const readonly = document.body.classList.contains('readonly')
+        this.classList.toggle('readonly', readonly)
+        this.shadowRoot.querySelectorAll(customElements.getName(BookmarkElement)).forEach(el => el.classList.toggle('readonly', readonly))
+        this.shadowRoot.querySelectorAll(customElements.getName(BookmarkAddElement)).forEach(el => el.classList.toggle('readonly', readonly))
     }
 
     setTheme() {
@@ -75,7 +85,6 @@ export class FolderElement extends BaseHTMLElement {
     async _ondisplay(root, host) {
         const self = this
         const folder = this.#folder
-        const readonly = !State.options?.allowEdits || folder.readonly
 
         host.style.gridRow = folder.height > 1 ? `span ${folder.height}` : ''
         host.style.gridColumn = folder.width > 1 ? `span ${folder.width}` : ''
@@ -136,7 +145,6 @@ export class FolderElement extends BaseHTMLElement {
 
         // Edit
         this._apply('i.fa-pen', function () {
-            this.show(!readonly)
             this.onclick = (ev) => {
                 ev.stopPropagation()
                 new EditFolderDialog('Edit folder').show(folder, null)
@@ -162,78 +170,81 @@ export class FolderElement extends BaseHTMLElement {
                 root.appendChild(bookmark instanceof BookmarkElement ? bookmark : new BookmarkElement(bookmark))
             }
 
-            if (!readonly) {
-                root.appendChild(new BookmarkAddElement(folder))
-            }
+            root.appendChild(new BookmarkAddElement(folder))
+
+            this.#refreshStyles()
         }
 
         // Collection dragging
-        if (!self.immobile) {
-            var sibling = null, dropped = false
-            const drag = new DragDropHandler(root.querySelector('h1'))
-            drag.ondragstart = (ev) => {
-                ev.stopPropagation()
-                ev.dataTransfer.effectAllowed = 'move'
-                self.classList.add('dragging')
-                document.body.classList.add('dragging')
-                sibling = self.nextSibling
-                dropped = false
-            }
-            drag.ondragend = () => {
-                self.classList.remove('dragging')
-                document.body.classList.remove('dragging')
-                document.body.classList.remove('over-trash')
-
-                if (!dropped) {
-                    sibling.parentElement.insertBefore(self, sibling)
-                }
+        var sibling = null, dropped = false
+        const drag = new DragDropHandler(root.querySelector('h1'))
+        drag.ondragstart = (ev) => {
+            if (this.readonly) {
+                ev.preventDefault()
+                return
             }
 
-            // Trash drop
-            drag.subscribeDrop((el) => !folder.readonly && el === MainView.elTrash, {
-                ondragenter: () => {
-                    document.body.classList.add('over-trash')
-                },
-                ondragover: (ev) => {
-                    ev.preventDefault()
-                    ev.dataTransfer.dropEffect = 'move'
-                },
-                ondragleave: () => {
-                    document.body.classList.remove('over-trash')
-                },
-                ondrop: (ev) => {
-                    ev.stopPropagation()
-                    dropped = true
-                    self.remove()
-                    State.removeFolder(folder)
-                }
-            })
-
-            // Collection reorder
-            drag.subscribeDrop((el) => el === MainView.elLayout, {
-                ondragover: (ev) => {
-                    ev.preventDefault()
-                    ev.dataTransfer.dropEffect = 'move'
-                },
-                ondrop: async (ev) => {
-                    ev.stopPropagation()
-                    dropped = true
-                    self.reindexSiblings()
-                    await State.save()
-                }
-            })
-            drag.subscribeDrop((el) => el !== self && el instanceof FolderElement && !el.folder.immobile, {
-                ondragenter: (ev) => {
-                    const startIndex = Array.prototype.indexOf.call(ev.target.parentElement.children, self)
-                    const targetIndex = Array.prototype.indexOf.call(ev.target.parentElement.children, ev.target)
-                    if (startIndex < 0 || startIndex > targetIndex) {
-                        ev.target.parentElement.insertBefore(self, ev.target)
-                    } else {
-                        ev.target.insertAdjacentElement('afterend', self)
-                    }
-                }
-            })
+            ev.stopPropagation()
+            ev.dataTransfer.effectAllowed = 'move'
+            self.classList.add('dragging')
+            document.body.classList.add('dragging')
+            sibling = self.nextSibling
+            dropped = false
         }
+        drag.ondragend = () => {
+            self.classList.remove('dragging')
+            document.body.classList.remove('dragging')
+            document.body.classList.remove('over-trash')
+
+            if (!dropped) {
+                sibling.parentElement.insertBefore(self, sibling)
+            }
+        }
+
+        // Trash drop
+        drag.subscribeDrop((el) => !folder.readonly && el === MainView.elTrash, {
+            ondragenter: () => {
+                document.body.classList.add('over-trash')
+            },
+            ondragover: (ev) => {
+                ev.preventDefault()
+                ev.dataTransfer.dropEffect = 'move'
+            },
+            ondragleave: () => {
+                document.body.classList.remove('over-trash')
+            },
+            ondrop: (ev) => {
+                ev.stopPropagation()
+                dropped = true
+                self.remove()
+                State.removeFolder(folder)
+            }
+        })
+
+        // Collection reorder
+        drag.subscribeDrop((el) => el === MainView.elLayout, {
+            ondragover: (ev) => {
+                ev.preventDefault()
+                ev.dataTransfer.dropEffect = 'move'
+            },
+            ondrop: async (ev) => {
+                ev.stopPropagation()
+                dropped = true
+                self.reindexSiblings()
+                await State.save()
+            }
+        })
+        drag.subscribeDrop((el) => el !== self && el instanceof FolderElement && !el.folder.immobile, {
+            ondragenter: (ev) => {
+                const startIndex = Array.prototype.indexOf.call(ev.target.parentElement.children, self)
+                const targetIndex = Array.prototype.indexOf.call(ev.target.parentElement.children, ev.target)
+                if (startIndex < 0 || startIndex > targetIndex) {
+                    ev.target.parentElement.insertBefore(self, ev.target)
+                } else {
+                    ev.target.insertAdjacentElement('afterend', self)
+                }
+            }
+        })
     }
 
     reindexBookmarks() {

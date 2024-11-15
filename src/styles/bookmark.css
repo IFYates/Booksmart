@@ -88,7 +88,11 @@ a .title.nowrap {
     visibility: hidden;
 }
 
-:host(:not(.favourite):hover) .actions {
+:host(.favourite) .actions>.move {
+    visibility: hidden;
+}
+
+:host(:not(.readonly):hover) .actions {
     visibility: visible;
 }
 
@@ -102,7 +106,7 @@ a .title.nowrap {
     opacity: 1;
 }
 
-:host(.add) {
+:host(bs-bookmark-add) {
     background: rgb(0, 0, 0, 0.1);
     flex-grow: 1;
     border-radius: 5px;
@@ -110,12 +114,16 @@ a .title.nowrap {
     text-align: center;
 }
 
-:host(.add:hover) {
+:host(bs-bookmark-add:hover) {
     background: rgb(255, 255, 255, 0.1);
     flex-grow: 1;
     border-radius: 5px;
     min-width: initial;
     text-align: center;
+}
+
+:host(bs-bookmark-add.readonly) {
+    display: none;
 }
 
 :host(bs-folder-add) {

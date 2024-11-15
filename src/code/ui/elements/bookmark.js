@@ -6,7 +6,6 @@ import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 import DragDropHandler from "../../common/DragDropHandler.js"
 import { Tabs } from "../../common/tabs.js"
 import State from "../../models/state.js"
-import { BookmarkAddElement } from "./bookmarkAdd.js"
 import { FolderElement } from './folder.js'
 import EditBookmarkDialog from '../dialog/editBookmark.js'
 
@@ -64,7 +63,6 @@ export class BookmarkElement extends BaseHTMLElement {
         const self = this
         const bookmark = this.#bookmark
         const folder = this.folder
-        bookmark.readonly = bookmark.readonly || !State.options.allowEdits || folder?.readonly
 
         // Icon
         const icon = root.querySelector('bs-icon')
@@ -84,7 +82,6 @@ export class BookmarkElement extends BaseHTMLElement {
 
         // Style
         host.classList.toggle('favourite', !!bookmark.favourite)
-        host.classList.toggle('readonly', !!bookmark.readonly)
 
         // Favourite
         root.querySelector('.favourite>i[title="Pin"]').style.display = bookmark.favourite ? 'none' : ''
@@ -100,8 +97,8 @@ export class BookmarkElement extends BaseHTMLElement {
         const attach = () => {
             const isFirst = !(self.previousElementSibling instanceof BookmarkElement) || self.previousElementSibling.bookmark.favourite
             const isLast = !(self.nextElementSibling instanceof BookmarkElement)
-            this._apply('.actions>.move[title="Move up"]', (el) => el.style.display = bookmark.readonly || isFirst ? 'none' : '')
-            this._apply('.actions>.move[title="Move down"]', (el) => el.style.display = bookmark.readonly || isLast ? 'none' : '')
+            this._apply('.actions>.move[title="Move up"]', (el) => el.style.display = isFirst ? 'none' : '')
+            this._apply('.actions>.move[title="Move down"]', (el) => el.style.display = isLast ? 'none' : '')
             self.removeEventListener('mouseenter', attach)
         }
         self.addEventListener('mouseenter', attach)
@@ -123,7 +120,6 @@ export class BookmarkElement extends BaseHTMLElement {
 
         // Edit
         this._apply('i[title="Edit bookmark"]', function () {
-            this.style.display = bookmark.readonly ? 'none' : ''
             this.onclick = (ev) => {
                 ev.stopPropagation()
                 new EditBookmarkDialog('Edit bookmark').show(bookmark, folder)
@@ -136,6 +132,11 @@ export class BookmarkElement extends BaseHTMLElement {
         var dragCopy = null
         const drag = new DragDropHandler(host)
         drag.ondragstart = (ev) => {
+            if (this.parent.readonly) {
+                ev.preventDefault()
+                return
+            }
+
             ev.stopPropagation()
 
             dragCopy = new BookmarkElement(this.#bookmark)
@@ -178,13 +179,8 @@ export class BookmarkElement extends BaseHTMLElement {
         })
 
         // Bookmark move/reorder
-        drag.subscribeDrop((el) => el instanceof FolderElement && !el.folder.readonly, {
+        drag.subscribeDrop((el) => el instanceof FolderElement && !el.readonly, {
             ondragenter: (ev) => {
-                if (ev.target.folder.id == folder.id) {
-                    dragCopy.remove()
-                    return
-                }
-
                 if (bookmark.favourite || !ev.target.folder.bookmarks.length) {
                     // At start
                     const head = ev.target.shadowRoot.querySelector('h1')
@@ -220,7 +216,7 @@ export class BookmarkElement extends BaseHTMLElement {
                 await State.save()
             }
         })
-        drag.subscribeDrop((el) => el !== dragCopy && el !== self && el instanceof BookmarkElement && el.folder && !el.folder.readonly && (!bookmark.favourite == !el.bookmark.favourite) && (el.folder.id != folder.id || folder.sortOrder == 0), {
+        drag.subscribeDrop((el) => el !== dragCopy && el !== self && el instanceof BookmarkElement && el.folder && !el.parent.readonly && (!bookmark.favourite == !el.bookmark.favourite) && (el.folder.id != folder.id || folder.sortOrder == 0), {
             ondragenter: (ev) => {
                 // Shift bookmarks as you drag over
                 const startIndex = Array.prototype.indexOf.call(ev.target.parentNode.children, dragCopy)
@@ -242,7 +238,7 @@ export class BookmarkElement extends BaseHTMLElement {
     async applyFolderChange(dropElement, asCopy) {
         const fromFolder = this.parentNode.host
         const toFolder = dropElement.parentNode.host
-        const element = (asCopy || this.readonly) && this.#bookmark.folderId != toFolder.folder.id
+        const element = (asCopy || this.#bookmark.readonly) && this.#bookmark.folderId != toFolder.folder.id
             ? new BookmarkElement(await this.#bookmark.duplicate()) // Replace with duplicate
             : this
         dropElement.replaceWith(element)

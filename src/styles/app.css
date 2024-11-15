@@ -4,8 +4,8 @@
     transform: rotate(180deg) scaleX(-1);
 }
 
-i.action,
-.actions>i {
+.actions i {
+    margin: 9px 0;
     cursor: pointer;
     opacity: 0.3;
     transition: opacity 0.5s ease-in-out;
@@ -15,9 +15,16 @@ i.action,
         -1px -1px 1px var(--text-shadow-colour);
 }
 
-i.action:hover,
-.actions>i:hover {
+.actions i:hover {
     opacity: 1;
+}
+
+body:not(.readonly) .actions i.fa-lock {
+    display: none;
+}
+
+body.readonly .actions i.fa-unlock {
+    display: none;
 }
 
 html {
@@ -48,6 +55,10 @@ body>.actions * {
     pointer-events: auto;
 }
 
+body.readonly bs-folder-add {
+    visibility: hidden;
+}
+
 #tagEdit {
     cursor: pointer;
 }
@@ -64,6 +75,10 @@ body.dragging #trash {
 
 body.dragging.over-trash #trash {
     text-shadow: 0px 0px 30px red;
+}
+
+body.readonly #trash {
+    visibility: hidden;
 }
 
 layout,
@@ -84,7 +99,7 @@ layout {
     margin-bottom: 3.5em;
 }
 
-.layout>*[style*="display: none"] ~ * {
+.layout>*[style*="display: none"]~* {
     grid-column: span 2;
 }
 

@@ -181,7 +181,6 @@ export default class State {
         const state = {
             options: State.#options.export()
         }
-        console.log(state.options)
         for (const folder of Object.values(State.#folders)) {
             state[`folder:${folder.uuid}`] = folder.export(false)
         }

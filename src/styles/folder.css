@@ -23,6 +23,10 @@ i.action,
     transition: opacity 0.5s ease-in-out;
 }
 
+:host(.readonly) .actions {
+    display: none;
+}
+
 i.action:hover,
 .actions>i:hover {
     opacity: 1;
