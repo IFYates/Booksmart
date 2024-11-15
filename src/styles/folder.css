@@ -64,6 +64,11 @@ h1 {
     margin-bottom: 5px;
 }
 
+:host([style*="background-image"]) h1,
+:host([style*="background-image"]) bs-bookmark {
+    background: rgb(var(--accent-colour-r), var(--accent-colour-g), var(--accent-colour-b), 0.8);
+}
+
 :host(.collapsable) h1 {
     cursor: pointer;
 }

@@ -40,7 +40,7 @@ export class FolderElement extends BaseHTMLElement {
     get index() { return this.#folder.index }
     set index(value) { this.#folder.index = num(value) }
 
-    get bookmarks() { return [...this.shadowRoot.children].filter(c => c instanceof BookmarkElement) }
+    get bookmarks() { return this.shadowRoot.querySelectorAll(customElements.getName(BookmarkElement)) }
 
     constructor(folder) {
         super(template, ['/styles/common.css', '/styles/folder.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
@@ -53,7 +53,7 @@ export class FolderElement extends BaseHTMLElement {
     #refreshStyles(cl) {
         const readonly = this.#folder.readonly || cl.includes('readonly')
         this.classList.toggle('readonly', readonly)
-        this.shadowRoot.querySelectorAll(customElements.getName(BookmarkElement)).forEach(el => el.classList.toggle('readonly', readonly))
+        this.bookmarks.forEach(el => el.classList.toggle('readonly', readonly))
         this.shadowRoot.querySelectorAll(customElements.getName(BookmarkAddElement)).forEach(el => el.classList.toggle('readonly', readonly))
 
         const tagId = cl.find(c => c.startsWith('tagging-'))?.substring(8)
@@ -62,7 +62,7 @@ export class FolderElement extends BaseHTMLElement {
 
     setTheme() {
         const accentColour = this.#folder.accentColour
-        globalThis.MainView?.setTheme(accentColour, this.shadowRoot.host)
+        MainView?.setTheme(accentColour, this.shadowRoot.host)
         this.shadowRoot.host.style.backgroundColor = accentColour || State.options?.backgroundImage ? 'var(--theme-colour-shade)' : 'rgb(0, 0, 0, 0.1)'
         this.shadowRoot.host.style.backgroundImage = this.#folder.backgroundImage ? `url(${this.#folder.backgroundImage})` : null
     }
