@@ -79,7 +79,7 @@ export default class State {
         }
 
         // Ensure all Booksmart children included
-        for (const child of booksmartRoot.children) {
+        for (const child of booksmartRoot.children || []) {
             if (!child.url) {
                 folders[child.id] ??= {}
             }
