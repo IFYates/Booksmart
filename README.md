@@ -49,7 +49,11 @@ A bookmark management tool and customisable homepage.
   - Tree of folders > bookmarks
 - Show bookmarks as "cards" (large squares of just icon)
 - Bookmarks _may_ have a thumbnail
+- Export to support re-linking folders inc. folder/bookmark customisations
+- Cache icons to local storage and serve from there first
+- Localisation
 - ? Show if bookmark is open
 - ? Show preview image
 - ? Side panel add-on (https://developer.chrome.com/docs/extensions/develop/ui#side-panels)
 - ? Non-bookmark items (e.g., notes)
+- ? Show full/recent history
