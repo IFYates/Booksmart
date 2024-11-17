@@ -49,10 +49,11 @@ export default class Options {
         return Options.#dailyBackground
     }
     async resolveDailyBackground(force = false) {
-        if (!force && Options.#dailyBackground?.date != new Date().toDateString()) {
+        const today = new Date().toDateString()
+        if (!force && Options.#dailyBackground?.date != today) {
             Options.#dailyBackground = (await chrome.storage.local.get('dailyBackgroundUrl'))?.dailyBackgroundUrl
         }
-        if (!force && Options.#dailyBackground?.date == new Date().toDateString()) {
+        if (!force && Options.#dailyBackground?.date == today) {
             return Options.#dailyBackground
         }
 
@@ -68,7 +69,7 @@ export default class Options {
                 match.groups.link = match.groups.link.slice(0, -5)
             }
 
-            Options.#dailyBackground = { date: new Date().toDateString(), url: match.groups.img }
+            Options.#dailyBackground = { date: today, url: match.groups.img }
             chrome.storage.local.set({ dailyBackgroundUrl: Options.#dailyBackground })
 
             // Continue to find accent

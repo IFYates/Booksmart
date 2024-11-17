@@ -37,6 +37,7 @@ A bookmark management tool and customisable homepage.
 - Change icon
 - Pin within folder
 - Add notes
+- Cache icons to local storage and serve from there first
 
 # Future possible features
 - Open folder as tab group
@@ -50,7 +51,6 @@ A bookmark management tool and customisable homepage.
 - Show bookmarks as "cards" (large squares of just icon)
 - Bookmarks _may_ have a thumbnail
 - Export to support re-linking folders inc. folder/bookmark customisations
-- Cache icons to local storage and serve from there first
 - Localisation
 - ? Show if bookmark is open
 - ? Show preview image
