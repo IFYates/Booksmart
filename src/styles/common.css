@@ -1,9 +1,7 @@
-:root {
+:host {
     --theme-colour-dark: rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585));
     --theme-colour-darkest: rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585));
     --theme-colour-lighter: rgb(calc(var(--accent-colour-r) * 1.5), calc(var(--accent-colour-g) * 1.5), calc(var(--accent-colour-b) * 1.5));
-    /*--theme-colour-darkest: hsl(var(--accent-colour-hue), var(--accent-colour-saturation), calc(var(--accent-colour-lightness) * 0.585));
-    --theme-colour-lighter: hsl(var(--accent-colour-hue), calc(var(--accent-colour-saturation) * 1.5), calc(var(--accent-colour-lightness) * 1.625));*/
 }
 
 * {
