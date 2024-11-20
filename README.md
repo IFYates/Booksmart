@@ -41,19 +41,25 @@ A bookmark management tool and customisable homepage.
 
 # Future possible features
 - Open folder as tab group
+- Save all open tabs as group
 - Folder description (visible)
 - Improved edit UI
-- Style bookmarks by domain (across all folders)
 - Use browser history to suggest URL on bookmark creation
 - Popup
   - Quick list of favourites / last used bookmarks
   - Tree of folders > bookmarks
 - Show bookmarks as "cards" (large squares of just icon)
-- Bookmarks _may_ have a thumbnail
 - Export to support re-linking folders inc. folder/bookmark customisations
 - Localisation
+- ? Style bookmarks by domain (across all folders)
 - ? Show if bookmark is open
 - ? Show preview image
 - ? Side panel add-on (https://developer.chrome.com/docs/extensions/develop/ui#side-panels)
 - ? Non-bookmark items (e.g., notes)
 - ? Show full/recent history
+- ...Bookmarks _may_ have a thumbnail
+
+2.0
+- "Open tabs" to individual window groups
+- Alternative layouts (grid w/ custom resize)
+- ? Optional central storage + sync

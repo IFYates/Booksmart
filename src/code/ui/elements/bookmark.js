@@ -69,7 +69,7 @@ export class BookmarkElement extends BaseHTMLElement {
         // Icon
         const icon = root.querySelector('bs-icon')
         icon.value = bookmark.icon
-        icon.favDomain = bookmark.domain
+        icon.favDomain = State.options.showFavIcons ? bookmark.domain : null
         icon.onchange = () => {
             this.#bookmark.icon = icon.value
         }

@@ -277,7 +277,6 @@ export default class State {
     static async save() {
         const state = State.#getData(false)
         await chrome.storage.sync.set(state)
-        console.log(state)
         const keys = await chrome.storage.sync.getKeys()
         for (const key of keys.filter(k => !state.hasOwnProperty(k))) {
             await chrome.storage.sync.remove(key)
@@ -297,5 +296,38 @@ export default class State {
         if (standalone) {
             await chrome.storage.sync.set({ [entry.uuid]: data })
         }
+    }
+
+    static async resolveCachedImage(img, url, force = false) {
+        // Try from cache first
+        const cached = !force ? (await chrome.storage.local.get(url))?.[url] : null
+        const today = new Date().toDateString()
+        const resultPromise = new Promise((resolve, reject) => {
+            if (cached == '$' + today) {
+                // Already failed today
+                reject()
+                return
+            }
+
+            if (cached?.startsWith('$') === false) {
+                // From cache
+                img.src = cached
+                resolve()
+                return
+            }
+
+            img.showImageAsDataUrl(url)
+                .then(r => {
+                    if (r && r != url) {
+                        chrome.storage.local.set({ [url]: r })
+                    }
+                    resolve()
+                })
+                .catch(_ => {
+                    chrome.storage.local.set({ [url]: '$' + today }) // Don't retry today
+                    reject()
+                })
+        })
+        return resultPromise
     }
 }

@@ -1,8 +1,7 @@
 import Emojis from "../../common/emojiHelpers.js"
 import FontAwesome from "../../common/faHelpers.js"
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
-
-const CORS_PROXY = 'https://corsproxy.io/?'
+import State from "../../models/state.js"
 
 // supports altIcon and favicon for domain
 export default class IconElement extends BaseHTMLElement {
@@ -54,72 +53,18 @@ export default class IconElement extends BaseHTMLElement {
         icon = (!icon && /^https?:\/\/\w+\.\w+/i.test(this.#favDomain))
             ? `${this.#favDomain}/favicon.ico` : icon
         if (icon) {
-            this.#showIconImage(icon, {
-                loaded: () => {
+            const img = this.querySelector('img.icon') || this.add('img', { className: 'icon', style: 'display: none' })
+            State.resolveCachedImage(img, icon)
+                .then(r => {
                     this.querySelector('i.icon')?.remove()
+                    img.show()
                     this.onchange?.() // TODO: ?
-                },
-                error: () => {
+                })
+                .catch(e => {
                     // Remove image
-                    this.remove()
-                }
-            })
+                    img.remove()
+                })
         }
-    }
-
-    async #showIconImage(icon, callbacks) {
-        // Element
-        const img = this.querySelector('img.icon') || this.add('img', { className: 'icon' })
-        img.crossOrigin = 'anonymous'
-
-        // First failure retries without CORS proxy
-        img.onerror = () => {
-            // Second failure removes CORS bypass (won't cache)
-            img.onerror = () => {
-                // Failed now
-                img.onerror = () => {
-                    img.onerror = null
-                    chrome.storage.local.set({ [icon]: '$' + today }) // Don't retry today
-                    callbacks?.error?.call(img)
-                }
-
-                img.crossOrigin = null
-            }
-
-            img.src = icon
-        }
-
-        // Get from local
-        const cached = (await chrome.storage.local.get(icon))?.[icon]
-        const today = new Date().toDateString()
-        if (cached == '$' + today) { // Already failed today
-            callbacks?.error?.call(img)
-            return
-        } else if (cached?.startsWith('$') === false) {
-            img.src = cached
-            callbacks?.loaded?.call(img)
-            return
-        }
-
-        // Load image
-        img.onload = async () => {
-            img.onload = null
-
-            // Cache data URL
-            if (img.crossOrigin) {
-                const imgBitmap = await createImageBitmap(img);
-                const canvas = document.createElement('canvas')
-                canvas.width = img.width
-                canvas.height = img.height
-                const ctx = canvas.getContext('2d')
-                ctx.drawImage(imgBitmap, 0, 0, canvas.width, canvas.height)
-                img.src = canvas.toDataURL()
-                await chrome.storage.local.set({ [icon]: canvas.toDataURL() })
-            }
-
-            callbacks?.loaded?.call(img)
-        }
-        img.src = CORS_PROXY + icon
     }
 }
 customElements.define('bs-icon', IconElement)

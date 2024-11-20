@@ -84,6 +84,54 @@ HTMLElement.prototype.extend(
     }
 )
 
+const CORS_PROXY = 'https://corsproxy.io/?'
+HTMLImageElement.prototype.extend(
+    function showImageAsDataUrl(url) {
+        const img = this
+        return new Promise((resolve, reject) => {
+            img.crossOrigin = 'anonymous' // Try with CORS support first
+
+            var failCount = 0
+            img.onerror = () => {
+                switch (++failCount) {
+                    case 1:
+                        // First failure retries without CORS proxy
+                        img.src = url
+                        break
+                    case 2:
+                        // Second failure removes CORS bypass (won't cache)
+                        img.crossOrigin = null
+                        break
+                    case 3:
+                        // Failed now
+                        img.onerror = null
+                        reject(null)
+                        break
+                }
+            }
+
+            img.onload = async () => {
+                img.onload = null
+
+                // Resolve data URL
+                try {
+                    const imgBitmap = await createImageBitmap(img);
+                    const canvas = document.createElement('canvas')
+                    canvas.width = img.width
+                    canvas.height = img.height
+                    const ctx = canvas.getContext('2d')
+                    ctx.drawImage(imgBitmap, 0, 0, canvas.width, canvas.height)
+                    img.src = canvas.toDataURL()
+                    resolve(img.src)
+                } catch {
+                    resolve() // Didn't get data URL, but did get image
+                }
+            }
+
+            img.src = CORS_PROXY + url
+        })
+    }
+)
 globalThis.extend(
     function createElement(type, text, args, logic) {
         if (!logic) {
