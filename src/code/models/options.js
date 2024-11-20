@@ -44,6 +44,7 @@ export default class Options {
     static #dailyBackground
     static #dailyBackgroundProviderUrl = 'https://corsproxy.io/?https://bing.gifposter.com';
     static #dailyBackgroundUrlRegex = /<a.+?href="(?<link>[^"]+)"[^>]+>\s+?<img.+?class="fl".*?src="(?<img>[^"]+)"/s
+    static #dailyBackgroundInfoRegex = /itemprop="name">.*?>(?<title>.*?)<\/a>.*?itemprop="copyrightHolder">(?<copyright>.*?)<\//si
     static #dailyBackgroundColorRegex = /href="\/colors\.html\?color=(?<r>\d+),(?<g>\d+),(?<b>\d+)"/s
     getDailyBackground() {
         return Options.#dailyBackground
@@ -69,7 +70,13 @@ export default class Options {
                 match.groups.link = match.groups.link.slice(0, -5)
             }
 
-            Options.#dailyBackground = { date: today, url: match.groups.img }
+            const infoMatch = body?.match(Options.#dailyBackgroundInfoRegex)
+            var info = ''
+            if (infoMatch) {
+                info = `${infoMatch.groups.title}<br>${infoMatch.groups.copyright}`
+            }
+
+            Options.#dailyBackground = { date: today, url: match.groups.img, info: info }
             chrome.storage.local.set({ dailyBackgroundUrl: Options.#dailyBackground })
 
             // Continue to find accent

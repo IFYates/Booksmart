@@ -55,6 +55,20 @@ body>.actions * {
     pointer-events: auto;
 }
 
+body>.actions>#imageDetail {
+    font-size: 1.2em;
+    font-weight: bold;
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    transition: opacity 0.2s ease-in-out;
+    opacity: 0;
+}
+
+body.showBackground>.actions>#imageDetail {
+    opacity: 1;
+}
+
 body.readonly bs-folder-add {
     visibility: hidden;
 }
@@ -103,12 +117,24 @@ layout {
     grid-column: span 2;
 }
 
+bs-folder,
+bs-site-list,
+bs-tab-list {
+    transition: opacity 0.2s ease-in-out;
+}
+
 bs-folder.tag-nodrop,
 layout.dragging bs-folder {
     opacity: 0.5;
-    transition: opacity 0.2s ease-in-out;
 }
 
 layout.dragging bs-folder.tag-hover {
     opacity: 1;
+}
+
+body.showBackground bs-folder,
+body.showBackground bs-site-list,
+body.showBackground bs-tab-list {
+    opacity: 0;
+    pointer-events: none;
 }

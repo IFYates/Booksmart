@@ -21,6 +21,10 @@ export default class MainView {
         await State.init()
         MainView.setTheme()
 
+        document.body.addEventListener('dblclick', () => {
+            document.body.classList.toggle('showBackground')
+        })
+
         document.getElementById('tagEdit').display((el) => {
             el.onclick = async () => {
                 await new TagsDialog().show()
@@ -64,6 +68,7 @@ export default class MainView {
                 document.getElementsByTagName('layout')[0].style.zoom = (State.options.scale && State.options.scale != 100) ? `${State.options.scale}%` : ''
             }
 
+            document.getElementById('imageDetail').innerHTML = ''
             if (State.options.backgroundImage == 'daily') {
                 const bg = State.options.getDailyBackground()
                 if (!bg) {
@@ -75,6 +80,7 @@ export default class MainView {
                         })
                 } else {
                     document.body.style.backgroundImage = `url(${bg.url})`
+                    document.getElementById('imageDetail').innerHTML = bg.info
                     accentColour = bg.accentColour
                 }
             } else {
