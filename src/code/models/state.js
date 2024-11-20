@@ -2,6 +2,8 @@ import Bookmark from "./bookmark.js"
 import Folder from "./folder.js"
 import Options from "./options.js"
 
+const IMAGE_CACHE_TTL = 604800000 // 7 days
+
 var _booksmartRootId = -1
 
 async function _getFullTree() {
@@ -299,32 +301,36 @@ export default class State {
     }
 
     static async resolveCachedImage(img, url, force = false) {
+        if (url?.startsWith('data:image/')) return url
+
         // Try from cache first
         const cached = !force ? (await chrome.storage.local.get(url))?.[url] : null
-        const today = new Date().toDateString()
         const resultPromise = new Promise((resolve, reject) => {
-            if (cached == '$' + today) {
-                // Already failed today
-                reject()
-                return
-            }
-
-            if (cached?.startsWith('$') === false) {
-                // From cache
-                img.src = cached
-                resolve()
+            const now = new Date().getTime()
+            if (cached?.expire > now) {
+                if (!cached?.src) {
+                    // Cached failure
+                    reject()
+                } else {
+                    // From cache
+                    img.src = cached.src
+                    resolve(cached.src)
+                }
                 return
             }
 
             img.showImageAsDataUrl(url)
                 .then(r => {
-                    if (r && r != url) {
-                        chrome.storage.local.set({ [url]: r })
+                    if (r) {
+                        chrome.storage.local.set({ [url]: { src: r, expire: now + IMAGE_CACHE_TTL } })
                     }
-                    resolve()
+                    resolve(r)
                 })
                 .catch(_ => {
-                    chrome.storage.local.set({ [url]: '$' + today }) // Don't retry today
+                    const tomorrow = new Date()
+                    tomorrow.setDate(tomorrow.getDate() + 1)
+                    tomorrow.setHours(0, 0, 0, 0)
+                    chrome.storage.local.set({ [url]: { expire: tomorrow.getTime() } }) // Don't retry today
                     reject()
                 })
         })

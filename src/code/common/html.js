@@ -117,6 +117,7 @@ HTMLImageElement.prototype.extend(
                 try {
                     const imgBitmap = await createImageBitmap(img);
                     const canvas = document.createElement('canvas')
+                    console.log(img.width, img.height)
                     canvas.width = img.width
                     canvas.height = img.height
                     const ctx = canvas.getContext('2d')
@@ -124,7 +125,7 @@ HTMLImageElement.prototype.extend(
                     img.src = canvas.toDataURL()
                     resolve(img.src)
                 } catch {
-                    resolve() // Didn't get data URL, but did get image
+                    resolve(img.src) // Didn't get data URL, but did get image
                 }
             }
 

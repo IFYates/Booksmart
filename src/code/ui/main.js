@@ -3,14 +3,12 @@ import './elements/TagElement.js'
 
 import Dialogs from './dialogs.js'
 import { FolderElement } from './elements/folder.js'
-import { FolderAddElement } from './elements/folderAdd.js'
 import { NoFoldersElement } from './elements/noFolders.js'
 import { SiteListElement } from './elements/sites.js'
 import { TabListElement } from './elements/TabListElement.js'
 import State from '../models/state.js'
 import TagElement from './elements/TagElement.js'
 import TagsDialog from './dialog/TagsDialog.js'
-import { BookmarkElement } from './elements/bookmark.js'
 
 export default class MainView {
     static elLayout
@@ -79,9 +77,13 @@ export default class MainView {
                             }
                         })
                 } else {
-                    document.body.style.backgroundImage = `url(${bg.url})`
-                    document.getElementById('imageDetail').innerHTML = bg.info
-                    accentColour = bg.accentColour
+                    const img = document.createElement('img')
+                    State.resolveCachedImage(img, bg.url)
+                        .then(r => {
+                            document.body.style.backgroundImage = `url(${r})`
+                            document.getElementById('imageDetail').innerHTML = bg.info
+                            accentColour = bg.accentColour
+                        })
                 }
             } else {
                 document.body.style.backgroundImage = State.options.backgroundImage ? `url(${State.options.backgroundImage})` : null
