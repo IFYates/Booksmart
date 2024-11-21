@@ -80,19 +80,17 @@ export default class Options {
             chrome.storage.local.set({ dailyBackgroundUrl: Options.#dailyBackground })
 
             // Continue to find accent
-            fetch(Options.#dailyBackgroundProviderUrl + match.groups.link)
-                .then(response => response.text())
-                .then(body => {
-                    const rgb = body?.match(Options.#dailyBackgroundColorRegex)?.groups
-                    if (rgb) {
-                        rgb.r = (rgb.r | 0).toString(16).padStart(2, '0')
-                        rgb.g = (rgb.g | 0).toString(16).padStart(2, '0')
-                        rgb.b = (rgb.b | 0).toString(16).padStart(2, '0')
-                        Options.#dailyBackground.accentColour = `#${rgb.r}${rgb.g}${rgb.b}`
-                        chrome.storage.local.set({ dailyBackgroundUrl: Options.#dailyBackground })
-                        MainView.setTheme(Options.#dailyBackground.accentColour)
-                    }
-                })
+            const response2 = await fetch(Options.#dailyBackgroundProviderUrl + match.groups.link)
+            const body2 = await response2?.text()
+            const rgb = body2?.match(Options.#dailyBackgroundColorRegex)?.groups
+            if (rgb) {
+                rgb.r = (rgb.r | 0).toString(16).padStart(2, '0')
+                rgb.g = (rgb.g | 0).toString(16).padStart(2, '0')
+                rgb.b = (rgb.b | 0).toString(16).padStart(2, '0')
+                Options.#dailyBackground.accentColour = `#${rgb.r}${rgb.g}${rgb.b}`
+                chrome.storage.local.set({ dailyBackgroundUrl: Options.#dailyBackground })
+                MainView.setTheme(Options.#dailyBackground.accentColour)
+            }
 
             return Options.#dailyBackground
         }

@@ -116,10 +116,7 @@ export default class OptionsDialog extends BaseDialog {
             add('span', ' Refresh')
 
             el.onclick = async () => {
-                const bgImageUrl = (await State.options.resolveDailyBackground(true)).url
-                if (bgImageUrl) {
-                    await State.resolveCachedImage(bgImage, bgImageUrl, true)
-                }
+                bgImage.src = (await State.options.resolveDailyBackground(true)).url
             }
         })
         bgType.on_change(async (value) => {

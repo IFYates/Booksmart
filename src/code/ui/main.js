@@ -17,7 +17,6 @@ export default class MainView {
 
     static async init() {
         await State.init()
-        MainView.setTheme()
 
         document.body.addEventListener('dblclick', () => {
             document.body.classList.toggle('showBackground')
@@ -56,7 +55,6 @@ export default class MainView {
         }
     }
 
-    static #count = 100
     static setTheme(accentColour = null, element = null) {
         element ??= document.documentElement
 
@@ -71,19 +69,15 @@ export default class MainView {
                 const bg = State.options.getDailyBackground()
                 if (!bg) {
                     State.options.resolveDailyBackground()
-                        .then(() => {
-                            if (--MainView.#count > 0) {
+                        .then(r => {
+                            if (r) {
                                 this.setTheme(accentColour, element)
                             }
                         })
                 } else {
-                    const img = document.createElement('img')
-                    State.resolveCachedImage(img, bg.url)
-                        .then(r => {
-                            document.body.style.backgroundImage = `url(${r})`
-                            document.getElementById('imageDetail').innerHTML = bg.info
-                            accentColour = bg.accentColour
-                        })
+                    document.body.style.backgroundImage = `url(${bg.url})`
+                    document.getElementById('imageDetail').innerHTML = bg.info
+                    accentColour = bg.accentColour
                 }
             } else {
                 document.body.style.backgroundImage = State.options.backgroundImage ? `url(${State.options.backgroundImage})` : null
@@ -96,12 +90,6 @@ export default class MainView {
             element.style.setProperty('--accent-colour-r', parseInt(accentColour.substring(1, 3), 16))
             element.style.setProperty('--accent-colour-g', parseInt(accentColour.substring(3, 5), 16))
             element.style.setProperty('--accent-colour-b', parseInt(accentColour.substring(5, 7), 16))
-            // element.style.setProperty('--accent-colour-hue', State.options.themeAccent[0])
-            // element.style.setProperty('--accent-colour-saturation', `${State.options.themeAccent[1]}%`)
-            // element.style.setProperty('--accent-colour-lightness', '24%')
-            // element.style.setProperty('--theme-colour-shade', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585), 0.5)')
-            // element.style.setProperty('--theme-colour-darkest', 'rgb(calc(var(--accent-colour-r) * 0.585), calc(var(--accent-colour-g) * 0.585), calc(var(--accent-colour-b) * 0.585))')
-            // element.style.setProperty('--theme-colour-lighter', 'rgb(calc(var(--accent-colour-r) * 1.5), calc(var(--accent-colour-g) * 1.5), calc(var(--accent-colour-b) * 1.5))')
 
             // TODO: tidier
             function calculateRelativeLuminance(r, g, b) {

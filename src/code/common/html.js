@@ -115,11 +115,10 @@ HTMLImageElement.prototype.extend(
 
                 // Resolve data URL
                 try {
-                    const imgBitmap = await createImageBitmap(img);
+                    const imgBitmap = await createImageBitmap(img)
                     const canvas = document.createElement('canvas')
-                    console.log(img.width, img.height)
-                    canvas.width = img.width
-                    canvas.height = img.height
+                    canvas.width = img.naturalWidth
+                    canvas.height = img.naturalWidth
                     const ctx = canvas.getContext('2d')
                     ctx.drawImage(imgBitmap, 0, 0, canvas.width, canvas.height)
                     img.src = canvas.toDataURL()

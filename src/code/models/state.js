@@ -322,7 +322,9 @@ export default class State {
             img.showImageAsDataUrl(url)
                 .then(r => {
                     if (r) {
-                        chrome.storage.local.set({ [url]: { src: r, expire: now + IMAGE_CACHE_TTL } })
+                        try {
+                            chrome.storage.local.set({ [url]: { src: r, expire: now + IMAGE_CACHE_TTL } })
+                        } catch { }
                     }
                     resolve(r)
                 })
