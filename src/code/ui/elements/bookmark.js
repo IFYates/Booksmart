@@ -44,6 +44,7 @@ export class BookmarkElement extends BaseHTMLElement {
         super(template, ['/styles/common.css', '/styles/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
         this.#bookmark = bookmark
         this.id = 'bookmark-' + bookmark.id
+        this.classList.add('grid') // TODO: option
     }
 
     onclick(ev) {
