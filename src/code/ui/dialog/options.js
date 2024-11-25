@@ -126,10 +126,7 @@ export default class OptionsDialog extends BaseDialog {
 
             if (value == 'Daily') {
                 State.options.backgroundImage = 'daily'
-                const bgImageUrl = (await State.options.resolveDailyBackground()).url
-                if (bgImageUrl) {
-                    await State.resolveCachedImage(bgImage, bgImageUrl)
-                }
+                bgImage.src = (await State.options.resolveDailyBackground()).url
             } else if (value == 'Custom') {
                 bgCustom.onkeyup()
             } else {
