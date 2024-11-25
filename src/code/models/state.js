@@ -44,8 +44,9 @@ export default class State {
         const fullTree = await _getFullTree()
         var booksmartRoot = fullTree.find(b => b.title == State.Title && !b.url)
         if (!booksmartRoot) {
-            const bookmarkRoot = fullTree.find(b => b.parentId == 0 && b.title == 'Bookmarks' && !b.url)
-                || fullTree.find(b => b.parentId == 0 && b.title == 'Other bookmarks' && !b.url)
+            const bookmarkRoot = fullTree.find(b => b.parentId == 0 && b.title == 'Bookmarks' && !b.url) // Chrome
+                || fullTree.find(b => b.parentId == 0 && b.title == 'Other bookmarks' && !b.url) // Vivaldi
+                || fullTree.find(b => b.parentId == 0 && b.title == 'Other favourites' && !b.url) || fullTree.find(b => b.parentId == 0 && b.title == 'Other favorites' && !b.url) // Edge
             if (!bookmarkRoot) {
                 console.error('Unable to find viable root folder')
             }

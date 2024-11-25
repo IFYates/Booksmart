@@ -123,6 +123,11 @@ bs-tab-list {
     transition: opacity 0.2s ease-in-out;
 }
 
+bs-nobookmarks {
+    height: fit-content;
+    width: calc(100% - 30px);
+}
+
 bs-folder.tag-nodrop,
 layout.dragging bs-folder {
     opacity: 0.5;

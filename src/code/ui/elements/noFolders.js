@@ -8,7 +8,7 @@ export class NoFoldersElement extends BookmarkElement {
     }
 
     async _ondisplay(root) {
-        root.innerHTML = 'You don\'t have any bookmarks; create one now';
+        root.innerHTML = 'You don\'t have any bookmark folders yet; add or create one now';
     }
 
     onclick() {
