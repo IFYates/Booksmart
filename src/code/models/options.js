@@ -42,10 +42,7 @@ export default class Options {
     }
 
     static #dailyBackground
-    static #dailyBackgroundProviderUrl = 'https://corsproxy.io/?https://bing.gifposter.com';
-    static #dailyBackgroundUrlRegex = /<a.+?href="(?<link>[^"]+)"[^>]+>\s+?<img.+?class="fl".*?src="(?<img>[^"]+)"/s
-    static #dailyBackgroundInfoRegex = /itemprop="name">.*?>(?<title>.*?)<\/a>.*?itemprop="copyrightHolder">(?<copyright>.*?)<\//si
-    static #dailyBackgroundColorRegex = /href="\/colors\.html\?color=(?<r>\d+),(?<g>\d+),(?<b>\d+)"/s
+    static #dailyBackgroundProviderUrl = 'https://bing.biturl.top/?mkt=en-GB&resolution=UHD'
     getDailyBackground() {
         return Options.#dailyBackground
     }
@@ -60,37 +57,15 @@ export default class Options {
 
         // Find today's image
         const response = await fetch(Options.#dailyBackgroundProviderUrl)
-        const body = await response?.text()
-        const match = body?.match(Options.#dailyBackgroundUrlRegex)
-        if (match) {
-            if (match.groups.img.endsWith('_mb')) {
-                match.groups.img = match.groups.img.slice(0, -3)
-            }
-            if (match.groups.link.endsWith('.html')) {
-                match.groups.link = match.groups.link.slice(0, -5)
-            }
-
-            const infoMatch = body?.match(Options.#dailyBackgroundInfoRegex)
-            var info = ''
-            if (infoMatch) {
-                info = `${infoMatch.groups.title}<br>${infoMatch.groups.copyright}`
-            }
-
-            Options.#dailyBackground = { date: today, url: match.groups.img, info: info }
+        const body = await response?.json()
+        if (body?.url) {
+            Options.#dailyBackground = { date: today, url: body.url, info: body.copyright }
+            
+            // Resolve accent colour
+            const img = document.createElement('img')
+            await img.showImageAsDataUrl(body.url)
+            Options.#dailyBackground.accentColour = img.getAverageColour()
             chrome.storage.local.set({ dailyBackgroundUrl: Options.#dailyBackground })
-
-            // Continue to find accent
-            const response2 = await fetch(Options.#dailyBackgroundProviderUrl + match.groups.link)
-            const body2 = await response2?.text()
-            const rgb = body2?.match(Options.#dailyBackgroundColorRegex)?.groups
-            if (rgb) {
-                rgb.r = (rgb.r | 0).toString(16).padStart(2, '0')
-                rgb.g = (rgb.g | 0).toString(16).padStart(2, '0')
-                rgb.b = (rgb.b | 0).toString(16).padStart(2, '0')
-                Options.#dailyBackground.accentColour = `#${rgb.r}${rgb.g}${rgb.b}`
-                chrome.storage.local.set({ dailyBackgroundUrl: Options.#dailyBackground })
-                MainView.setTheme(Options.#dailyBackground.accentColour)
-            }
 
             return Options.#dailyBackground
         }

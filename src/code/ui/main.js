@@ -112,8 +112,8 @@ export default class MainView {
             element.style.setProperty('--accent-colour-r', null)
             element.style.setProperty('--accent-colour-g', null)
             element.style.setProperty('--accent-colour-b', null)
-            element.style.setProperty('--theme-colour-darkest', null)
-            element.style.setProperty('--theme-colour-lighter', null)
+            element.style.setProperty('--text-colour', null)
+            element.style.setProperty('--text-shadow-colour', null)
         }
     }
 

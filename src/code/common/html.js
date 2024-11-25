@@ -89,6 +89,12 @@ HTMLImageElement.prototype.extend(
     function showImageAsDataUrl(url) {
         const img = this
         return new Promise((resolve, reject) => {
+            if (url.startsWith('data:') || /\.svg(?:\?|$)/i.test(url)) {
+                img.src = url
+                resolve(img.src)
+                return
+            }
+    
             img.crossOrigin = 'anonymous' // Try with CORS support first
 
             var failCount = 0
@@ -115,12 +121,11 @@ HTMLImageElement.prototype.extend(
 
                 // Resolve data URL
                 try {
-                    const imgBitmap = await createImageBitmap(img)
                     const canvas = document.createElement('canvas')
                     canvas.width = img.naturalWidth
                     canvas.height = img.naturalWidth
                     const ctx = canvas.getContext('2d')
-                    ctx.drawImage(imgBitmap, 0, 0, canvas.width, canvas.height)
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
                     img.src = canvas.toDataURL()
                     resolve(img.src)
                 } catch {
@@ -130,6 +135,12 @@ HTMLImageElement.prototype.extend(
 
             img.src = CORS_PROXY + url
         })
+    },
+    function getAverageColour() {
+        const ctx = document.createElement("canvas").getContext("2d")
+        ctx.drawImage(this, 0, 0, 1, 1)
+        const px = ctx.getImageData(0, 0, 1, 1).data
+        return "#" + ((1 << 24) + (px[0] << 16) + (px[1] << 8) + px[2]).toString(16).slice(1)
     }
 )
 globalThis.extend(
