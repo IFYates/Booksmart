@@ -27,7 +27,7 @@ export class SiteListElement extends FolderElement {
     }
 
     refresh() {
-        if (!State.options.showTopSites) {
+        if (!State.options?.showTopSites) {
             this.shadowRoot.host.style.display = 'none'
             super.refresh()
             return

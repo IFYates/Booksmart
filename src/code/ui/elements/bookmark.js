@@ -12,7 +12,7 @@ import { BookmarkAddElement } from './bookmarkAdd.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
-<a href="<!--$ url $-->" title="<!--$ url $-->">
+<a href="<!--$ url $-->" title="<!--$ title $-->&#13;&#10;<!--$ url $-->">
     <bs-icon altIcon="far fa-bookmark"></bs-icon>
 
     <div class="favourite">
