@@ -1,5 +1,6 @@
 import './common/html.js'
 import './common/utilities.js'
+import './ui/elements/folderAdd.js'
 import MainView from "./ui/main.js"
 
 await MainView.init()

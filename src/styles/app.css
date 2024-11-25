@@ -75,6 +75,7 @@ body.readonly bs-folder-add {
 
 #tagEdit {
     cursor: pointer;
+    transition: opacity 0.2s ease-in-out;
 }
 
 #trash {
@@ -139,7 +140,8 @@ layout.dragging bs-folder.tag-hover {
 
 body.showBackground bs-folder,
 body.showBackground bs-site-list,
-body.showBackground bs-tab-list {
+body.showBackground bs-tab-list,
+body.showBackground #tagEdit {
     opacity: 0;
     pointer-events: none;
 }
