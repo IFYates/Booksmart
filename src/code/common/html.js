@@ -133,7 +133,7 @@ HTMLImageElement.prototype.extend(
                 }
             }
 
-            img.src = CORS_PROXY + url
+            img.src = CORS_PROXY + encodeURIComponent(url)
         })
     },
     function getAverageColour() {

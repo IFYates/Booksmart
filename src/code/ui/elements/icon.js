@@ -50,8 +50,9 @@ export default class IconElement extends BaseHTMLElement {
             return
         }
 
-        icon = (!icon && /^https?:\/\/\w+\.\w+/i.test(this.#favDomain))
-            ? `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=128&url=${this.#favDomain}` : icon
+        if (!icon && /^https?:\/\/\w+\.\w+/i.test(this.#favDomain)) {
+            icon = `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=128&url=${this.#favDomain}`
+        }
         if (icon) {
             const img = this.querySelector('img.icon') || this.add('img', { className: 'icon', style: 'display: none' })
             State.resolveCachedImage(img, icon)
