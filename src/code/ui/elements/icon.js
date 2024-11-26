@@ -51,7 +51,7 @@ export default class IconElement extends BaseHTMLElement {
         }
 
         icon = (!icon && /^https?:\/\/\w+\.\w+/i.test(this.#favDomain))
-            ? `${this.#favDomain}/favicon.ico` : icon
+            ? `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=128&url=${this.#favDomain}` : icon
         if (icon) {
             const img = this.querySelector('img.icon') || this.add('img', { className: 'icon', style: 'display: none' })
             State.resolveCachedImage(img, icon)
