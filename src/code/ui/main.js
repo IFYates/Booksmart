@@ -55,7 +55,7 @@ export default class MainView {
         }
     }
 
-    static setTheme(accentColour = null, element = null) {
+    static setTheme(accentColour = null, element = null, recursed = false) {
         element ??= document.documentElement
 
         if (element == document.documentElement) {
@@ -71,8 +71,8 @@ export default class MainView {
                     document.body.style.backgroundImage = `url(${bg.url})`
                     document.getElementById('imageDetail').innerHTML = bg.info
                     accentColour = bg.accentColour
-                    if (didAwait) {
-                        this.setTheme(accentColour, element)
+                    if (didAwait && !recursed) {
+                        this.setTheme(accentColour, element, true)
                     }
                 })
                 didAwait = true

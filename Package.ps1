@@ -18,5 +18,5 @@ if ($info -match '(?m)\/\*\$date\*\/.*$') {
 }
 
 Write-Output "Compressing..."
-Compress-Archive -Path "$PSScriptRoot/src/*" -DestinationPath $dest
+Compress-Archive -Path "$PSScriptRoot/src/*" -DestinationPath $dest -Force
 Write-Output "Compressed to $dest"
