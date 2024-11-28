@@ -48,7 +48,6 @@ A bookmark management tool and customisable homepage.
 - Popup
   - Quick list of favourites / last used bookmarks
   - Tree of folders > bookmarks
-- Show bookmarks as "cards" (large squares of just icon)
 - Export to support re-linking folders inc. folder/bookmark customisations
 - Localisation
 - ? Style bookmarks by domain (across all folders)

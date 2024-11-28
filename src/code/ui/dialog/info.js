@@ -1,5 +1,7 @@
 import BaseDialog from './base.js'
 
+const VERSION = /*$date*/'v1.3.2 November 2024'
+
 export default class InfoDialog extends BaseDialog {
     constructor() {
         super('fas fa-info-circle', 'About Booksmart')
@@ -22,7 +24,7 @@ export default class InfoDialog extends BaseDialog {
         add('p', 'If you want to support the project or thank me, you can buying me a 🍵: ').add('a', 'https://buymeacoffee.com/ifyates', { href: 'https://buymeacoffee.com/ifyates' })
         
         add('p', { style: 'text-align:right' }, () => {
-            add('div', 'Booksmart v1.3.0 November 2024') // TODO
+            add('div', 'Booksmart ' + VERSION)
             add('div', 'Copyright (c) 2024, IFYates. All rights reserved.')
         })
 
