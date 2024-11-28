@@ -66,19 +66,16 @@ export default class MainView {
 
             document.getElementById('imageDetail').innerHTML = ''
             if (State.options.backgroundImage == 'daily') {
-                const bg = State.options.getDailyBackground()
-                if (!bg) {
-                    State.options.resolveDailyBackground()
-                        .then(r => {
-                            if (r) {
-                                this.setTheme(accentColour, element)
-                            }
-                        })
-                } else {
+                var didAwait = false
+                State.options.resolveDailyBackground(bg => {
                     document.body.style.backgroundImage = `url(${bg.url})`
                     document.getElementById('imageDetail').innerHTML = bg.info
                     accentColour = bg.accentColour
-                }
+                    if (didAwait) {
+                        this.setTheme(accentColour, element)
+                    }
+                })
+                didAwait = true
             } else {
                 document.body.style.backgroundImage = State.options.backgroundImage ? `url(${State.options.backgroundImage})` : null
             }

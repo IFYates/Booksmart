@@ -46,19 +46,29 @@ export default class Options {
     getDailyBackground() {
         return Options.#dailyBackground
     }
-    async resolveDailyBackground(force = false) {
+    async resolveDailyBackground(force = false, applyValue = null) {
+        if (typeof force == 'function') {
+            [applyValue, force] = [force, false]
+        }
+
+        // Use cached, if not expired
         const today = new Date().toDateString()
         if (!force && Options.#dailyBackground?.date != today) {
             Options.#dailyBackground = (await chrome.storage.local.get('dailyBackgroundUrl'))?.dailyBackgroundUrl
+        }
+        if (Options.#dailyBackground && applyValue) {
+            // Apply current background before deciding if refreshing
+            applyValue(Options.#dailyBackground)
         }
         if (!force && Options.#dailyBackground?.date == today) {
             return Options.#dailyBackground
         }
 
+
         // Find today's image
         const response = await fetch(Options.#dailyBackgroundProviderUrl)
         const body = await response?.json()
-        if (body?.url) {
+        if (body?.url && body?.url != Options.#dailyBackground?.url) {
             Options.#dailyBackground = { date: today, url: body.url, info: body.copyright }
             
             // Resolve accent colour
@@ -67,6 +77,7 @@ export default class Options {
             Options.#dailyBackground.accentColour = img.getAverageColour()
             chrome.storage.local.set({ dailyBackgroundUrl: Options.#dailyBackground })
 
+            applyValue?.(Options.#dailyBackground)
             return Options.#dailyBackground
         }
     }

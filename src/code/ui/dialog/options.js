@@ -116,7 +116,7 @@ export default class OptionsDialog extends BaseDialog {
             add('span', ' Refresh')
 
             el.onclick = async () => {
-                bgImage.src = (await State.options.resolveDailyBackground(true)).url
+                bgImage.src = (await State.options.resolveDailyBackground(true))?.url
             }
         })
         bgType.on_change(async (value) => {
@@ -126,7 +126,9 @@ export default class OptionsDialog extends BaseDialog {
 
             if (value == 'Daily') {
                 State.options.backgroundImage = 'daily'
-                bgImage.src = (await State.options.resolveDailyBackground()).url
+                State.options.resolveDailyBackground(bg => {
+                    bgImage.src = bg?.url
+                })
             } else if (value == 'Custom') {
                 bgCustom.onkeyup()
             } else {
