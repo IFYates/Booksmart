@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Booksmart",
   "description": "Customisable start page for quickly accessing your most important bookmarks.",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "author": "IFYates",
   "icons": {
     "128": "assets/icon.png"

@@ -40,8 +40,11 @@ A bookmark management tool and customisable homepage.
 - Cache icons to local storage and serve from there first
 
 # Future possible features
+- "Welcome" screen for fresh start, with suggested options
+- Main options to sidebar instead of modal
 - Open folder as tab group
-- Save all open tabs as group
+- "Open tabs" to individual window groups
+  - Save all open tabs as group
 - Folder description (visible)
 - Improved edit UI
 - Use browser history to suggest URL on bookmark creation
@@ -54,11 +57,11 @@ A bookmark management tool and customisable homepage.
 - ? Show if bookmark is open
 - ? Show preview image
 - ? Side panel add-on (https://developer.chrome.com/docs/extensions/develop/ui#side-panels)
-- ? Non-bookmark items (e.g., notes)
+- ? Non-bookmark items (e.g., notes, images)
 - ? Show full/recent history
 - ...Bookmarks _may_ have a thumbnail
 
 2.0
-- "Open tabs" to individual window groups
 - Alternative layouts (grid w/ custom resize)
 - ? Optional central storage + sync
+- ? Widgets?
