@@ -39,6 +39,7 @@ body {
     padding: 8px;
     margin: 0;
     overflow-x: hidden;
+    min-height: calc(100% - 16px);
 }
 
 body>.actions {

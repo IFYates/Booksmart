@@ -1,4 +1,3 @@
-
 import './elements/TagElement.js'
 
 import Dialogs from './dialogs.js'
@@ -10,6 +9,24 @@ import State from '../models/state.js'
 import TagElement from './elements/TagElement.js'
 import TagsDialog from './dialog/TagsDialog.js'
 import MessageDialog from './dialog/MessageDialog.js'
+
+// Hide document until changes have settled settled
+var changed = true
+document.body.style.contentVisibility = 'hidden'
+const observer = new MutationObserver(() => {
+    changed = true
+})
+observer.observe(document, { childList: true, subtree: true })
+function showBody() {
+    if (changed) {
+        changed = false
+        setTimeout(() => requestAnimationFrame(showBody), 10)
+        return
+    }
+    observer.disconnect()
+    document.body.style.contentVisibility = ''
+}
+requestAnimationFrame(showBody)
 
 export default class MainView {
     static elLayout
@@ -141,7 +158,7 @@ export default class MainView {
         MainView.setTheme()
 
         SiteListElement.instance.refresh()
-        TabListElement.instance.refresh()
+        await TabListElement.instance.refresh()
     }
 }
 

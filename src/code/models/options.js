@@ -143,18 +143,18 @@ export default class Options {
             data.tags = Object.values(data.tags)
         }
         this.#stateFlags = data.flags
-        this.#accentColour = data.accentColour || '#4F4F78'
-        this.#allowEdits = data.allowEdits !== false
-        this.#backgroundImage = data.backgroundImage
-        this.#columns = data.columns
-        this.#openExistingTab = data.openExistingTab !== false
-        this.#openNewTab = !!data.openNewTab
-        this.#scale = data.scale || 100
-        this.#showFavicons = data.showFavicons !== false
-        this.#showTabList = data.showTabList !== false
-        this.#showTopSites = !!data.showTopSites
+        this.accentColour = data.accentColour || '#4F4F78'
+        this.allowEdits = data.allowEdits !== false
+        this.backgroundImage = data.backgroundImage
+        this.columns = data.columns
+        this.openExistingTab = data.openExistingTab !== false
+        this.openNewTab = !!data.openNewTab
+        this.scale = data.scale || 100
+        this.showFavicons = data.showFavicons !== false
+        this.showTabList = data.showTabList !== false
+        this.showTopSites = !!data.showTopSites
         this.#tags = data.tags?.map(t => Tag.import(t)) || []
-        this.#wrapTitles = data.wrapTitles !== false
+        this.wrapTitles = data.wrapTitles !== false
         this.#ensureTags()
     }
 }
