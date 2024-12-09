@@ -9,6 +9,7 @@ import { TabListElement } from './elements/TabListElement.js'
 import State from '../models/state.js'
 import TagElement from './elements/TagElement.js'
 import TagsDialog from './dialog/TagsDialog.js'
+import MessageDialog from './dialog/MessageDialog.js'
 
 export default class MainView {
     static elLayout
@@ -47,11 +48,19 @@ export default class MainView {
                 .then(MainView.fullRefresh)
 
         document.body.classList.toggle('readonly', !State.options.allowEdits)
-        MainView.elEditLock.onclick = async () => {
+        MainView.elEditLock.onclick = () => {
             State.options.allowEdits = !State.options.allowEdits
             document.body.classList.toggle('readonly', !State.options.allowEdits)
+            State.save()
+        }
 
-            await State.save()
+        // Inform user about daily background
+        if (!State.options.flagConfirmedDailyBackground) {
+            new MessageDialog('fas fa-question-circle', 'Daily background', ['Did you know that you can customise the background and colour of your homepage, including having a daily-changing image?', 'Set your preference using the <i class="fas fa-gear"></i> icon on the bottom left.'])
+                .show().then(() => {
+                    State.options.flagConfirmedDailyBackground = true
+                    State.save()
+                })
         }
     }
 

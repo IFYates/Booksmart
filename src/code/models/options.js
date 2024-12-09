@@ -1,13 +1,17 @@
 import Tag from "./Tag.js"
 
 export default class Options {
+    #stateFlags = 0 // (63 bits) 2: Confirmed 'daily' background
+    get flagConfirmedDailyBackground() { return !!(this.#stateFlags & 2) }
+    set flagConfirmedDailyBackground(onOff) { if (!!(this.#stateFlags & 2) != !!onOff) this.#stateFlags ^= 2 }
+
     #accentColour
     get accentColour() { return this.#accentColour }
     set accentColour(value) { this.#accentColour = value }
     #allowEdits
     get allowEdits() { return this.#allowEdits }
     set allowEdits(value) { this.#allowEdits = !!value }
-    #backgroundImage
+    #backgroundImage = 'daily'
     get backgroundImage() { return this.#backgroundImage }
     set backgroundImage(value) { this.#backgroundImage = value }
     #columns
@@ -101,6 +105,7 @@ export default class Options {
     }
 
     static #defaults = {
+        flags: null,
         accentColour: v => !v || v == '#4F4F78',
         allowEdits: true,
         backgroundImage: v => !v?.length,
@@ -117,6 +122,7 @@ export default class Options {
     export() {
         this.#ensureTags()
         return {
+            flags: this.#stateFlags,
             accentColour: this.#accentColour,
             allowEdits: this.#allowEdits,
             backgroundImage: this.#backgroundImage,
@@ -136,18 +142,19 @@ export default class Options {
         if (data.tags && !Array.isArray(data.tags)) {
             data.tags = Object.values(data.tags)
         }
-        this.accentColour = data.accentColour || '#4F4F78'
-        this.allowEdits = data.allowEdits !== false
-        this.backgroundImage = data.backgroundImage
-        this.columns = data.columns
-        this.openExistingTab = data.openExistingTab !== false
-        this.openNewTab = !!data.openNewTab
-        this.scale = data.scale || 100
-        this.showFavicons = data.showFavicons !== false
-        this.showTabList = data.showTabList !== false
-        this.showTopSites = !!data.showTopSites
+        this.#stateFlags = data.flags
+        this.#accentColour = data.accentColour || '#4F4F78'
+        this.#allowEdits = data.allowEdits !== false
+        this.#backgroundImage = data.backgroundImage
+        this.#columns = data.columns
+        this.#openExistingTab = data.openExistingTab !== false
+        this.#openNewTab = !!data.openNewTab
+        this.#scale = data.scale || 100
+        this.#showFavicons = data.showFavicons !== false
+        this.#showTabList = data.showTabList !== false
+        this.#showTopSites = !!data.showTopSites
         this.#tags = data.tags?.map(t => Tag.import(t)) || []
-        this.wrapTitles = data.wrapTitles !== false
+        this.#wrapTitles = data.wrapTitles !== false
         this.#ensureTags()
     }
 }
