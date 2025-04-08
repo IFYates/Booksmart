@@ -1,6 +1,5 @@
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 import Boxicons from "../../common/bxHelpers.js"
-import FontAwesome from "../../common/bxHelpers.js"
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -39,8 +38,8 @@ export class BoxiconSelectorElement extends BaseHTMLElement {
     get value() { return this.#value }
 
     constructor(currentIcon) {
-        super(template, ['https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css'])
-        this.#value = FontAwesome.isBoxicon(currentIcon) ? currentIcon : null
+        super(template, [Boxicons.CSS])
+        this.#value = Boxicons.isBoxicon(currentIcon) ? currentIcon : null
     }
 
     update(value, scrollTo, force) {
@@ -75,11 +74,12 @@ export class BoxiconSelectorElement extends BaseHTMLElement {
         }
 
         const boxiconTemplate = root.querySelector('.boxicon')
+        const list = boxiconTemplate.parentElement
         for (const [icon, styles] of Boxicons.icons) {
             for (const style of styles) {
                 const value = `bx ${style}-${icon}`
                 const boxicon = boxiconTemplate.cloneNode(true)
-                boxiconTemplate.parentElement.appendChild(boxicon)
+                list.appendChild(boxicon)
 
                 boxicon.classList.add('bx', `${style}-${icon}`)
                 boxicon.title = icon.replace(/-/g, ' ') + ` (${style})`
@@ -102,7 +102,7 @@ export class BoxiconSelectorElement extends BaseHTMLElement {
         boxiconTemplate.remove()
         this.update(this.#value, true, true)
 
-        txtFilter.placeholder = `Filter (${Boxicons.icons.length} icons)`
+        txtFilter.placeholder = `Filter (${list.childNodes.length} icons)`
     }
 }
 customElements.define('boxicon-selector', BoxiconSelectorElement)

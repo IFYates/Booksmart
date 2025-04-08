@@ -275,7 +275,7 @@ export default class EditBookmarkDialog extends BaseDialog {
             })
         })
         add(iconPreviewDefault, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_DEFAULT || value == IT_CUSTOM) })
+            lstIconType.on_change(value => { me.show(value == IT_DEFAULT) })
         })
         add(iconPreviewBX, (me) => {
             lstIconType.on_change((value) => {

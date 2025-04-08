@@ -1,4 +1,5 @@
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
+import FontAwesome from "../../common/faHelpers.js"
 import EditBookmarkDialog from "../dialog/editBookmark.js"
 
 const template = document.createElement('template')
@@ -11,13 +12,19 @@ export class BookmarkAddElement extends BaseHTMLElement {
     get folder() { return this.#folder }
 
     constructor(folder) {
-        super(template, ['/styles/common.css', '/styles/bookmark.css', '/styles/bookmark.grid.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
+        super(template, [
+            '/styles/common.css',
+            '/styles/bookmark.css',
+            '/styles/bookmark.grid.css',
+            FontAwesome.CSS
+        ])
         this.#folder = folder
         this.title = 'Add bookmark'
     }
 
     onclick() {
-        new EditBookmarkDialog('New bookmark').show(null, this.#folder)
+        new EditBookmarkDialog('New bookmark')
+            .show(null, this.#folder)
             .then(MainView.fullRefresh)
     }
 }

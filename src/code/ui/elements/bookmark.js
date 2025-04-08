@@ -1,14 +1,13 @@
-import './icon.js'
-import "../../common/emojiHelpers.js"
-import "../../common/faHelpers.js"
-
+import './icon.js' // Needed for bs-icon
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
-import DragDropHandler from "../../common/DragDropHandler.js"
-import { Tabs } from "../../common/tabs.js"
-import State from "../../models/state.js"
-import { FolderElement } from './folder.js'
-import EditBookmarkDialog from '../dialog/editBookmark.js'
 import { BookmarkAddElement } from './bookmarkAdd.js'
+import Boxicons from '../../common/bxHelpers.js'
+import DragDropHandler from "../../common/DragDropHandler.js"
+import EditBookmarkDialog from '../dialog/editBookmark.js'
+import { FolderElement } from './folder.js'
+import FontAwesome from '../../common/faHelpers.js'
+import State from "../../models/state.js"
+import { Tabs } from "../../common/tabs.js"
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -46,8 +45,8 @@ export class BookmarkElement extends BaseHTMLElement {
             '/styles/common.css',
             '/styles/bookmark.css',
             '/styles/bookmark.grid.css',
-            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css',
-            'https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css'
+            FontAwesome.CSS,
+            Boxicons.CSS
         ])
         this.#bookmark = bookmark
         this.id = 'bookmark-' + bookmark.id

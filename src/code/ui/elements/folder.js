@@ -1,14 +1,12 @@
-import './icon.js'
-import "../../common/emojiHelpers.js"
-import "../../common/faHelpers.js"
-
+import './icon.js' // Needed for bs-icon
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
-import DragDropHandler from "../../common/DragDropHandler.js"
 import { BookmarkAddElement } from './bookmarkAdd.js'
 import { BookmarkElement, } from './bookmark.js'
-import State from "../../models/state.js"
+import DragDropHandler from "../../common/DragDropHandler.js"
 import EditFolderDialog from '../dialog/editFolder.js'
+import FontAwesome from '../../common/faHelpers.js'
 import ImportBookmarkDialog from '../dialog/importBookmark.js'
+import State from "../../models/state.js"
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -43,7 +41,11 @@ export class FolderElement extends BaseHTMLElement {
     get bookmarks() { return this.shadowRoot.querySelectorAll(customElements.getName(BookmarkElement)) }
 
     constructor(folder) {
-        super(template, ['/styles/common.css', '/styles/folder.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
+        super(template, [
+            '/styles/common.css',
+            '/styles/folder.css',
+            FontAwesome.CSS
+        ])
         this.#folder = folder
         this.id = 'folder-' + folder.id
 

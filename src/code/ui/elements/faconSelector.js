@@ -28,9 +28,7 @@ list .facon {
 </style>
 
 <input type="text" placeholder="Filter" />
-<list>
-    <i role="button" tabIndex="0" class="facon fa-fw fa-2x"></i>
-</list>
+<list><i role="button" tabIndex="0" class="facon fa-fw fa-2x"></i></list>
 `
 
 export class FaconSelectorElement extends BaseHTMLElement {
@@ -38,7 +36,7 @@ export class FaconSelectorElement extends BaseHTMLElement {
     get value() { return this.#value }
 
     constructor(currentIcon) {
-        super(template, ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
+        super(template, [FontAwesome.CSS])
         this.#value = FontAwesome.isFacon(currentIcon) ? currentIcon : null
     }
 
@@ -74,11 +72,12 @@ export class FaconSelectorElement extends BaseHTMLElement {
         }
 
         const faconTemplate = root.querySelector('.facon')
+        const list = faconTemplate.parentElement
         for (const [icon, styles] of FontAwesome.icons) {
             for (const style of styles) {
                 const value = `${style} ${icon}`
                 const facon = faconTemplate.cloneNode(true)
-                faconTemplate.parentElement.appendChild(facon)
+                list.appendChild(facon)
 
                 facon.classList.add(style, icon)
                 facon.title = icon.substring(3).replace(/-/g, ' ')
@@ -101,7 +100,7 @@ export class FaconSelectorElement extends BaseHTMLElement {
         faconTemplate.remove()
         this.update(this.#value, true, true)
 
-        txtFilter.placeholder = `Filter (${FontAwesome.icons.length} icons)`
+        txtFilter.placeholder = `Filter (${list.childNodes.length} icons)`
     }
 }
 customElements.define('facon-selector', FaconSelectorElement)

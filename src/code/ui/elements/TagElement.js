@@ -1,7 +1,8 @@
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 import DragDropHandler from "../../common/DragDropHandler.js"
-import State from "../../models/state.js"
 import { FolderElement } from "./folder.js"
+import FontAwesome from "../../common/faHelpers.js"
+import State from "../../models/state.js"
 
 const template = document.createElement('template')
 template.innerHTML = `<div>
@@ -17,7 +18,10 @@ export default class TagElement extends BaseHTMLElement {
     get colour() { return this.#tag.colour }
 
     constructor(tag) {
-        super(template, ['/styles/tag.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
+        super(template, [
+            '/styles/tag.css',
+            FontAwesome.CSS
+        ])
         this.#tag = tag
     }
 

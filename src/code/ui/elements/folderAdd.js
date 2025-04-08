@@ -1,5 +1,6 @@
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 import Dialogs from "../dialogs.js"
+import FontAwesome from "../../common/faHelpers.js"
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -11,7 +12,11 @@ template.innerHTML = `
 
 export class FolderAddElement extends BaseHTMLElement {
     constructor() {
-        super(template, ['/styles/common.css', '/styles/bookmark.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
+        super(template, [
+            '/styles/common.css',
+            '/styles/bookmark.css',
+            FontAwesome.CSS
+        ])
     }
 
     onclick() {

@@ -1,5 +1,6 @@
 import Emojis from "../../common/emojiHelpers.js"
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
+import FontAwesome from "../../common/faHelpers.js"
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -44,7 +45,7 @@ export class EmojiSelectorElement extends BaseHTMLElement {
     get value() { return this.#value }
 
     constructor(currentIcon) {
-        super(template, ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
+        super(template, [FontAwesome.CSS])
         this.#value = Emojis.isEmoji(currentIcon) ? currentIcon : null
     }
 
