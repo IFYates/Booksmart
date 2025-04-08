@@ -49,6 +49,15 @@
     max-width: calc(var(--size) * 0.75);
 }
 
+:host bs-icon#overlay {
+    scale: 50%;
+    margin-top: calc(var(--size) - 70px);
+    margin-left: calc(var(--size) - 70px);
+}
+:host bs-icon#overlay:has(i.emoji) {
+    margin-top: calc(var(--size) - 100px); /* Additional -30px */
+}
+
 :host .favourite {
     left: 8px;
     top: 8px;

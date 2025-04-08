@@ -13,7 +13,8 @@ import { BookmarkAddElement } from './bookmarkAdd.js'
 const template = document.createElement('template')
 template.innerHTML = `
 <a href="<!--$ url $-->" title="<!--$ title $-->&#13;&#10;<!--$ url $-->">
-    <bs-icon altIcon="far fa-bookmark"></bs-icon>
+    <bs-icon id="icon" altIcon="far fa-bookmark"></bs-icon>
+    <bs-icon id="overlay"></bs-icon>
 
     <div class="favourite">
         <i class="fa-fw far fa-star" title="Pin"></i>
@@ -67,11 +68,18 @@ export class BookmarkElement extends BaseHTMLElement {
         const folder = this.folder
 
         // Icon
-        const icon = root.querySelector('bs-icon')
+        const icon = root.querySelector('bs-icon#icon')
         icon.value = bookmark.icon
         icon.favDomain = State.options.showFavicons ? bookmark.domain : null
         icon.onchange = () => {
             this.#bookmark.icon = icon.value
+        }
+
+        // Overlay
+        const overlay = root.querySelector('bs-icon#overlay')
+        overlay.value = bookmark.overlay
+        overlay.onchange = () => {
+            this.#bookmark.overlay = overlay.value
         }
 
         // Link

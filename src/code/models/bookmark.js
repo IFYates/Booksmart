@@ -39,6 +39,9 @@ export default class Bookmark {
     #icon
     get icon() { return this.#icon }
     set icon(value) { this.#icon = value?.trim() }
+    #overlay
+    get overlay() { return this.#overlay }
+    set overlay(value) { this.#overlay = value?.trim() }
     #favourite
     get favourite() { return this.#favourite }
     set favourite(value) { this.#favourite = !!value }
@@ -63,6 +66,7 @@ export default class Bookmark {
     static #defaults = {
         favourite: false,
         icon: '',
+        overlay: '',
         index: null,
         clicks: 0,
         lastClick: 0,
@@ -74,6 +78,7 @@ export default class Bookmark {
         return {
             favourite: this.#favourite,
             icon: this.#icon,
+            overlay: this.#overlay,
             index: this.#index,
             clicks: this.#clicks,
             lastClick: this.#lastClick,
@@ -86,6 +91,7 @@ export default class Bookmark {
     import(data) {
         this.#index = num(data.index, this.#index)
         this.#icon = data.icon || ''
+        this.#overlay = data.overlay || ''
         this.#favourite = !!data.favourite
         this.#clicks = num(data.clicks)
         this.#lastClick = num(data.lastClick)

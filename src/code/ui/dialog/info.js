@@ -1,6 +1,6 @@
 import BaseDialog from './base.js'
 
-const VERSION = /*$date*/'v1.3.2 November 2024'
+const VERSION = /*$date*/'v1.4.0 April 2025'
 
 export default class InfoDialog extends BaseDialog {
     constructor() {
