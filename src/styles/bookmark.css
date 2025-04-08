@@ -26,6 +26,9 @@
     max-width: 16px;
     max-height: 16px;
 }
+.bx {
+    font-size: 1.1em;
+}
 
 .emoji {
     margin-bottom: 5px;

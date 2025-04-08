@@ -1,5 +1,6 @@
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
-import FontAwesome from "../../common/faHelpers.js"
+import Boxicons from "../../common/bxHelpers.js"
+import FontAwesome from "../../common/bxHelpers.js"
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -14,14 +15,14 @@ list {
     height: 150px;
 }
 
-list .facon {
+list .boxicon {
     padding: 2.5px 1px;
     border: 1px solid transparent;
     border-radius: 3px;
     user-select: none;
 }
 
-.facon.selected {
+.boxicon.selected {
     border-color: var(--text-colour);
     background-color: rgba(255, 255, 255, 0.2);
 }
@@ -29,17 +30,17 @@ list .facon {
 
 <input type="text" placeholder="Filter" />
 <list>
-    <i role="button" tabIndex="0" class="facon fa-fw fa-2x"></i>
+    <i role="button" tabIndex="0" class="boxicon bx-md"></i>
 </list>
 `
 
-export class FaconSelectorElement extends BaseHTMLElement {
+export class BoxiconSelectorElement extends BaseHTMLElement {
     #value
     get value() { return this.#value }
 
     constructor(currentIcon) {
-        super(template, ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css'])
-        this.#value = FontAwesome.isFacon(currentIcon) ? currentIcon : null
+        super(template, ['https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css'])
+        this.#value = FontAwesome.isBoxicon(currentIcon) ? currentIcon : null
     }
 
     update(value, scrollTo, force) {
@@ -49,7 +50,7 @@ export class FaconSelectorElement extends BaseHTMLElement {
             }
 
             if (value) {
-                const el = this.shadowRoot.querySelector('.facon.' + value.replace(' ', '.'))
+                const el = this.shadowRoot.querySelector('.boxicon.' + value.replace(' ', '.'))
                 if (el) {
                     el.classList.add('selected')
                 }
@@ -60,7 +61,7 @@ export class FaconSelectorElement extends BaseHTMLElement {
         }
 
         if (scrollTo) {
-            const el = this.shadowRoot.querySelector('.facon.selected')
+            const el = this.shadowRoot.querySelector('.boxicon.selected')
             setTimeout(() => el?.scrollIntoView({ block: 'center' }), 100)
         }
     }
@@ -68,29 +69,29 @@ export class FaconSelectorElement extends BaseHTMLElement {
     _ondisplay(root) {
         const txtFilter = root.querySelector('input')
         txtFilter.onkeyup = function () {
-            for (const el of root.querySelectorAll('.facon')) {
+            for (const el of root.querySelectorAll('.boxicon')) {
                 el.style.display = (!this.value || el.title.includes(this.value.toLowerCase())) ? '' : 'none'
             }
         }
 
-        const faconTemplate = root.querySelector('.facon')
-        for (const [icon, styles] of FontAwesome.icons) {
+        const boxiconTemplate = root.querySelector('.boxicon')
+        for (const [icon, styles] of Boxicons.icons) {
             for (const style of styles) {
-                const value = `${style} ${icon}`
-                const facon = faconTemplate.cloneNode(true)
-                faconTemplate.parentElement.appendChild(facon)
+                const value = `bx ${style}-${icon}`
+                const boxicon = boxiconTemplate.cloneNode(true)
+                boxiconTemplate.parentElement.appendChild(boxicon)
 
-                facon.classList.add(style, icon)
-                facon.title = icon.substring(3).replace(/-/g, ' ')
-                facon.onfocus = () => {
+                boxicon.classList.add('bx', `${style}-${icon}`)
+                boxicon.title = icon.replace(/-/g, ' ') + ` (${style})`
+                boxicon.onfocus = () => {
                     this.update(value)
                 }
-                facon.onmouseenter = (ev) => {
+                boxicon.onmouseenter = (ev) => {
                     if (ev.buttons == 1) {
                         this.update(value)
                     }
                 }
-                facon.onmouseup = () => {
+                boxicon.onmouseup = () => {
                     if (this.#value == value) {
                         this.update(value, true)
                         this.dispatchEvent(new Event('change'))
@@ -98,10 +99,10 @@ export class FaconSelectorElement extends BaseHTMLElement {
                 }
             }
         }
-        faconTemplate.remove()
+        boxiconTemplate.remove()
         this.update(this.#value, true, true)
 
-        txtFilter.placeholder = `Filter (${FontAwesome.icons.length} icons)`
+        txtFilter.placeholder = `Filter (${Boxicons.icons.length} icons)`
     }
 }
-customElements.define('facon-selector', FaconSelectorElement)
+customElements.define('boxicon-selector', BoxiconSelectorElement)

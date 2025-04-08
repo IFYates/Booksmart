@@ -1,3 +1,4 @@
+import Boxicons from "../../common/bxHelpers.js"
 import Emojis from "../../common/emojiHelpers.js"
 import FontAwesome from "../../common/faHelpers.js"
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
@@ -39,6 +40,11 @@ export default class IconElement extends BaseHTMLElement {
     }
 
     #show(icon) {
+        if (Boxicons.isBoxicon(icon)) {
+            this.querySelector('i.icon')?.remove()
+            this.add('i', { className: `icon ${icon}` })
+            return
+        }
         if (Emojis.isEmoji(icon)) {
             this.querySelector('i.icon')?.remove()
             this.add('i', icon, { className: 'icon emoji fa-fw' })

@@ -4,8 +4,10 @@ import { FaconSelectorElement } from '../elements/faconSelector.js'
 import { EmojiSelectorElement } from '../elements/emojiSelector.js'
 import Emojis from '../../common/emojiHelpers.js'
 import State from '../../models/state.js'
+import Boxicons from '../../common/bxHelpers.js'
+import { BoxiconSelectorElement } from '../elements/boxiconSelector.js'
 
-const IT_DEFAULT = '0', IT_EMOJI = '4', IT_FACON = '1', IT_CUSTOM = '3'
+const IT_DEFAULT = '0', IT_BOXICONS = '2', IT_EMOJI = '4', IT_FACON = '1', IT_CUSTOM = '3'
 
 export default class EditBookmarkDialog extends BaseDialog {
     constructor(title) {
@@ -88,7 +90,12 @@ export default class EditBookmarkDialog extends BaseDialog {
                     return
                 }
 
-                if (form.iconType == IT_FACON) {
+                if (form.iconType == IT_BOXICONS) {
+                    if (!form.icon?.startsWith('bx ')) {
+                        elError.textContent = 'Boxicon selection required'
+                        return
+                    }
+                } else if (form.iconType == IT_FACON) {
                     if (!form.icon?.includes('fa-')) {
                         elError.textContent = 'Font Awesome icon is required'
                         return
@@ -106,7 +113,12 @@ export default class EditBookmarkDialog extends BaseDialog {
                 } else {
                     form.icon = ''
                 }
-                if (form.overlayType == IT_FACON) {
+                if (form.overlayType == IT_BOXICONS) {
+                    if (!form.overlay?.startsWith('bx ')) {
+                        elError.textContent = 'Boxicon selection required'
+                        return
+                    }
+                } else if (form.overlayType == IT_FACON) {
                     if (!form.overlay?.includes('fa-')) {
                         elError.textContent = 'Font Awesome icon is required'
                         return
@@ -168,6 +180,23 @@ export default class EditBookmarkDialog extends BaseDialog {
             }
         })
 
+        const isBoxicon = Boxicons.isBoxicon(form?.icon)
+        const boxiconSelector = new BoxiconSelectorElement(form?.icon || '')
+        const iconPreviewBX = create('i', { className: 'bx-2x bx bx-bookmark centred' }, function () {
+            var _lastValue = ['bx', 'bx-bookmark']
+            this.update = () => {
+                iconPreviewBX.classList.remove(..._lastValue)
+                if (boxiconSelector.value) {
+                    if (form.iconType == IT_BOXICONS) {
+                        form.icon = boxiconSelector.value || ''
+                    }
+                    _lastValue = boxiconSelector.value?.split(' ') || []
+                    iconPreviewBX.classList.add(..._lastValue)
+                }
+            }
+        })
+        boxiconSelector.addEventListener('change', iconPreviewBX.update)
+
         const isFacon = FontAwesome.isFacon(form?.icon)
         const faconSelector = new FaconSelectorElement(form?.icon || '')
         const iconPreviewFA = create('i', { className: 'fa-fw fa-6x far fa-bookmark centred' }, function () {
@@ -204,21 +233,23 @@ export default class EditBookmarkDialog extends BaseDialog {
                 }
                 iconPreviewCustom.image(this.value)
             }
-            this.value = !isFacon && !isEmoji ? (form?.icon || '') : ''
+            this.value = !isBoxicon && !isFacon && !isEmoji ? (form?.icon || '') : ''
             this.onkeyup()
         })
 
 
         const lstIconType = create('select', function () {
             add('option', 'Favicon', { value: IT_DEFAULT })
+            add('option', 'Boxicons', { value: IT_BOXICONS })
             add('option', 'Emoji', { value: IT_EMOJI })
             add('option', 'Font Awesome', { value: IT_FACON })
             add('option', 'Custom', { value: IT_CUSTOM })
 
-            form.iconType = isFacon ? IT_FACON
+            form.iconType = isBoxicon ? IT_BOXICONS
                 : isEmoji ? IT_EMOJI
-                    : form?.icon ? IT_CUSTOM
-                        : IT_DEFAULT
+                    : isFacon ? IT_FACON
+                        : form?.icon ? IT_CUSTOM
+                            : IT_DEFAULT
             this.value = form.iconType
         })
         lstIconType.on_change(value => { form.iconType = value })
@@ -227,11 +258,14 @@ export default class EditBookmarkDialog extends BaseDialog {
         add('div', { classes: ['spanCols3', 'spanRows2'] }, (me) => {
             lstIconType.on_change(value => { me.show(value == IT_DEFAULT) })
         })
-        add(faconSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_FACON) })
+        add(boxiconSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
+            lstIconType.on_change(value => { me.show(value == IT_BOXICONS) })
         })
         add(emojiSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
             lstIconType.on_change(value => { me.show(value == IT_EMOJI) })
+        })
+        add(faconSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
+            lstIconType.on_change(value => { me.show(value == IT_FACON) })
         })
         add(txtCustomIcon, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
             lstIconType.on_change((value) => {
@@ -243,9 +277,9 @@ export default class EditBookmarkDialog extends BaseDialog {
         add(iconPreviewDefault, (me) => {
             lstIconType.on_change(value => { me.show(value == IT_DEFAULT || value == IT_CUSTOM) })
         })
-        add(iconPreviewFA, (me) => {
+        add(iconPreviewBX, (me) => {
             lstIconType.on_change((value) => {
-                if (me.show(value == IT_FACON)) {
+                if (me.show(value == IT_BOXICONS)) {
                     me.update()
                 }
             })
@@ -257,12 +291,36 @@ export default class EditBookmarkDialog extends BaseDialog {
                 }
             })
         })
+        add(iconPreviewFA, (me) => {
+            lstIconType.on_change((value) => {
+                if (me.show(value == IT_FACON)) {
+                    me.update()
+                }
+            })
+        })
         add(iconPreviewCustom, (me) => {
             lstIconType.on_change(value => { me.show(value == IT_CUSTOM) })
         })
     }
 
     _displayOverlaySelector(form) {
+        const isBoxicon = Boxicons.isBoxicon(form?.overlay)
+        const boxiconSelector = new BoxiconSelectorElement(form?.overlay || '')
+        const iconPreviewBX = create('i', { className: 'bx-2x bx bx-bookmark centred' }, function () {
+            var _lastValue = ['bx', 'bx-bookmark']
+            this.update = () => {
+                iconPreviewBX.classList.remove(..._lastValue)
+                if (boxiconSelector.value) {
+                    if (form.overlayType == IT_BOXICONS) {
+                        form.overlay = boxiconSelector.value || ''
+                    }
+                    _lastValue = boxiconSelector.value?.split(' ') || []
+                    iconPreviewBX.classList.add(..._lastValue)
+                }
+            }
+        })
+        boxiconSelector.addEventListener('change', iconPreviewBX.update)
+
         const isFacon = FontAwesome.isFacon(form?.overlay)
         const faconSelector = new FaconSelectorElement(form?.overlay || '')
         const iconPreviewFA = create('i', { className: 'fa-fw fa-6x far fa-bookmark centred' }, function () {
@@ -270,7 +328,7 @@ export default class EditBookmarkDialog extends BaseDialog {
             this.update = () => {
                 iconPreviewFA.classList.remove(..._lastValue)
                 if (faconSelector.value) {
-                    if (form.iconType == IT_FACON) {
+                    if (form.overlayType == IT_FACON) {
                         form.overlay = faconSelector.value || ''
                     }
                     _lastValue = faconSelector.value?.split(' ') || []
@@ -284,7 +342,7 @@ export default class EditBookmarkDialog extends BaseDialog {
         const emojiSelector = new EmojiSelectorElement(isEmoji ? form?.overlay : '')
         const iconPreviewEmoji = create('i', { className: 'emoji fa-6x centred' }, function () {
             this.update = () => {
-                if (form.iconType == IT_EMOJI) {
+                if (form.overlayType == IT_EMOJI) {
                     form.overlay = emojiSelector.value || ''
                 }
                 iconPreviewEmoji.innerText = emojiSelector.value || ''
@@ -294,26 +352,31 @@ export default class EditBookmarkDialog extends BaseDialog {
 
         const lstIconType = create('select', function () {
             add('option', 'None', { value: IT_DEFAULT })
+            add('option', 'Boxicons', { value: IT_BOXICONS })
             add('option', 'Emoji', { value: IT_EMOJI })
             add('option', 'Font Awesome', { value: IT_FACON })
 
-            form.overlayType = isFacon ? IT_FACON
+            form.overlayType = isBoxicon ? IT_BOXICONS
                 : isEmoji ? IT_EMOJI
-                    : IT_DEFAULT
+                    : isFacon ? IT_FACON
+                        : IT_DEFAULT
             this.value = form.overlayType
         })
         lstIconType.on_change(value => { form.overlayType = value })
 
         add(lstIconType)
-        add(faconSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_FACON) })
+        add(boxiconSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
+            lstIconType.on_change(value => { me.show(value == IT_BOXICONS) })
         })
         add(emojiSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
             lstIconType.on_change(value => { me.show(value == IT_EMOJI) })
         })
-        add(iconPreviewFA, (me) => {
+        add(faconSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
+            lstIconType.on_change(value => { me.show(value == IT_FACON) })
+        })
+        add(iconPreviewBX, (me) => {
             lstIconType.on_change((value) => {
-                if (me.show(value == IT_FACON)) {
+                if (me.show(value == IT_BOXICONS)) {
                     me.update()
                 }
             })
@@ -321,6 +384,13 @@ export default class EditBookmarkDialog extends BaseDialog {
         add(iconPreviewEmoji, (me) => {
             lstIconType.on_change((value) => {
                 if (me.show(value == IT_EMOJI)) {
+                    me.update()
+                }
+            })
+        })
+        add(iconPreviewFA, (me) => {
+            lstIconType.on_change((value) => {
+                if (me.show(value == IT_FACON)) {
                     me.update()
                 }
             })

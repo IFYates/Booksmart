@@ -76,7 +76,7 @@ export class EmojiSelectorElement extends BaseHTMLElement {
         const txtFilter = root.querySelector('input')
         txtFilter.onkeyup = function () {
             for (const el of root.querySelectorAll('.emoji')) {
-                el.style.display = (!this.value || el.title.includes(this.value)) ? '' : 'none'
+                el.style.display = (!this.value || el.title.includes(this.value.toLowerCase())) ? '' : 'none'
             }
         }
 
@@ -104,6 +104,8 @@ export class EmojiSelectorElement extends BaseHTMLElement {
         }
         emojiTemplate.remove()
         this.update(this.#value, null, true, true)
+
+        txtFilter.placeholder = `Filter (${Object.keys(Emojis.emojis).length})`
     }
 }
 customElements.define('emoji-selector', EmojiSelectorElement)

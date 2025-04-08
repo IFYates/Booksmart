@@ -49,6 +49,9 @@ i.emoji {
     font-style: normal;
     height: 100%;
 }
+i.bx-2x {
+    font-size: 6rem !important;
+}
 
 label {
     align-content: center;
