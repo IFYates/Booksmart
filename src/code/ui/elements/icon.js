@@ -36,7 +36,6 @@ export default class IconElement extends BaseHTMLElement {
         if (this.#altIcon) {
             this.#show(this.#altIcon)
         }
-        console.log(this.#icon)
         this.#show(this.#icon)
     }
 

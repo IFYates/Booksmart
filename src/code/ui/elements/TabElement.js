@@ -13,6 +13,7 @@ export class TabElement extends BookmarkElement {
             domain: isURL(tab.url) ? new URL(tab.url).origin : null,
             altIcon: 'fas fa-window-maximize',
             icon: tab.icon,
+            readonly: true,
             hasOpenTab: () => true
         })
         this.#tab = tab
@@ -42,6 +43,8 @@ export class TabElement extends BookmarkElement {
         const self = this
         await super._ondisplay(root, host)
 
+        root.querySelector('.favourite')?.remove()
+        
         this._apply('.actions i', (el) => el.remove())
 
         root.querySelector('.actions').display(() => {
