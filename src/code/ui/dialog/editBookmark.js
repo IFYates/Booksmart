@@ -128,6 +128,11 @@ export default class EditBookmarkDialog extends BaseDialog {
                         elError.textContent = 'Emoji selection is required'
                         return
                     }
+                } else if (form.overlayType == IT_CUSTOM) {
+                    if (!form.overlay) {
+                        elError.textContent = 'Custom icon is required'
+                        return
+                    }
                 } else {
                     form.overlay = ''
                 }
@@ -236,7 +241,6 @@ export default class EditBookmarkDialog extends BaseDialog {
             this.value = !isBoxicon && !isFacon && !isEmoji ? (form?.icon || '') : ''
             this.onkeyup()
         })
-
 
         const lstIconType = create('select', function () {
             add('option', 'Favicon', { value: IT_DEFAULT })
@@ -350,29 +354,52 @@ export default class EditBookmarkDialog extends BaseDialog {
         })
         emojiSelector.addEventListener('change', iconPreviewEmoji.update)
 
+        const iconPreviewCustom = create('img', { className: 'iconPreview centred' }, function () {
+            this.image = (url) => {
+                if (!url || (!url?.startsWith('data:image/') && !url?.includes('://'))) {
+                    this.src = ''
+                } else if (url && this.src != url) {
+                    this.style.display = 'none'
+                    this.src = url
+                } else {
+                    this.onload()
+                }
+            }
+            this.onload = () => {
+                this.style.display = ''
+            }
+        })
+        const txtCustomIcon = create('input', { type: 'text' }, function () {
+            this.onkeyup = () => {
+                if (form.overlayType == IT_CUSTOM) {
+                    form.overlay = this.value
+                }
+                iconPreviewCustom.image(this.value)
+            }
+            console.log(!isBoxicon, !isFacon, !isEmoji, form?.overlay)
+            this.value = !isBoxicon && !isFacon && !isEmoji ? (form?.overlay || '') : ''
+            this.onkeyup()
+        })
+
         const lstIconType = create('select', function () {
             add('option', 'None', { value: IT_DEFAULT })
             add('option', 'Boxicons', { value: IT_BOXICONS })
             add('option', 'Emoji', { value: IT_EMOJI })
             add('option', 'Font Awesome', { value: IT_FACON })
+            add('option', 'Custom', { value: IT_CUSTOM })
 
             form.overlayType = isBoxicon ? IT_BOXICONS
                 : isEmoji ? IT_EMOJI
                     : isFacon ? IT_FACON
-                        : IT_DEFAULT
+                        : form.overlay ? IT_CUSTOM : IT_DEFAULT
             this.value = form.overlayType
         })
         lstIconType.on_change(value => { form.overlayType = value })
 
         add(lstIconType)
+
         add(boxiconSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
             lstIconType.on_change(value => { me.show(value == IT_BOXICONS) })
-        })
-        add(emojiSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_EMOJI) })
-        })
-        add(faconSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_FACON) })
         })
         add(iconPreviewBX, (me) => {
             lstIconType.on_change((value) => {
@@ -381,6 +408,10 @@ export default class EditBookmarkDialog extends BaseDialog {
                 }
             })
         })
+
+        add(emojiSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
+            lstIconType.on_change(value => { me.show(value == IT_EMOJI) })
+        })
         add(iconPreviewEmoji, (me) => {
             lstIconType.on_change((value) => {
                 if (me.show(value == IT_EMOJI)) {
@@ -388,12 +419,27 @@ export default class EditBookmarkDialog extends BaseDialog {
                 }
             })
         })
+
+        add(faconSelector, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
+            lstIconType.on_change(value => { me.show(value == IT_FACON) })
+        })
         add(iconPreviewFA, (me) => {
             lstIconType.on_change((value) => {
                 if (me.show(value == IT_FACON)) {
                     me.update()
                 }
             })
+        })
+
+        add(txtCustomIcon, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
+            lstIconType.on_change((value) => {
+                if (me.show(value == IT_CUSTOM)) {
+                    me.onkeyup()
+                }
+            })
+        })
+        add(iconPreviewCustom, (me) => {
+            lstIconType.on_change(value => { me.show(value == IT_CUSTOM) })
         })
     }
 }
