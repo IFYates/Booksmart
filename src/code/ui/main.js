@@ -36,8 +36,10 @@ export default class MainView {
     static async init() {
         await State.init()
 
-        document.body.addEventListener('dblclick', () => {
-            document.body.classList.toggle('showBackground')
+        document.body.addEventListener('dblclick', (ev) => {
+            if (ev.target == document.body) {
+                document.body.classList.toggle('showBackground')
+            }
         })
 
         document.getElementById('tagEdit').display((el) => {
