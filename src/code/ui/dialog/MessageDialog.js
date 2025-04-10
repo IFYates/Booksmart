@@ -10,7 +10,7 @@ export default class MessageDialog extends BaseDialog {
         this.#messages = Array.isArray(messages) ? messages : [messages]
     }
 
-    _display(dialog) {
+    _ondisplay(dialog) {
         for (const message of this.#messages) {
             add('p').innerHTML = message
         }

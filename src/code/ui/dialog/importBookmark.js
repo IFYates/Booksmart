@@ -13,7 +13,7 @@ export default class ImportBookmarkDialog extends BaseDialog {
         this.#folders = Object.values(State.folders)
     }
 
-    _display(dialog) {
+    _ondisplay(dialog) {
         const items = []
         function showFolder(folder, parentShowHide, depth = 0) {
             if (folder.id == State.booksmartRootId || folder.trash) {

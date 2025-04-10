@@ -10,11 +10,11 @@ export default class TagsDialog extends BaseDialog {
     _refresh(dialog) {
         dialog.querySelector('form').display((el) => {
             el.clearChildren()
-            this._display(dialog)
+            this._ondisplay(dialog)
         })
     }
 
-    _display(dialog) {
+    _ondisplay(dialog) {
         // Head
         add('div', 'Tag name')
         add('div', 'Colour')

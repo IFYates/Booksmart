@@ -7,7 +7,7 @@ export default class InfoDialog extends BaseDialog {
         super('fas fa-info-circle', 'About Booksmart')
     }
 
-    _display(dialog) {
+    _ondisplay(dialog) {
         dialog.style.width = '33%'
         
         add('p', 'Thanks for using Booksmart!')

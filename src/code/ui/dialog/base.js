@@ -19,7 +19,7 @@ export default class BaseDialog {
     get formClass() { return this.#formClass }
 
     async _prepare() { }
-    _display(dialog) {
+    _ondisplay(dialog) {
         throw new Error('Must be implemented by a subclass');
     }
 
@@ -34,7 +34,7 @@ export default class BaseDialog {
                 add('span', self.title)
             })
         })
-        dialog.add('form', { className: this.formClass, onsubmit: () => false }, () => self._display(dialog, ...args))
+        dialog.add('form', { className: this.formClass, onsubmit: () => false }, () => self._ondisplay(dialog, ...args))
 
         const promise = new Promise(resolve => {
             dialog.showModal()

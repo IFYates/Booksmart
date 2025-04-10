@@ -12,7 +12,7 @@ export default class EditFolderDialog extends BaseDialog {
         super('fas fa-book', title)
     }
 
-    async _display(dialog, folder) {
+    async _ondisplay(dialog, folder) {
         folder ??= new Folder()
 
         // Title

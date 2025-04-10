@@ -7,7 +7,7 @@ export default class OptionsDialog extends BaseDialog {
         super('fas fa-gear', 'Options')
     }
 
-    _display(dialog) {
+    _ondisplay(dialog) {
         function checkbox(labelText, getter, setter) {
             const id = `input-${(Math.random() * 1000) | 0}`
             const label = add('label', labelText, { htmlFor: id })
