@@ -13,6 +13,7 @@ for (const key in ICONS) {
         classes: 'emoji ' + id,
         name: key,
         style: 'emoji',
+        listClasses: 'emoji',
         content: ICONS[key]
     })
 }

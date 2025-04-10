@@ -2,8 +2,6 @@ import BaseDialog from './base.js'
 import { IconSelectorElement } from '../elements/IconSelector.js'
 import State from '../../models/state.js'
 
-const IT_DEFAULT = '0', IT_BOXICONS = '2', IT_EMOJI = '4', IT_FACON = '1', IT_CUSTOM = '3'
-
 export default class EditBookmarkDialog extends BaseDialog {
     constructor(title) {
         super('fas fa-bookmark', title)
@@ -43,21 +41,14 @@ export default class EditBookmarkDialog extends BaseDialog {
             add('strong', 'Icon')
             // TODO: collapsible
         })
+        const iconSelector = new IconSelectorElement(bookmark?.icon || '', bookmark?.domain)
+        const overlaySelector = new IconSelectorElement(bookmark?.overlay || '')
         add('div', { classes: ['spanCols4'] }, () => {
-            const iconSelector = new IconSelectorElement(bookmark?.icon || '', bookmark?.domain)
-            iconSelector.addEventListener('change', () => {
-                bookmark.icon = iconSelector.value
-            })
             add(iconSelector)
-
-            const overlaySelector = new IconSelectorElement(bookmark?.overlay || '', bookmark?.domain)
-            overlaySelector.addEventListener('change', () => {
-                bookmark.overlay = overlaySelector.value
-            })
             add(overlaySelector)
         })
 
-        add('div', { classes: ['spanCols4'] }) // Gap
+        add('div', { classes: ['spanCols4'] }) // Gapc
         const elError = add('div', { classes: ['error', 'spanCols4'] })
 
         add('div', { classes: ['actions', 'spanCols2'], style: 'white-space:nowrap' }, () => {
@@ -95,6 +86,8 @@ export default class EditBookmarkDialog extends BaseDialog {
                     bookmark.url = txtURL.value
                 }
 
+                bookmark.icon = iconSelector.value
+                bookmark.overlay = overlaySelector.value
                 bookmark.notes = txtNotes.value
 
                 await State.updateEntry(bookmark)
@@ -107,57 +100,5 @@ export default class EditBookmarkDialog extends BaseDialog {
                 add('span', ' Cancel')
             }).onclick = () => dialog.close()
         })
-    }
-
-    #displayIconSelector(form) {
-        const iconSelector = new IconSelectorElement(form.icon || '', form?.favicon)
-        iconSelector.addEventListener('change', () => {
-            console.log('change', iconSelector.value)
-        })
-        add(iconSelector)
-    }
-
-    #displayOverlaySelector(form) {
-        const iconSelector = new IconSelectorElement(form?.overlay || '')
-        
-        const iconPreviewCustom = create('img', { className: 'iconPreview centred' }, function () {
-            this.image = (url) => {
-                if (!url || (!url?.startsWith('data:image/') && !url?.includes('://'))) {
-                    this.src = ''
-                } else if (url && this.src != url) {
-                    this.style.display = 'none'
-                    this.src = url
-                } else {
-                    this.onload()
-                }
-            }
-            this.onload = () => {
-                this.style.display = ''
-            }
-        })
-
-        add(iconSelector, { classes: ['spanCols4', 'spanRows2'] }, (me) => {
-        })
-
-        add(txtCustomIcon, { classes: ['spanCols3', 'spanRows2'] }, (me) => {
-            // lstIconType.on_change((value) => {
-            //     if (me.show(value == IT_CUSTOM)) {
-            //         me.onkeyup()
-            //     }
-            // })
-        })
-        add(iconPreviewCustom, (me) => {
-            //lstIconType.on_change(value => { me.show(value == IT_CUSTOM) })
-        })
-
-        // add('div', { classes: ['spanCols4'] }, (me) => {
-        //     me.style = 'display: grid; grid-template-columns: auto 1fr'
-        //     lstIconType.on_change(value => { me.show(value != IT_DEFAULT) })
-
-        //     add('input', { type: 'checkbox' })
-        //         .onchange = function () {
-        //         }
-        //     add('span', 'Solid background')
-        // })
     }
 }

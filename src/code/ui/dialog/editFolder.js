@@ -1,11 +1,8 @@
 import BaseDialog from './base.js'
-import FontAwesome from '../../common/faHelpers.js'
-import { FaconSelectorElement } from '../elements/faconSelector.js'
-import { EmojiSelectorElement } from '../elements/emojiSelector.js'
-import Emojis from '../../common/emojiHelpers.js'
 import State from '../../models/state.js'
 import Folder from '../../models/folder.js'
 import ImportBookmarkDialog from './importBookmark.js'
+import { IconSelectorElement } from '../elements/IconSelector.js'
 
 export default class EditFolderDialog extends BaseDialog {
     constructor(title) {
@@ -47,95 +44,7 @@ export default class EditFolderDialog extends BaseDialog {
             this.onchange()
         })
 
-        // Icon
-        const iconPreviewDefault = create('i', { className: 'fa-fw fa-6x centred' })
-        const iconPreviewCustom = create('img', { className: 'iconPreview centred' }, function () {
-            this.image = (url) => {
-                if (!url || (!url?.startsWith('data:image/') && !url?.includes('://'))) {
-                    this.style.display = 'none'
-                    iconPreviewDefault.style.display = ''
-                    return
-                }
-
-                if (url && this.src != url) {
-                    this.style.display = 'none'
-                    iconPreviewDefault.style.display = ''
-                    this.src = url
-                } else {
-                    this.onload()
-                }
-            }
-            this.onload = () => {
-                this.style.display = ''
-                iconPreviewDefault.style.display = 'none'
-            }
-        })
-
-        const isFacon = FontAwesome.isFacon(folder.icon)
-        const faconSelector = new FaconSelectorElement(folder.icon)
-        const iconPreviewFA = create('i', { className: 'fa-fw fa-6x centred' }, function () {
-            var _lastValue = []
-            this.update = () => {
-                iconPreviewFA.classList.remove(..._lastValue)
-                if (faconSelector.value) {
-                    _lastValue = faconSelector.value?.split(' ') || []
-                    iconPreviewFA.classList.add(..._lastValue)
-                }
-            }
-        })
-        faconSelector.addEventListener('change', iconPreviewFA.update)
-
-        const isEmoji = Emojis.isEmoji(folder.icon)
-        const emojiSelector = new EmojiSelectorElement(isEmoji ? folder.icon : '')
-        const iconPreviewEmoji = create('i', { className: 'emoji fa-6x centred' }, function () {
-            this.update = () => {
-                iconPreviewEmoji.innerText = emojiSelector.value || ''
-            }
-        })
-        emojiSelector.addEventListener('change', iconPreviewEmoji.update)
-
-        const bookmarkIcon = !isEmoji && !isFacon ? folder.bookmarks?.find(b => b.icon && b.icon == folder.icon) : null
-        const lstBookmarkIcons = create('select', function () {
-            folder.bookmarks.forEach(b => {
-                add('option', b.title, { value: b.icon || '(none)' }, function () {
-                    this.selected = bookmarkIcon === b
-                    this.disabled = !b.icon?.startsWith('data:image/') && !b.icon?.includes('://')
-                    if (this.disabled) {
-                        this.textContent = "[No icon] " + this.textContent
-                    }
-                })
-            })
-            this.onchange = () => {
-                iconPreviewCustom.image(this.value)
-            }
-            this.value = folder.icon
-            this.onchange()
-        })
-
-        const txtCustomIcon = create('input', { type: 'text' }, function () {
-            this.onkeyup = () => {
-                iconPreviewCustom.image(this.value)
-            }
-            this.value = folder.icon && !isFacon && !isEmoji ? folder.icon : ''
-            this.onkeyup()
-        })
-
-        const IT_NONE = '0', IT_EMOJI = '4', IT_FACON = '1', IT_BOOKMARK = '2', IT_CUSTOM = '3'
-        const lstIconType = create('select', function () {
-            add('option', 'None', { value: IT_NONE })
-            add('option', 'Emoji', { value: IT_EMOJI })
-            add('option', 'Font Awesome', { value: IT_FACON })
-            if (folder.bookmarks.length) {
-                add('option', 'From bookmark', { value: IT_BOOKMARK })
-            }
-            add('option', 'Custom', { value: IT_CUSTOM })
-
-            this.value = !folder.icon ? IT_NONE
-                : isFacon ? IT_FACON
-                    : bookmarkIcon ? IT_BOOKMARK
-                        : isEmoji ? IT_EMOJI
-                            : IT_CUSTOM
-        })
+        const iconSelector = new IconSelectorElement(folder.icon || '')
 
         add('label', 'Title')
         add(txtTitle, { classes: 'spanCols3' })
@@ -145,51 +54,7 @@ export default class EditFolderDialog extends BaseDialog {
         add(chkSortAsc)
 
         add('label', 'Icon')
-        add(lstIconType)
-        add('div', { classes: ['spanCols2', 'spanRows2'] }, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_NONE) })
-        })
-        add(faconSelector, { classes: ['spanCols2', 'spanRows2'] }, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_FACON) })
-        })
-        add(emojiSelector, { classes: ['spanCols2', 'spanRows2'] }, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_EMOJI) })
-        })
-        add(lstBookmarkIcons, { classes: ['spanCols2', 'spanRows2'] }, (me) => {
-            lstIconType.on_change((value) => {
-                if (me.show(value == IT_BOOKMARK)) {
-                    me.onchange()
-                }
-            })
-        })
-        add(txtCustomIcon, { classes: ['spanCols2', 'spanRows2'] }, (me) => {
-            lstIconType.on_change((value) => {
-                if (me.show(value == IT_CUSTOM)) {
-                    me.onkeyup()
-                }
-            })
-        })
-        add('div')
-        add(iconPreviewCustom, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_BOOKMARK) })
-        })
-        add(iconPreviewDefault, (me) => {
-            lstIconType.on_change(value => { me.show(value == IT_NONE || value == IT_CUSTOM) })
-        })
-        add(iconPreviewFA, (me) => {
-            lstIconType.on_change((value) => {
-                if (me.show(value == IT_FACON)) {
-                    me.update()
-                }
-            })
-        })
-        add(iconPreviewEmoji, (me) => {
-            lstIconType.on_change((value) => {
-                if (me.show(value == IT_EMOJI)) {
-                    me.update()
-                }
-            })
-        })
+        add(iconSelector, { classes: ['spanCols3', 'spanRows3'] })
 
         // Scale
         const lblScale = add('label', 'Scale')
@@ -317,33 +182,6 @@ export default class EditFolderDialog extends BaseDialog {
                     return
                 }
 
-                var newIcon = null
-                if (lstIconType.value == IT_FACON) {
-                    newIcon = faconSelector.value
-                    if (!newIcon?.includes('fa-')) {
-                        elError.textContent = 'Font Awesome icon is required'
-                        return
-                    }
-                } else if (lstIconType.value == IT_BOOKMARK) {
-                    newIcon = lstBookmarkIcons.value
-                    if (!newIcon) {
-                        elError.textContent = 'Bookmark selection is required'
-                        return
-                    }
-                } else if (lstIconType.value == IT_CUSTOM) {
-                    newIcon = txtCustomIcon.value
-                    if (!newIcon) {
-                        elError.textContent = 'Custom icon is required'
-                        return
-                    }
-                } else if (lstIconType.value == IT_EMOJI) {
-                    newIcon = emojiSelector.value
-                    if (!newIcon) {
-                        elError.textContent = 'Emoji selection is required'
-                        return
-                    }
-                }
-
                 // Create / update folder
                 if (!folder.id) {
                     folder = await State.createFolder(txtTitle.value.trim())
@@ -351,10 +189,10 @@ export default class EditFolderDialog extends BaseDialog {
                     folder.title = txtTitle.value
                 }
 
-                folder.sortOrder = num(lstSort.value) * (chkSortAsc.checked ? 1 : -1)
-                folder.icon = newIcon
                 folder.accentColour = defaultAccent ? null : accountColourPicker.value
+                folder.icon = iconSelector.value
                 folder.scale = scaleInput.value * 10
+                folder.sortOrder = num(lstSort.value) * (chkSortAsc.checked ? 1 : -1)
 
                 await State.updateEntry(folder)
                 MainView.setTheme()

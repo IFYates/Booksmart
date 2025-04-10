@@ -45,8 +45,9 @@ const _icons = []
 for (const key in ICONS) {
     for (const style of ICONS[key]) {
         _icons.push({
-            id: `${style} ${key}`, // {style} fa-{name}
-            classes: `${style} fa-fw fa-2x ${key}`,
+            id: `${style}-${key}`, // {style} fa-{name}
+            classes: `${style} fa-fw ${key}`,
+            listClasses: 'fa-2x',
             name: key.slice(3),
             style: style
         })

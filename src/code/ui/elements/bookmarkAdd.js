@@ -1,5 +1,5 @@
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
-import FontAwesome from "../../common/faHelpers.js"
+import IconProvider from "../../common/icons/IconProvider.js"
 import EditBookmarkDialog from "../dialog/editBookmark.js"
 
 const template = document.createElement('template')
@@ -16,7 +16,7 @@ export class BookmarkAddElement extends BaseHTMLElement {
             '/styles/common.css',
             '/styles/bookmark.css',
             '/styles/bookmark.grid.css',
-            FontAwesome.CSS
+            ...IconProvider.CSS
         ])
         this.#folder = folder
         this.title = 'Add bookmark'

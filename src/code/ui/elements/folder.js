@@ -4,9 +4,9 @@ import { BookmarkAddElement } from './bookmarkAdd.js'
 import { BookmarkElement, } from './bookmark.js'
 import DragDropHandler from "../../common/DragDropHandler.js"
 import EditFolderDialog from '../dialog/editFolder.js'
-import FontAwesome from '../../common/faHelpers.js'
 import ImportBookmarkDialog from '../dialog/importBookmark.js'
 import State from "../../models/state.js"
+import IconProvider from '../../common/icons/IconProvider.js'
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -44,7 +44,7 @@ export class FolderElement extends BaseHTMLElement {
         super(template, [
             '/styles/common.css',
             '/styles/folder.css',
-            FontAwesome.CSS
+            ...IconProvider.CSS
         ])
         this.#folder = folder
         this.id = 'folder-' + folder.id

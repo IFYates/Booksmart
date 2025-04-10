@@ -30,8 +30,9 @@ const _icons = []
 for (const key in ICONS) {
     for (const style of ICONS[key]) {
         _icons.push({
-            id: `${style} bx-${key}`, // {style} bx-{name}
-            classes: `bx bx-sm ${style}-${key}`,
+            id: `${style}-bx-${key}`, // {style} bx-{name}
+            classes: `bx ${style}-${key}`,
+            listClasses: 'bx-sm',
             name: key,
             style: style
         })

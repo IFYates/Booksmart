@@ -32,6 +32,11 @@ export default class IconProvider {
             return null
         }
         
+        // Explicit
+        if (value.id && (value.content || value.classes || value.src)) {
+            return value
+        }
+
         // By id
         var icon = _icons.find(i => i.id == value)
         if (icon) {
@@ -39,7 +44,7 @@ export default class IconProvider {
         }
 
         // By classes
-        const words = value.toLowerCase().split(' ')
+        const words = `${value}`.toLowerCase().split(' ')
         for (var icon of _icons) {
             if (icon.classes && words.every(w => icon.classes.includes(w))) {
                 return icon

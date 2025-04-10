@@ -1,66 +1,6 @@
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 import IconProvider from "../../common/icons/IconProvider.js"
 
-const template = document.createElement('template')
-template.innerHTML = `
-<style type="text/css">
-div {
-    display: grid;
-    grid-template-columns: auto 1fr;
-}
-
-input {
-    width: 100%;
-}
-
-i.preview {
-    zoom: 2;
-    width: 50px;
-    height: 100%;
-    align-content: space-evenly;
-    text-align: center;
-}
-
-list {
-    display: block;
-    overflow-y: scroll;
-    height: 150px;
-}
-
-i.icon, i.preview {
-    font-style: normal;
-}
-i.icon.gray {
-    opacity: 0.25;
-}
-i.emoji {
-    font-size: 2em;
-}
-list i.icon {
-    padding: 2.5px 1px;
-    border: 1px solid transparent;
-    border-radius: 3px;
-    user-select: none;
-    height: 32px;
-    width: 32px;
-    align-content: space-evenly;
-    text-align: center;
-    display: inline-block;
-}
-i.icon.selected {
-    border-color: var(--text-colour);
-    background-color: rgba(255, 255, 255, 0.2);
-}
-</style>
-
-<input type="text" id="custom" placeholder="Custom icon URL" />
-<input type="text" id="filter" placeholder="Filter" />
-<div>
-    <i class="preview"></i>
-    <list><i role="button" tabIndex="0" class="icon"></i></list>
-</div>
-`
-
 const _custom = {
     nonIcon: true,
     id: 'custom',
@@ -77,22 +17,86 @@ const _favicon = {
     nonIcon: true,
     id: 'favicon',
     name: 'Favicon',
-    classes: 'far fa-fw fa-2x fa-bookmark'
+    classes: 'far fa-bookmark',
+    listClasses: 'fa-fw fa-2x'
 }
+
+const template = document.createElement('template')
+template.innerHTML = `
+<style type="text/css">
+div {
+    display: grid;
+    grid-template-columns: auto 1fr;
+}
+
+input {
+    width: 100%;
+}
+
+
+list {
+    display: block;
+    overflow-y: scroll;
+    height: 150px;
+}
+
+.icon {
+    font-style: normal;
+}
+.icon.gray {
+    opacity: 0.25;
+}
+.icon.preview {
+    zoom: 2;
+    width: 50px;
+    height: 100%;
+    align-content: space-evenly;
+    text-align: center;
+}
+.icon.preview img {
+    max-width: -webkit-fill-available;
+}
+.emoji {
+    font-size: 2em;
+}
+list .icon {
+    padding: 2.5px 1px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    user-select: none;
+    height: 32px;
+    width: 32px;
+    align-content: space-evenly;
+    text-align: center;
+    display: inline-block;
+}
+list .icon.selected {
+    border-color: var(--text-colour);
+    background-color: rgba(255, 255, 255, 0.2);
+}
+</style>
+
+<input type="text" id="custom" placeholder="Custom icon URL" />
+<input type="text" id="filter" placeholder="Filter" />
+<div>
+    <bs-icon class="icon preview" altIcon="far fa-bookmark"></bs-icon>
+    <list><bs-icon role="button" tabIndex="0" class="icon"></bs-icon></list>
+</div>
+`
 
 export class IconSelectorElement extends BaseHTMLElement {
     #current
     get value() { return this.#current?.id }
     #preview
-    #customUrl
-    #faviconUrl
+    #customUrl = ''
+    #favDomain
 
-    constructor(currentIcon, faviconUrl) {
+    constructor(currentIcon, favDomain) {
         super(template, IconProvider.CSS)
-        this.#faviconUrl = faviconUrl
+        this.#favDomain = favDomain
         this.select(currentIcon)
         if (!this.#current) {
-            this.#current = faviconUrl ? _favicon : _none
+            this.#current = favDomain ? _favicon : _none
         }
     }
 
@@ -124,32 +128,20 @@ export class IconSelectorElement extends BaseHTMLElement {
             for (const el of root.querySelectorAll('.selected')) {
                 el.classList.remove('selected')
             }
-            if (this.#current?.classes) {
-                this.#preview.classList.remove(...this.#current.classes.split(' '))
-            }
-            this.#preview.innerHTML = ''
 
             // Show/hide custom icon
-            var custom = root.querySelector('.icon.custom')
-            if (custom?.show(!!this.#customUrl)) {
-                custom.innerHTML = `<img src="${this.#customUrl}"/>`
+            const custom = root.querySelector('.icon#custom')
+            if (custom?.show(!!this.#customUrl) && custom.value != this.#customUrl) {
+                custom.value = this.#customUrl
             }
 
             if (icon) {
                 // Select new
-                if (icon.classes) {
-                    root.querySelector('.icon.' + icon.classes.replaceAll(' ', '.'))
-                        ?.classList.add('selected')
-                    this.#preview.classList.add(...icon.classes.split(' '))
-                } else {
-                    root.querySelector('.icon.' + _favicon.classes.replaceAll(' ', '.'))
-                        ?.classList.add('selected')
-                }
-                if (icon.content) {
-                    this.#preview.innerHTML = icon.content
-                } else if (icon == _custom) {
-                    this.#preview.innerHTML = `<img src="${this.#customUrl}"/>`
-                }
+                const el = root.querySelector('.icon#' + icon.id)
+                el.classList.add('selected')
+
+                // Update preview
+                this.#preview.value = icon == _custom ? this.#customUrl : icon
             }
 
             this.#current = icon
@@ -164,9 +156,12 @@ export class IconSelectorElement extends BaseHTMLElement {
 
     _ondisplay(root) {
         const self = this
-        self.#preview = root.querySelector('i.preview')
-        
+
+        self.#preview = root.querySelector('.preview')
+        self.#preview.favDomain = self.#favDomain
+
         const txtCustom = root.querySelector('input#custom')
+        txtCustom.value = self.#customUrl
         txtCustom.onkeyup = function () {
             if (!/^https?:\/\/./.test(this.value)) {
                 self.#customUrl = null
@@ -184,21 +179,22 @@ export class IconSelectorElement extends BaseHTMLElement {
             }
         }
 
-        const iconTemplate = root.querySelector('i.icon')
+        const iconTemplate = root.querySelector('list .icon')
         const list = iconTemplate.parentElement
         function addIcon(icon) {
             const el = iconTemplate.cloneNode(true)
             list.appendChild(el)
+            
+            if (icon.listClasses) {
+                icon = { ...icon }
+                icon.classes = icon.classes + ' ' + icon.listClasses
+            }
 
+            el.id = icon.id
+            el.value = icon
             el.title = icon.name
             if (icon.style) {
                 el.title += ` (${icon.style})`
-            }
-            if (icon.classes) {
-                el.classList.add(...icon.classes.split(' '))
-            }
-            if (icon.content) {
-                el.innerHTML = icon.content
             }
 
             el.onfocus = () => {
@@ -214,9 +210,17 @@ export class IconSelectorElement extends BaseHTMLElement {
                     self.#refresh(icon, true)
                 }
             }
+
+            return el
         }
 
-        addIcon(this.#faviconUrl ? _favicon : _none)
+        if (self.#favDomain) {
+            const el = addIcon(self.#favDomain ? _favicon : _none)
+            el.altIcon = _favicon.classes
+            el.favDomain = self.#favDomain
+        } else {
+            addIcon(_none)
+        }
         addIcon(_custom)
 
         for (const icon of IconProvider.icons()) {

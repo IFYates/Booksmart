@@ -1,8 +1,6 @@
-import Boxicons from "../../common/bxHelpers.js"
-import Emojis from "../../common/emojiHelpers.js"
-import FontAwesome from "../../common/faHelpers.js"
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 import State from "../../models/state.js"
+import IconProvider from "../../common/icons/IconProvider.js"
 
 // supports altIcon and favicon for domain
 export default class IconElement extends BaseHTMLElement {
@@ -39,29 +37,26 @@ export default class IconElement extends BaseHTMLElement {
         this.#show(this.#icon)
     }
 
-    #show(icon) {
-        if (Boxicons.isBoxicon(icon)) {
+    #show(iconOrUrl) {
+        const icon = IconProvider.findIcon(iconOrUrl)
+        if (icon?.id == 'favicon') {
+            iconOrUrl = 'favicon'
+        } else if (icon) {
             this.querySelector('i.icon')?.remove()
-            this.add('i', { className: `icon ${icon}` })
-            return
-        }
-        if (Emojis.isEmoji(icon)) {
-            this.querySelector('i.icon')?.remove()
-            this.add('i', icon, { className: 'icon emoji fa-fw' })
-            return
-        }
-        if (FontAwesome.isFacon(icon)) {
-            this.querySelector('i.icon')?.remove()
-            this.add('i', { className: `icon fa-fw ${icon}` })
+            this.add('i', icon.content, { className: `icon ${icon.classes}` })
             return
         }
 
-        if (!icon && /^https?:\/\/\w+\.\w+/i.test(this.#favDomain)) {
-            icon = `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=128&url=${this.#favDomain}`
+        if (iconOrUrl == 'favicon') {
+            const m = /^https?:\/\/(\w+\.[^/\?]+)/i.exec(this.#favDomain || '')
+            if (!m) {
+                return
+            }
+            iconOrUrl = `https://favicone.com/${m[1]}?s=64`
         }
-        if (icon) {
+        if (iconOrUrl) {
             const img = this.querySelector('img.icon') || this.add('img', { className: 'icon', style: 'display: none' })
-            State.resolveCachedImage(img, icon)
+            State.resolveCachedImage(img, iconOrUrl)
                 .then(r => {
                     this.querySelector('i.icon')?.remove()
                     img.show()

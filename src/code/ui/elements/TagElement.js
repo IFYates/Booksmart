@@ -1,7 +1,7 @@
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 import DragDropHandler from "../../common/DragDropHandler.js"
 import { FolderElement } from "./folder.js"
-import FontAwesome from "../../common/faHelpers.js"
+import IconProvider from "../../common/icons/IconProvider.js"
 import State from "../../models/state.js"
 
 const template = document.createElement('template')
@@ -20,7 +20,7 @@ export default class TagElement extends BaseHTMLElement {
     constructor(tag) {
         super(template, [
             '/styles/tag.css',
-            FontAwesome.CSS
+            ...IconProvider.CSS
         ])
         this.#tag = tag
     }

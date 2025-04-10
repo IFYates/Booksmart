@@ -1,6 +1,6 @@
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 import Dialogs from "../dialogs.js"
-import FontAwesome from "../../common/faHelpers.js"
+import IconProvider from "../../common/icons/IconProvider.js"
 
 const template = document.createElement('template')
 template.innerHTML = `
@@ -15,7 +15,7 @@ export class FolderAddElement extends BaseHTMLElement {
         super(template, [
             '/styles/common.css',
             '/styles/bookmark.css',
-            FontAwesome.CSS
+            ...IconProvider.CSS
         ])
     }
 

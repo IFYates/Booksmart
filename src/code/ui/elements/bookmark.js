@@ -1,11 +1,10 @@
 import './icon.js' // Needed for bs-icon
 import { BaseHTMLElement } from "../../common/BaseHTMLElement.js"
 import { BookmarkAddElement } from './bookmarkAdd.js'
-import Boxicons from '../../common/bxHelpers.js'
 import DragDropHandler from "../../common/DragDropHandler.js"
 import EditBookmarkDialog from '../dialog/editBookmark.js'
 import { FolderElement } from './folder.js'
-import FontAwesome from '../../common/faHelpers.js'
+import IconProvider from "../../common/icons/IconProvider.js"
 import State from "../../models/state.js"
 import { Tabs } from "../../common/tabs.js"
 
@@ -45,8 +44,7 @@ export class BookmarkElement extends BaseHTMLElement {
             '/styles/common.css',
             '/styles/bookmark.css',
             '/styles/bookmark.grid.css',
-            FontAwesome.CSS,
-            Boxicons.CSS
+            ...IconProvider.CSS
         ])
         this.#bookmark = bookmark
         this.id = 'bookmark-' + bookmark.id
