@@ -84,7 +84,7 @@ HTMLElement.prototype.extend(
     }
 )
 
-const CORS_PROXY = 'https://corsproxy.io/?'
+const CORS_PROXY = 'https://corsproxy.io/?url='
 HTMLImageElement.prototype.extend(
     function showImageAsDataUrl(url) {
         const img = this
@@ -94,7 +94,7 @@ HTMLImageElement.prototype.extend(
                 resolve(img.src)
                 return
             }
-    
+
             img.crossOrigin = 'anonymous' // Try with CORS support first
 
             var failCount = 0

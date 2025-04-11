@@ -38,35 +38,76 @@ export default class IconElement extends BaseHTMLElement {
     }
 
     #show(iconOrUrl) {
-        const icon = IconProvider.findIcon(iconOrUrl)
-        if (icon?.id == 'favicon') {
+        const self = this
+
+        var content = ''
+        if (!iconOrUrl) {
             iconOrUrl = 'favicon'
-        } else if (icon) {
-            this.querySelector('i.icon')?.remove()
-            this.add('i', icon.content, { className: `icon ${icon.classes}` })
-            return
+        } else if (iconOrUrl != 'favicon' && !isURL(iconOrUrl)) {
+            const icon = IconProvider.findIcon(iconOrUrl)
+            if (icon) {
+                iconOrUrl = icon?.id == 'favicon' ? 'favicon' : icon.classes
+                content = icon.content
+            }
         }
 
         if (iconOrUrl == 'favicon') {
-            const m = /^https?:\/\/(\w+\.[^/\?]+)/i.exec(this.#favDomain || '')
-            if (!m) {
+            // Get valid favicon from provider
+            const domain = isURL(self.#favDomain)
+            if (!domain) {
                 return
             }
-            iconOrUrl = `https://favicone.com/${m[1]}?s=64`
+
+            function retryWithoutSubdomain(url) {
+                const p = url.split('.')
+                if (p.length > 1) {
+                    url = p.slice(1).join('.')
+                    self.#showImage(`https://favicone.com/${url}?s=128`, () => retryWithoutSubdomain(url))
+                }
+            }
+            return self.#showImage(`https://favicone.com/${domain}?s=128`, () => retryWithoutSubdomain(domain))
+        } else if (isURL(iconOrUrl)) {
+            return self.#showImage(iconOrUrl)
         }
-        if (iconOrUrl) {
-            const img = this.querySelector('img.icon') || this.add('img', { className: 'icon', style: 'display: none' })
-            State.resolveCachedImage(img, iconOrUrl)
-                .then(r => {
-                    this.querySelector('i.icon')?.remove()
-                    img.show()
-                    this.onchange?.() // TODO: ?
-                })
-                .catch(e => {
-                    // Remove image
+
+        // Assume classes
+        self.querySelector('i.icon')?.remove()
+        self.add('i', content, { className: `icon ${iconOrUrl}` })
+    }
+
+    #imageBusy = false
+    #showImage(iconOrUrl, failHandler) {
+        // Ensure that we are the only current active request
+        const uuid = 'I' + Math.random().toString(36).slice(2)
+        this.#imageBusy = uuid
+        for (const img of this.querySelectorAll('img')) {
+            img.remove()
+        }
+        const img = this.add('img', { id: uuid, className: 'icon', style: 'display: none' })
+        if (this.#imageBusy != uuid) {
+            return
+        }
+
+        State.resolveCachedImage(img, iconOrUrl)
+            .then(_ => {
+                if (this.#imageBusy != uuid) {
                     img.remove()
-                })
-        }
+                    return
+                }
+
+                this.#imageBusy = false
+                this.querySelector('i.icon')?.remove()
+                img.show()
+                this.onchange?.()
+            })
+            .catch(_ => {
+                img.remove()
+                if (this.#imageBusy == uuid) {
+                    this.#imageBusy = false
+                    failHandler?.()
+                }
+
+            })
     }
 }
 customElements.define('bs-icon', IconElement)

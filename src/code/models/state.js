@@ -58,6 +58,7 @@ export default class State {
         _booksmartRootId = booksmartRoot.id
 
         const state = await chrome.storage.sync.get()
+        console.debug(state)
         const keys = Object.keys(state)
         State.#options = new Options(state.options || {})
         const folders = {}
@@ -306,14 +307,21 @@ export default class State {
 
         // Try from cache first
         const cached = !force ? (await chrome.storage.local.get(url))?.[url] : null
-        const resultPromise = new Promise((resolve, reject) => {
+        const resultPromise = new Promise(async (resolve, reject) => {
             const now = new Date().getTime()
-            if (cached?.expire > now) {
-                if (!cached?.src) {
-                    // Cached failure
-                    reject()
+            if (cached?.expire > now && cached?.src) {
+                // From cache
+
+                // Check it isn't a disguised 404
+                var failure = null
+                if (isURL(cached.src)) {
+                    await fetch('https://corsproxy.io/?url=' + encodeURIComponent(cached.src))
+                        .then(data => failure = data.ok ? null : data)
+                        .catch(e => failure = e)
+                }
+                if (failure) {
+                    reject(failure)
                 } else {
-                    // From cache
                     img.src = cached.src
                     resolve(cached.src)
                 }
