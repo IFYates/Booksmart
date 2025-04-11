@@ -51,6 +51,10 @@ dialog#EditFolderDialog form {
     grid-template-columns: 1fr 1fr 4fr 2fr;
 }
 
+dialog#EditFolderDialog icon-selector {
+    height: 250px;
+}
+
 dialog#ImportBookmarkDialog form input[type="checkbox"] {
     width: fit-content;
 }
