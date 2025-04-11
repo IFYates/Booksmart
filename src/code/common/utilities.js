@@ -10,12 +10,13 @@ globalThis.extend(
     /**
      * Checks if the given string is a valid URL.
      * @param {string} url URL to test
+     * @param {boolean} [http=true] If true, only HTTP(S) URLs are valid
      * @returns {boolean|URL} The URL domain if input was a valid URL, false if not
      */
-    function isURL(url) {
+    function isURL(url, http = true) {
         try {
             url = new URL(url)
-            if (url.protocol == 'http:' || url.protocol == 'https:') {
+            if (!http || url.protocol == 'http:' || url.protocol == 'https:') {
                 return url.hostname
             }
         } catch {

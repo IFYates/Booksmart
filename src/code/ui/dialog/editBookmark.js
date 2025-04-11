@@ -75,7 +75,7 @@ export default class EditBookmarkDialog extends BaseDialog {
                     elError.textContent = 'Title is required'
                     return
                 }
-                if (!txtURL.value.trim() || !isURL(txtURL.value.trim())) {
+                if (!txtURL.value.trim() || !isURL(txtURL.value.trim(), false)) {
                     elError.textContent = 'Invalid URL'
                     return
                 }

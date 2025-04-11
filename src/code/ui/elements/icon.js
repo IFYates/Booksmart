@@ -60,7 +60,7 @@ export default class IconElement extends BaseHTMLElement {
 
             function retryWithoutSubdomain(url) {
                 const p = url.split('.')
-                if (p.length > 1) {
+                if (p.length > 2) {
                     url = p.slice(1).join('.')
                     self.#showImage(`https://favicone.com/${url}?s=128`, () => retryWithoutSubdomain(url))
                 }
@@ -76,6 +76,7 @@ export default class IconElement extends BaseHTMLElement {
     }
 
     #imageBusy = false
+    #promises = {}
     #showImage(iconOrUrl, failHandler) {
         // Ensure that we are the only current active request
         const uuid = 'I' + Math.random().toString(36).slice(2)
@@ -88,9 +89,9 @@ export default class IconElement extends BaseHTMLElement {
             return
         }
 
-        State.resolveCachedImage(img, iconOrUrl)
+        const promise = this.#promises[iconOrUrl] ??= State.resolveCachedImage(img, iconOrUrl)
             .then(_ => {
-                if (this.#imageBusy != uuid) {
+                if (this.#imageBusy != uuid || !img.parentNode) {
                     img.remove()
                     return
                 }
@@ -106,8 +107,8 @@ export default class IconElement extends BaseHTMLElement {
                     this.#imageBusy = false
                     failHandler?.()
                 }
-
             })
+        promise.finally(_ => delete this.#promises[iconOrUrl])
     }
 }
 customElements.define('bs-icon', IconElement)

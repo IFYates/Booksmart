@@ -302,26 +302,17 @@ export default class State {
         }
     }
 
+    static #promises = {}
     static async resolveCachedImage(img, url, force = false) {
         if (url?.startsWith('data:image/')) return url
 
         // Try from cache first
         const cached = !force ? (await chrome.storage.local.get(url))?.[url] : null
-        const resultPromise = new Promise(async (resolve, reject) => {
+        const resultPromise = State.#promises[url] ??= new Promise(async (resolve, reject) => {
             const now = new Date().getTime()
-            if (cached?.expire > now && cached?.src) {
-                // From cache
-
-                // Check it isn't a disguised 404
-                var failure = null
-                if (isURL(cached.src)) {
-                    await fetch('https://corsproxy.io/?url=' + encodeURIComponent(cached.src))
-                        .then(data => failure = data.ok ? null : data)
-                        .catch(e => failure = e)
-                }
-                if (failure) {
-                    reject(failure)
-                } else {
+            if (cached?.expire > now) {
+                if (cached?.src) {
+                    // From cache
                     img.src = cached.src
                     resolve(cached.src)
                 }
@@ -345,6 +336,7 @@ export default class State {
                     reject()
                 })
         })
+        resultPromise.finally(_ => delete State.#promises[url])
         return resultPromise
     }
 }

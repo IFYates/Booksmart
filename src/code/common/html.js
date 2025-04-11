@@ -88,11 +88,23 @@ const CORS_PROXY = 'https://corsproxy.io/?url='
 HTMLImageElement.prototype.extend(
     function showImageAsDataUrl(url) {
         const img = this
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             if (url.startsWith('data:') || /\.svg(?:\?|$)/i.test(url)) {
                 img.src = url
                 resolve(img.src)
                 return
+            }
+
+            // Check it isn't a disguised 404
+            if (isURL(url)) {
+                var failure = null
+                await fetch('https://corsproxy.io/?url=' + encodeURIComponent(url))
+                    .then(data => failure = !data.ok ? data : null)
+                    .catch(e => failure = e)
+                if (failure) {
+                    reject(failure)
+                    return
+                }
             }
 
             img.crossOrigin = 'anonymous' // Try with CORS support first
