@@ -2,6 +2,8 @@ import BaseDialog from './base.js'
 import { IconSelectorElement } from '../elements/IconSelector.js'
 import State from '../../models/state.js'
 
+// TODO: preview at top of how all changes will look
+
 export default class EditBookmarkDialog extends BaseDialog {
     constructor(title) {
         super('fas fa-bookmark', title)
@@ -19,11 +21,10 @@ export default class EditBookmarkDialog extends BaseDialog {
         })
         const txtNotes = document.createElement('textarea')
 
-        add('div', { classes: 'spanCols4' }, () => {
-            add('strong', 'Details')
-            // TODO: collapsible
-        })
         add('div', { classes: ['grid', 'spanCols4'] }, () => {
+            add('strong', 'Details', { classes: 'spanCols4' })
+            // TODO: collapsible
+
             add('label', 'Title')
             add(txtTitle, { classes: 'spanCols3' })
 
@@ -37,14 +38,15 @@ export default class EditBookmarkDialog extends BaseDialog {
             })
         })
 
+        const iconSelector = new IconSelectorElement(bookmark?.icon || '', bookmark?.domain)
+        const overlaySelector = new IconSelectorElement(bookmark?.overlay || '')
         add('div', { classes: 'spanCols4' }, () => {
             add('strong', 'Icon')
             // TODO: collapsible
-        })
-        const iconSelector = new IconSelectorElement(bookmark?.icon || '', bookmark?.domain)
-        const overlaySelector = new IconSelectorElement(bookmark?.overlay || '')
-        add('div', { classes: ['spanCols4'] }, () => {
             add(iconSelector)
+
+            add('strong', 'Overlay')
+            // TODO: collapsible?
             add(overlaySelector)
         })
 

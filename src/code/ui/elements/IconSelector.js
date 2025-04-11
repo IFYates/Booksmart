@@ -5,39 +5,32 @@ const _custom = {
     nonIcon: true,
     id: 'custom',
     name: 'Custom icon',
-    classes: 'custom'
+    classes: 'bx bxs-image-alt bx-sm gray'
 }
 const _none = {
     nonIcon: true,
     id: 'none',
     name: 'No icon',
-    classes: 'bx bx-sm bx-square-rounded gray'
+    classes: 'bx bxs-x-square bx-sm gray'
 }
 const _favicon = {
     nonIcon: true,
     id: 'favicon',
     name: 'Favicon',
-    classes: 'far fa-bookmark',
-    listClasses: 'fa-fw fa-2x'
+    classes: 'far fa-bookmark fa-fw fa-2x'
 }
 
 const template = document.createElement('template')
 template.innerHTML = `
 <style type="text/css">
-div {
+:host {
     display: grid;
     grid-template-columns: auto 1fr;
+    grid-template-rows: auto 1fr auto;
 }
 
 input {
     width: 100%;
-}
-
-
-list {
-    display: block;
-    overflow-y: scroll;
-    height: 150px;
 }
 
 .icon {
@@ -59,6 +52,10 @@ list {
 .emoji {
     font-size: 2em;
 }
+
+list {
+    overflow-y: scroll;
+}
 list .icon {
     padding: 2.5px 1px;
     border: 1px solid transparent;
@@ -76,19 +73,27 @@ list .icon.selected {
 }
 </style>
 
-<input type="text" id="custom" placeholder="Custom icon URL" />
-<input type="text" id="filter" placeholder="Filter" />
-<div>
-    <bs-icon class="icon preview" altIcon="far fa-bookmark"></bs-icon>
-    <list><bs-icon role="button" tabIndex="0" class="icon"></bs-icon></list>
-</div>
+<input type="text" id="filter" placeholder="Filter" style="grid-column: span 2" />
+<bs-icon class="icon preview" altIcon="far fa-bookmark"></bs-icon>
+<list><bs-icon role="button" tabIndex="0" class="icon"></bs-icon></list>
+<div></div><input type="text" id="custom" placeholder="Custom icon URL" />
 `
 
 export class IconSelectorElement extends BaseHTMLElement {
     #current
-    get value() { return this.#current?.id }
+    get value() {
+        switch (this.#current) {
+            case _custom:
+                return this.#customUrl
+            case _none:
+                return null
+            default:
+                return this.#current?.id
+        }
+    }
     #preview
     #customUrl = ''
+    #customIcon
     #favDomain
 
     constructor(currentIcon, favDomain) {
@@ -107,7 +112,7 @@ export class IconSelectorElement extends BaseHTMLElement {
     select(idOrUrl) {
         var icon = IconProvider.findIcon(idOrUrl)
         if (!icon) {
-            if (!/^https?:\/\//.test(idOrUrl)) {
+            if (!isURL(idOrUrl)) {
                 return
             }
             icon = _custom
@@ -130,9 +135,8 @@ export class IconSelectorElement extends BaseHTMLElement {
             }
 
             // Show/hide custom icon
-            const custom = root.querySelector('.icon#custom')
-            if (custom?.show(!!this.#customUrl) && custom.value != this.#customUrl) {
-                custom.value = this.#customUrl
+            if (this.#customIcon && this.#customIcon.value != this.#customUrl) {
+                this.#customIcon.value = this.#customUrl
             }
 
             if (icon) {
@@ -160,26 +164,15 @@ export class IconSelectorElement extends BaseHTMLElement {
         self.#preview = root.querySelector('.preview')
         self.#preview.favDomain = self.#favDomain
 
-        const txtCustom = root.querySelector('input#custom')
-        txtCustom.value = self.#customUrl
-        txtCustom.onkeyup = function () {
-            if (!/^https?:\/\/./.test(this.value)) {
-                self.#customUrl = null
-            } else {
-                self.#customUrl = this.value
-                self.#refresh(_custom, true)
-            }
-        }
-
         const txtFilter = root.querySelector('input#filter')
         txtFilter.onkeyup = function () {
-            for (const el of root.querySelectorAll('.icon')) {
+            for (const el of root.querySelectorAll('list>.icon')) {
                 const words = this.value.toLowerCase().split(' ')
-                el.style.display = (!this.value || words.every(w => el.title.includes(w))) ? '' : 'none'
+                el.show(!this.value || words.every(w => el.title.includes(w)))
             }
         }
 
-        const iconTemplate = root.querySelector('list .icon')
+        const iconTemplate = root.querySelector('list>.icon')
         const list = iconTemplate.parentElement
         function addIcon(icon) {
             const el = iconTemplate.cloneNode(true)
@@ -195,6 +188,9 @@ export class IconSelectorElement extends BaseHTMLElement {
             el.title = icon.name
             if (icon.style) {
                 el.title += ` (${icon.style})`
+            }
+            if (self.#current?.id == icon.id) {
+                self.#current = icon
             }
 
             el.onfocus = () => {
@@ -214,20 +210,42 @@ export class IconSelectorElement extends BaseHTMLElement {
             return el
         }
 
+        // Favicon / None
         if (self.#favDomain) {
-            const el = addIcon(self.#favDomain ? _favicon : _none)
+            const el = addIcon(_favicon)
             el.altIcon = _favicon.classes
             el.favDomain = self.#favDomain
         } else {
             addIcon(_none)
         }
-        addIcon(_custom)
+
+        // Custom
+        this.#customIcon = addIcon(_custom)
+        this.#customIcon.altIcon = _custom
+        this.#customIcon.value = this.#customUrl
+        const fn = this.#customIcon.onfocus
+        this.#customIcon.onfocus = () => {
+            fn()
+            txtCustom.focus()
+        }
+        const txtCustom = root.querySelector('input#custom')
+        txtCustom.value = self.#customUrl
+        txtCustom.onkeyup = function () {
+            const txt = this.value.trim()
+            if (!isURL(txt)) {
+                self.#customUrl = null
+                self.#customIcon.value = null
+            } else {
+                self.#customUrl = txt
+                self.#refresh(_custom, true)
+            }
+        }
 
         for (const icon of IconProvider.icons()) {
             addIcon(icon)
         }
-
         iconTemplate.remove()
+
         self.#refresh(self.#current, true)
 
         txtFilter.placeholder = `Filter (${list.childNodes.length} icons)`
