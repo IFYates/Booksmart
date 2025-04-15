@@ -1,5 +1,27 @@
+<table>
+<tr><td>
+
+[<img src="https://github.com/kazcfz/Browser-Promotional-Badges/raw/refs/heads/main/Google/Chrome%20Web%20Store/SVG%20(with%20border).svg" height="45px">](https://chromewebstore.google.com/detail/booksmart/chdioebfigbkodldfombonmoocefgefk?authuser=0&hl=en-GB)
+
+</td><td>
+
+[![Chrome Web Store Version](https://img.shields.io/chrome-web-store/v/chdioebfigbkodldfombonmoocefgefk)](https://chromewebstore.google.com/detail/booksmart/chdioebfigbkodldfombonmoocefgefk?authuser=0&hl=en-GB)
+
+</td></tr></table>
+
 # Description
-A bookmark management tool and customisable homepage.
+Customisable start page for quickly accessing your most important bookmarks.
+
+Provides a customisable start page with bookmark management.  
+Add bookmarks from open tabs and your existing bookmark manager, grouping them in to collections.  
+Quickly access your bookmarks every time you open a new tab.
+
+Choose which of your existing bookmark folders to show, or create new ones for Booksmart.  
+Position them on the dashboard, and choose icons, colours, and background images, so everything looks how you want.  
+You can even tag folders to quickly hide any that you don't currently need.
+
+Everything is stored in your Chrome profile and synced using through your browser account, so nothing is kept externally and you don't need to create a new account.  
+If you need to share a single folder or your whole Booksmart dashboard, you can export them for import to another account.
 
 # Features
 - Stored in browser bookmark system, for automatic synchronisation
