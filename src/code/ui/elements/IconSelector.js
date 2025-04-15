@@ -166,9 +166,15 @@ export class IconSelectorElement extends BaseHTMLElement {
 
         const txtFilter = root.querySelector('input#filter')
         txtFilter.onkeyup = function () {
+            const value = this.value.trim().toLowerCase()
+            if (this._lastValue == value) {
+                return
+            }
+            txtFilter._lastValue = value
+
+            const words = value?.split(' ').filter($ => $)
             for (const el of root.querySelectorAll('list>.icon')) {
-                const words = this.value.toLowerCase().split(' ')
-                el.show(!this.value || words.every(w => el.title.includes(w)))
+                el.show(!value || words.every(w => el.title.includes(w)))
             }
         }
 
@@ -231,12 +237,12 @@ export class IconSelectorElement extends BaseHTMLElement {
         const txtCustom = root.querySelector('input#custom')
         txtCustom.value = self.#customUrl
         txtCustom.onkeyup = function () {
-            const txt = this.value.trim()
-            if (!isURL(txt)) {
+            const value = this.value.trim()
+            if (!isURL(value)) {
                 self.#customUrl = null
                 self.#customIcon.value = null
-            } else {
-                self.#customUrl = txt
+            } else if (self.#customUrl != value) {
+                self.#customUrl = value
                 self.#refresh(_custom, true)
             }
         }
