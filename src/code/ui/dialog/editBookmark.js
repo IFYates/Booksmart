@@ -38,8 +38,8 @@ export default class EditBookmarkDialog extends BaseDialog {
             })
         })
 
-        const iconSelector = new IconSelectorElement(bookmark?.icon || '', bookmark?.domain)
-        const overlaySelector = new IconSelectorElement(bookmark?.overlay || '')
+        const iconSelector = new IconSelectorElement(bookmark?.icon || 'favicon', bookmark?.domain, false)
+        const overlaySelector = new IconSelectorElement(bookmark?.overlay, bookmark?.domain)
         add('div', { classes: 'spanCols4' }, () => {
             add('strong', 'Icon')
             // TODO: collapsible

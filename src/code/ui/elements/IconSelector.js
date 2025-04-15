@@ -95,14 +95,13 @@ export class IconSelectorElement extends BaseHTMLElement {
     #customUrl = ''
     #customIcon
     #favDomain
+    #allowNull
 
-    constructor(currentIcon, favDomain) {
+    constructor(currentIcon, favDomain, allowNull = true) {
         super(template, IconProvider.CSS)
         this.#favDomain = favDomain
+        this.#allowNull = allowNull
         this.select(currentIcon)
-        if (!this.#current) {
-            this.#current = favDomain ? _favicon : _none
-        }
     }
 
     get isIcon() {
@@ -110,13 +109,21 @@ export class IconSelectorElement extends BaseHTMLElement {
     }
 
     select(idOrUrl) {
-        var icon = IconProvider.findIcon(idOrUrl)
-        if (!icon) {
-            if (!isURL(idOrUrl)) {
-                return
+        var icon = _none
+        if (idOrUrl == 'favicon') {
+            icon = _favicon
+        } else if (idOrUrl) {
+            icon = IconProvider.findIcon(idOrUrl)
+            if (!icon) {
+                if (!isURL(idOrUrl)) {
+                    return
+                }
+                icon = _custom
+                this.#customUrl = idOrUrl
             }
-            icon = _custom
-            this.#customUrl = idOrUrl
+        }
+        else if (!this.#allowNull) {
+            return
         }
         if (this.#preview) {
             this.#refresh(icon, true)
@@ -183,7 +190,7 @@ export class IconSelectorElement extends BaseHTMLElement {
         function addIcon(icon) {
             const el = iconTemplate.cloneNode(true)
             list.appendChild(el)
-            
+
             if (icon.listClasses) {
                 icon = { ...icon }
                 icon.classes = icon.classes + ' ' + icon.listClasses
@@ -216,13 +223,16 @@ export class IconSelectorElement extends BaseHTMLElement {
             return el
         }
 
-        // Favicon / None
+        // None
+        if (this.#allowNull) {
+            addIcon(_none)
+        }
+
+        // Favicon
         if (self.#favDomain) {
             const el = addIcon(_favicon)
             el.altIcon = _favicon.classes
             el.favDomain = self.#favDomain
-        } else {
-            addIcon(_none)
         }
 
         // Custom

@@ -39,11 +39,16 @@ export default class IconElement extends BaseHTMLElement {
 
     #show(iconOrUrl) {
         const self = this
+        if (!iconOrUrl) {
+            return
+        }
+
+        if (isURL(iconOrUrl)) {
+            return self.#showImage(iconOrUrl)
+        }
 
         var content = ''
-        if (!iconOrUrl) {
-            iconOrUrl = 'favicon'
-        } else if (iconOrUrl != 'favicon' && !isURL(iconOrUrl)) {
+        if (iconOrUrl && iconOrUrl != 'favicon') {
             const icon = IconProvider.findIcon(iconOrUrl)
             if (icon) {
                 iconOrUrl = icon?.id == 'favicon' ? 'favicon' : icon.classes
@@ -66,8 +71,6 @@ export default class IconElement extends BaseHTMLElement {
                 }
             }
             return self.#showImage(`https://favicone.com/${domain}?s=128`, () => retryWithoutSubdomain(domain))
-        } else if (isURL(iconOrUrl)) {
-            return self.#showImage(iconOrUrl)
         }
 
         // Assume classes
@@ -75,40 +78,34 @@ export default class IconElement extends BaseHTMLElement {
         self.add('i', content, { className: `icon ${iconOrUrl}` })
     }
 
-    #imageBusy = false
-    #promises = {}
+    #promise = null
     #showImage(iconOrUrl, failHandler) {
         // Ensure that we are the only current active request
-        const uuid = 'I' + Math.random().toString(36).slice(2)
-        this.#imageBusy = uuid
-        for (const img of this.querySelectorAll('img')) {
-            img.remove()
-        }
-        const img = this.add('img', { id: uuid, className: 'icon', style: 'display: none' })
-        if (this.#imageBusy != uuid) {
-            return
-        }
+        const img = this.add('img', { className: 'icon', style: 'display: none' })
+        const promise = this.#promise = State.resolveCachedImage(img, iconOrUrl)
+        promise.then(_ => {
+            if (this.#promise !== promise) {
+                img.remove()
+                return
+            }
 
-        const promise = this.#promises[iconOrUrl] ??= State.resolveCachedImage(img, iconOrUrl)
-            .then(_ => {
-                if (this.#imageBusy != uuid || !img.parentNode) {
-                    img.remove()
-                    return
+            // Replace image
+            this.querySelector('i.icon')?.remove()
+            for (const old of this.querySelectorAll('img')) {
+                if (old !== img) {
+                    old.remove()
                 }
+            }
+            img.show()
 
-                this.#imageBusy = false
-                this.querySelector('i.icon')?.remove()
-                img.show()
-                this.onchange?.()
-            })
+            this.onchange?.()
+        })
             .catch(_ => {
                 img.remove()
-                if (this.#imageBusy == uuid) {
-                    this.#imageBusy = false
+                if (this.#promise === promise) {
                     failHandler?.()
                 }
             })
-        promise.finally(_ => delete this.#promises[iconOrUrl])
     }
 }
 customElements.define('bs-icon', IconElement)
