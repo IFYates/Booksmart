@@ -73,6 +73,7 @@ If you need to share a single folder or your whole Booksmart dashboard, you can 
 - Popup
   - Quick list of favourites / last used bookmarks
   - Tree of folders > bookmarks
+- Folder span2 to only apply on med/lrg screens
 - Export to support re-linking folders inc. folder/bookmark customisations
 - Localisation
 - ? Style bookmarks by domain (across all folders)
@@ -84,6 +85,9 @@ If you need to share a single folder or your whole Booksmart dashboard, you can 
 - ...Bookmarks _may_ have a thumbnail
 
 2.0
-- Alternative layouts (grid w/ custom resize)
+- Alternative layouts
+  - grid w/ custom resize
+  - columns
 - ? Optional central storage + sync
 - ? Widgets?
+- ? Central storage w/ private link for use on other browsers (inc. mobile)

@@ -71,17 +71,20 @@ export default class EditFolderDialog extends BaseDialog {
 
         // Span
         add('label', 'Size')
-        add('div', { className: 'spanCols3', style: 'display: grid; grid-template-columns: 1fr 2fr 1fr 2fr 6fr;' }, (me) => {
-            super._addCheckbox('Wide', folder.width > 1, (v) => {
-                folder.width = !!v ? 2 : 1
-                document.getElementById(`folder-${folder.id}`)?.refresh()
-            })
-
-            super._addCheckbox('Tall', folder.height > 1, (v) => {
-                folder.height = !!v ? 2 : 1
-                document.getElementById(`folder-${folder.id}`)?.refresh()
-            })
+        add('select', function () {
+            add('option', '1 x 1', { value: '1x1' })
+            add('option', '1 x 2', { value: '1x2' })
+            add('option', '2 x 1', { value: '2x1' })
+            add('option', '2 x 2', { value: '2x2' })
+            this.onchange = () => {
+                folder.width = num(this.value[0])
+                folder.height = num(this.value[2])
+            }
+            this.value = `${folder.width || 1}x${folder.height || 1}`
+            console.log(`${this.value}`)
+            this.onchange()
         })
+        add('div', { classes: 'spanCols2' })
 
         // Colour
         var defaultAccent = !folder.accentColour
@@ -118,7 +121,7 @@ export default class EditFolderDialog extends BaseDialog {
 
         const elError = add('div', { classes: ['error', 'spanCols4'] })
 
-        add('div', { classes: 'spanCols2', style: 'white-space:nowrap' }, () => {
+        add('div', { classes: ['actions','spanCols2'], style: 'white-space:nowrap' }, () => {
             if (folder.id) {
                 if (folder.isOwned) {
                     var confirmedDelete = false
@@ -157,10 +160,7 @@ export default class EditFolderDialog extends BaseDialog {
                 }
             } else {
                 add('button', { type: 'button' }, () => {
-                    add('span', { className: 'fa-stack fa-xs' }, () => {
-                        add('i', { className: 'fas fa-bookmark fa-stack-2x' })
-                        add('i', { className: 'fas fa-arrow-right fa-stack-1x fa-inverse' })
-                    })
+                    add('i', { className: 'fas fa-bookmark' })
                     add('span', ' Add from browser bookmarks')
                 }).onclick = async () => {
                     const result = await new ImportBookmarkDialog().show()
