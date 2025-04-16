@@ -39,6 +39,9 @@ input {
 .icon.gray {
     opacity: 0.25;
 }
+.icon.hgi {
+    font-size: 28px;
+}
 .icon.preview {
     zoom: 2;
     width: 50px;

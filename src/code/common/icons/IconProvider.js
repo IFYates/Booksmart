@@ -6,11 +6,11 @@ import { Hugeicons } from "./Icons.Hugeicons.js"
 import { Iconoir } from "./Icons.Iconoir.js"
 
 var _icons = [
-    ...Boxicons.icons,
-    ...Emojis.icons,
-    ...FontAwesome.icons,
-    ...GoogleMaterial.icons,
-    // ...Hugeicons.icons,
+    // ...Boxicons.icons,
+    // ...Emojis.icons,
+    // ...FontAwesome.icons,
+    // ...GoogleMaterial.icons,
+    ...Hugeicons.icons,
     // ...Iconoir.icons
 ]
 _icons = _icons.sort((a, b) => a.name.localeCompare(b.name))
