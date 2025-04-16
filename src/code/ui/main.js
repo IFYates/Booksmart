@@ -6,9 +6,14 @@ import { NoFoldersElement } from './elements/noFolders.js'
 import { SiteListElement } from './elements/sites.js'
 import { TabListElement } from './elements/TabListElement.js'
 import State from '../models/state.js'
+import IconProvider from '../common/icons/IconProvider.js'
 import TagElement from './elements/TagElement.js'
 import TagsDialog from './dialog/TagsDialog.js'
 import MessageDialog from './dialog/MessageDialog.js'
+
+for (const css of IconProvider.CSS) {
+    document.head.add('link', { href: css, rel: 'stylesheet' })
+}
 
 // Hide document until changes have settled settled
 var changed = true

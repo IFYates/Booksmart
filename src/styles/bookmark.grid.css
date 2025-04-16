@@ -28,25 +28,27 @@
 }
 
 :host bs-icon {
+    align-content: center;
     display: block;
-    font-size: calc(var(--size) * 0.75);
-    height: calc(var(--size) - 10px);
+    font-size: calc(var(--size) - 40px);
     position: absolute;
+    margin-top: -10px;
 }
 
 :host bs-icon:has(i.emoji) {
     margin-top: -30px;
 }
-
-:host bs-icon i.icon:not(.emoji) {
-    display: flex;
-    justify-content: center;
+:host bs-icon i.icon {
+    display: inline;
+    max-height: calc(var(--size) - 60px);
 }
-
+:host bs-icon i.icon.material {
+    font-size: calc(var(--size) - 20px);
+}
 :host bs-icon img.icon {
-    height: calc(var(--size) * 0.75);
     max-height: unset;
-    max-width: calc(var(--size) * 0.75);
+    height: calc(var(--size) - 40px);
+    max-width: calc(var(--size) - 40px);
 }
 
 :host bs-icon#overlay {

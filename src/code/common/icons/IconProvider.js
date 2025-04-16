@@ -9,7 +9,7 @@ var _icons = [
     ...Boxicons.icons,
     ...Emojis.icons,
     ...FontAwesome.icons,
-    // ...GoogleMaterial.icons,
+    ...GoogleMaterial.icons,
     // ...Hugeicons.icons,
     // ...Iconoir.icons
 ]
@@ -19,7 +19,6 @@ export default class IconProvider {
     static get CSS() {
         return [
             Boxicons.CSS,
-            //Emojis.CSS,
             FontAwesome.CSS,
             GoogleMaterial.CSS,
             Hugeicons.CSS,
