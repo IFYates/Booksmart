@@ -10,7 +10,7 @@ import { Tabs } from "../../common/tabs.js"
 
 const template = document.createElement('template')
 template.innerHTML = `
-<a href="<!--$ url $-->" title="<!--$ title $-->&#13;&#10;<!--$ url $-->">
+<a href="<!--$ url $-->" title="<!--$ title $-->&#13;&#10;<!--$ url $-->&#13;&#10;&#13;&#10;<!--$ notes $-->">
     <bs-icon id="icon" altIcon="far fa-bookmark"></bs-icon>
     <bs-icon id="overlay"></bs-icon>
 
