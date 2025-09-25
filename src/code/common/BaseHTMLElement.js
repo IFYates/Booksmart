@@ -5,7 +5,7 @@ export class BaseHTMLElement extends HTMLElement {
     #styles;
     get host() { return this.#template ? this.shadowRoot.host : this; }
 
-    static TemplateRE = /<!--\$\s*([\w\.]+)\s*\$-->/;
+    static TemplateRE = /(?:&lt;|<)!--\$\s*([\w\.]+)\s*\$--(?:&gt;|>)/;
     static replaceTemplates(input, object) {
         input = String(input);
         var m, result = '';
