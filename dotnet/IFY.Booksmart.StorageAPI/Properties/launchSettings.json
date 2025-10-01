@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "environmentVariables": {
+        "ASPNETCORE_HTTPS_PORTS": "8081",
+        "ASPNETCORE_HTTP_PORTS": "8080",
+        "CONNECTIONSTRINGS__SQLITE": "Data Source=/storage/booksmart.db"
+      },
+      "publishAllPorts": true,
+      "useSSL": true
+    },
+    "App": {
+      "commandName": "Project",
+      "workingDirectory": "bin\\Debug\\net10.0",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "Container (.NET SDK)": {
+      "commandName": "SdkContainer",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "environmentVariables": {
+        "ASPNETCORE_HTTPS_PORTS": "8081",
+        "ASPNETCORE_HTTP_PORTS": "8080",
+        "CONNECTIONSTRINGS__SQLITE": "Data Source=/storage/booksmart.db"
+      },
+      "publishAllPorts": true,
+      "useSSL": true
+    }
+  }
+}

@@ -1,2 +1,9 @@
+*.pdn
 *.pem
 /*.zip
+
+/dotnet/**/.vs
+/dotnet/**/bin
+/dotnet/**/obj
+/dotnet/**/TestResults
+/dotnet/**/*.user
