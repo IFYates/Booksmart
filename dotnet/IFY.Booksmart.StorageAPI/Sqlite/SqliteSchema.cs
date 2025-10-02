@@ -38,11 +38,14 @@ public static class SqliteSchema
     {
         const string createTableSql = @"
 CREATE TABLE [KeyValue] (
-    [EmailAddress] VARCHAR(500) NOT NULL UNIQUE,
-    [Key] VARCHAR(100) NOT NULL,
-    [Value] CLOB,
+    [Account] VARCHAR(500) NOT NULL PRIMARY KEY, -- Hashed email address using platform salt
+    [Key] VARCHAR(100) NOT NULL, -- From KeyValueStore.Keys
+    [Value] TEXT, -- Literal or base64-encoded binary data
+    [CreatedAt] DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')),
+    [UpdatedAt] DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')),
+    [IsDeleted] BOOLEAN NOT NULL DEFAULT 0,
 
-    CONSTRAINT [UQ_KeyValue_EmailAddress_Key] UNIQUE ([EmailAddress], [Key])
+    CONSTRAINT [UQ_KeyValue_Account_Key] UNIQUE ([Account], [Key])
 )
 ";
         executeNonQuery(sqlite, createTableSql);

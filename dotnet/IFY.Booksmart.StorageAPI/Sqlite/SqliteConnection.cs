@@ -12,7 +12,7 @@ public sealed class SqliteConnection : ISqliteConnection
         _connection = new(opts.Value.ConnectionString);
 
         // Register the user-defined function
-        _connection.CreateFunction<string, string>(
+        _connection.CreateFunction<string, string, string>(
             name: "SHA256_BASE64",
             function: Utility.Sha256Base64);
     }
