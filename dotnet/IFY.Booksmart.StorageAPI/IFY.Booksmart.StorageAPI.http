@@ -1,0 +1,20 @@
+@HOST = http://localhost:5000
+
+### Register
+
+POST {{HOST}}/booksmart/register
+Content-Type: application/json
+
+"ian@iyates.co.uk"
+
+### Set value
+
+PUT {{HOST}}/booksmart/dashboard/1759443105/o6QczBNiqFSIxTYIiXLH7tNkOXV7+ulaabp789a1ne0=
+Content-Type: application/json
+
+"value"
+
+### Get value
+
+GET {{HOST}}/booksmart/dashboard/1759443105/o6QczBNiqFSIxTYIiXLH7tNkOXV7+ulaabp789a1ne0=
+Accept: application/json

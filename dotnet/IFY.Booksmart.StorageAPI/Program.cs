@@ -21,19 +21,22 @@ builder.Services.AddHostedService<DisableInactiveAccountsTask>();
 // Add the rate‑limiting service
 builder.Services.AddRateLimiter(options =>
 {
+    const int windowSeconds = 60;
+    const int requestLimit = 10;
+
     // Global fallback policy
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
     {
         // Partition key = client IP
         var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-        // Fixed‑window: 100 req / 60 sec
+        // Fixed‑window: X req per Y secs
         return RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: ip,
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 100,
-                Window = TimeSpan.FromMinutes(1),
+                PermitLimit = requestLimit,
+                Window = TimeSpan.FromSeconds(windowSeconds),
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 0 // reject immediately when limit exceeded
             });
@@ -43,7 +46,7 @@ builder.Services.AddRateLimiter(options =>
     options.OnRejected = (context, token) =>
     {
         context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-        context.HttpContext.Response.Headers.RetryAfter = "60"; // 1-minute retry
+        context.HttpContext.Response.Headers.RetryAfter = windowSeconds.ToString();
         return ValueTask.CompletedTask;
     };
 });

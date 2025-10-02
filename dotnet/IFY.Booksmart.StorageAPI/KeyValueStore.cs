@@ -29,16 +29,7 @@ AND [IsDeleted] = 0
 
     private async Task markAccountAsAccessed(string account)
     {
-        using var cmd = sqlite.CreateCommand();
-        cmd.CommandText = @"
-UPDATE [KeyValue]
-SET [Value] = @now, [UpdatedAt] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')
-WHERE [Account] = @account AND [Key] = @key
-";
-        cmd.Parameters.AddWithValue("@now", DateTime.UtcNow.ToString("o"));
-        cmd.Parameters.AddWithValue("@account", account);
-        cmd.Parameters.AddWithValue("@key", "LastAccessed");
-        await cmd.ExecuteNonQueryAsync();
+        await setAccountValue(account, "LastAccessed", DateTime.UtcNow.ToString("o"));
     }
 
     public async Task<bool> CreateAccount(string emailAddress)
@@ -151,32 +142,25 @@ AND [IsDeleted] = 0
             return;
         }
 
-        // Try to upsert value
-        var res = executeSql(@"
+        await setAccountValue(account, key.ToString(), value);
+    }
+
+    private async Task<bool> setAccountValue(string account, string key, string value)
+    {
+        // Upsert value
+        const string sql = @"
 INSERT INTO [KeyValue] ([Account], [Key], [Value], [CreatedAt], [UpdatedAt], [IsDeleted])
 VALUES (@account, @key, @value, STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'), STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'), 0)
 ON CONFLICT([Account], [Key]) DO UPDATE
 SET [Value] = @value, [UpdatedAt] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'), [IsDeleted] = 0
-");
+";
 
-        // If no rows were affected, the account/key does not exist, so create it
-        if (res.Result == 0)
-        {
-            await executeSql(@"
-INSERT INTO [KeyValue] ([Account], [Key], [Value])
-VALUES (@account, @key, @value)
-");
-        }
+        using var cmd = sqlite.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@account", account);
+        cmd.Parameters.AddWithValue("@key", key);
+        cmd.Parameters.AddWithValue("@value", value);
 
-        async Task<int> executeSql(string sql)
-        {
-            using var cmd = sqlite.CreateCommand();
-            cmd.CommandText = sql;
-            cmd.Parameters.AddWithValue("@account", account);
-            cmd.Parameters.AddWithValue("@key", key.ToString());
-            cmd.Parameters.AddWithValue("@value", value);
-
-            return await cmd.ExecuteNonQueryAsync();
-        }
+        return await cmd.ExecuteNonQueryAsync() > 0;
     }
 }
