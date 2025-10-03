@@ -1,26 +1,31 @@
 @HOST = http://localhost:5000
 
+# test@example.com hash: eaeQQX0An/xQ/jAg9fa2M0CpiGS6Z6FcuPXO9l+UQ7E= eaeQQX0An%2FxQ%2FjAg9fa2M0CpiGS6Z6FcuPXO9l%2BUQ7E%3D
+# 'salt' email hash: qMhdMUx9WemyWUqzrgdzGZsU239cOuROhizjO+5kSpI=
+
 ### Register
 
 POST {{HOST}}/booksmart/register
 Content-Type: text/plain
 
-ian@iyates.co.uk
+test@example.com
 
 ### Confirm
 
-POST {{HOST}}/booksmart/register/qjaiKAS5Wys%2BXQAkFs2VPyG4csmlA1ur%2FifkryUeBl8%3D
+POST {{HOST}}/booksmart/register/eaeQQX0An%2FxQ%2FjAg9fa2M0CpiGS6Z6FcuPXO9l%2BUQ7E%3D/EjIyZSe7dkC9T-lzNAjjuw
 Content-Type: text/plain
 
-CzxfTMkVSU-StXdNAYalWw
+Passw0rd
 
 ### Set value
 
-PUT {{HOST}}/booksmart/dashboard/test/LxNjHSOgEZUpT7JCjCse7O8FqgM7R0vctyGTIUfNr7M=
+PUT {{HOST}}/booksmart/dashboard
+Authorization: SHA256 salt qMhdMUx9WemyWUqzrgdzGZsU239cOuROhizjO+5kSpI= Passw0rd
 Content-Type: text/plain
 
 value2
 
 ### Get value
 
-GET {{HOST}}/booksmart/dashboard/test/LxNjHSOgEZUpT7JCjCse7O8FqgM7R0vctyGTIUfNr7M=
+GET {{HOST}}/booksmart/dashboard
+Authorization: SHA256 salt qMhdMUx9WemyWUqzrgdzGZsU239cOuROhizjO+5kSpI= Passw0rd

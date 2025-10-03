@@ -1,24 +1,20 @@
 ﻿using IFY.Booksmart.StorageAPI.Sqlite;
-using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Options;
-using System.Runtime.CompilerServices;
-using System.Security.Principal;
 
 namespace IFY.Booksmart.StorageAPI.Data;
 
 public class KeyValueStore(ISqliteConnection sqlite) : ISchemaBuilder
 {
-    public async Task<string?> GetAccountValue(string account, string key)
+    public async Task<string?> GetAccountValue(long accountId, StorageKey key)
     {
         using var cmd = sqlite.CreateCommand();
         cmd.CommandText = @"
 SELECT [Value]
 FROM [KeyValue]
-WHERE [Account] = @account
+WHERE [AccountId] = @accountId
 AND [Key] = @key
 AND [IsDeleted] = 0
 ";
-        cmd.Parameters.AddWithValue("@account", account);
+        cmd.Parameters.AddWithValue("@accountId", accountId);
         cmd.Parameters.AddWithValue("@key", key.ToString());
 
         using var reader = await cmd.ExecuteReaderAsync();
@@ -30,34 +26,34 @@ AND [IsDeleted] = 0
         return reader.IsDBNull(0) ? null : reader.GetString(0);
     }
 
-    public async Task<bool> SetAccountValue(string account, string key, string value)
+    public async Task<bool> SetAccountValue(long accountId, StorageKey key, string value)
     {
         // Upsert value
         using var cmd = sqlite.CreateCommand();
         cmd.CommandText = @"
-INSERT INTO [KeyValue] ([Account], [Key], [Value])
-VALUES (@account, @key, @value)
-ON CONFLICT([Account], [Key]) DO UPDATE
+INSERT INTO [KeyValue] ([AccountId], [Key], [Value])
+VALUES (@accountId, @key, @value)
+ON CONFLICT([AccountId], [Key]) DO UPDATE
 SET [Value] = @value, [UpdatedAt] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'), [IsDeleted] = 0
 ";
-        cmd.Parameters.AddWithValue("@account", account);
-        cmd.Parameters.AddWithValue("@key", key);
+        cmd.Parameters.AddWithValue("@accountId", accountId);
+        cmd.Parameters.AddWithValue("@key", key.ToString());
         cmd.Parameters.AddWithValue("@value", value);
 
         return await cmd.ExecuteNonQueryAsync() > 0;
     }
 
-    public async Task<bool> RemoveAccountValue(string account, string key)
+    public async Task<bool> RemoveAccountValue(long accountId, StorageKey key)
     {
         // Upsert value
         using var cmd = sqlite.CreateCommand();
         cmd.CommandText = @"
 UPDATE [KeyValue]
 SET [IsDeleted] = 1, [UpdatedAt] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')
-WHERE [Account] = @account
+WHERE [AccountId] = @accountId
 ";
-        cmd.Parameters.AddWithValue("@account", account);
-        cmd.Parameters.AddWithValue("@key", key);
+        cmd.Parameters.AddWithValue("@accountId", accountId);
+        cmd.Parameters.AddWithValue("@key", key.ToString());
 
         return await cmd.ExecuteNonQueryAsync() > 0;
     }
@@ -69,12 +65,12 @@ WHERE [Account] = @account
         switch (version)
         {
             case 1:
-                ApplySchemaV1(sqlite);
+                applySchemaV1(sqlite);
                 break;
         }
     }
 
-    private static void ApplySchemaV1(ISqliteConnection sqlite)
+    private static void applySchemaV1(ISqliteConnection sqlite)
     {
         const string createTableSql = @"
 CREATE TABLE [KeyValue] (

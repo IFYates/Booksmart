@@ -2,6 +2,8 @@
 using IFY.Booksmart.StorageAPI.Data;
 using IFY.Booksmart.StorageAPI.Sqlite;
 using Microsoft.Extensions.Options;
+using System.Net.Mime;
+using System.Text;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -57,7 +59,8 @@ builder.Services.AddRateLimiter(options =>
 // Build app
 var app = builder.Build();
 app.UseRateLimiter();
-app.UseRouteValueSlashDecoder();
+app.Use(Middleware.RouteValueSlashDecoder);
+app.Use(Middleware.PlainTextBodyParser);
 
 // Setup database
 using (var sqlite = app.Services.GetRequiredService<ISqliteConnection>())
@@ -73,34 +76,60 @@ app.Services.GetRequiredService<Api>().RegisterRoutes(app);
 
 app.Run();
 
-file static class MiddlewareExtensions
+file static class Middleware
 {
     /// <summary>
-    /// Replaces any remaining "%2F" or "%5C" in ALL route values
-    /// with the actual '/' or '\' character.
+    /// Processes requests with a Content-Type of text/plain by converting the request body to a JSON string, enabling
+    /// model binding for [FromBody] parameters expecting a string.
+    /// </summary>
+    /// <remarks>This middleware allows endpoints expecting a string parameter via [FromBody] to accept plain
+    /// text requests by reformatting the body as a JSON string. The Content-Type is changed to application/json to
+    /// ensure correct model binding. This conversion only occurs for requests with a Content-Type of text/plain; other
+    /// requests are passed through unchanged.</remarks>
+    /// <param name="context">The HTTP context for the current request. Must not be null.</param>
+    /// <param name="next">A delegate representing the next middleware in the pipeline. Must not be null.</param>
+    /// <returns>A task that represents the asynchronous operation of the middleware.</returns>
+    public static async Task PlainTextBodyParser(HttpContext context, Func<Task> next)
+    {
+        // If the Content-Type is text/plain, change it to application/json
+        // so that the [FromBody] attribute can parse it as a string.
+        if (context.Request.ContentType != null &&
+            context.Request.ContentType.StartsWith(MediaTypeNames.Text.Plain, StringComparison.OrdinalIgnoreCase))
+        {
+            // Read the entire body as a string
+            using var r = new StreamReader(context.Request.Body);
+            var value = await r.ReadToEndAsync();
+            context.Request.Body.Dispose();
+
+            // Replace the body with a new stream containing the JSON string
+            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes($"\"{value}\""));
+            context.Request.ContentType = MediaTypeNames.Application.Json;
+        }
+        await next();
+    }
+
+    /// <summary>
+    /// Replaces any remaining "%2F" or "%5C" in ALL route values with the actual '/' or '\' character.
     /// </summary>
     /// <remarks>
     /// This is because ASP.NET Core routing leaves only these characters encoded.
     /// </remarks>
-    public static IApplicationBuilder UseRouteValueSlashDecoder(this IApplicationBuilder app)
+    public static async Task RouteValueSlashDecoder(HttpContext context, Func<Task> next)
     {
-        return app.Use(async (context, next) =>
+        foreach (var kvp in context.Request.RouteValues.ToArray())
         {
-            foreach (var kvp in context.Request.RouteValues.ToArray())
+            if (kvp.Value is string raw && !string.IsNullOrEmpty(raw))
             {
-                if (kvp.Value is string raw && !string.IsNullOrEmpty(raw))
+                var decoded = raw
+                    .Replace("%2F", "/", StringComparison.OrdinalIgnoreCase)
+                    .Replace("%5C", "\\", StringComparison.OrdinalIgnoreCase);
+                if (!ReferenceEquals(decoded, raw))
                 {
-                    var decoded = raw
-                        .Replace("%2F", "/", StringComparison.OrdinalIgnoreCase)
-                        .Replace("%5C", "\\", StringComparison.OrdinalIgnoreCase);
-                    if (!ReferenceEquals(decoded, raw))
-                    {
-                        context.Request.RouteValues[kvp.Key] = decoded;
-                    }
+                    context.Request.RouteValues[kvp.Key] = decoded;
                 }
             }
+        }
 
-            await next();
-        });
+        await next();
     }
 }

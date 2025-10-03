@@ -33,7 +33,7 @@ public class DisableInactiveAccountsTask(AccountStore store, IConfiguration conf
         var cutoff = DateTime.UtcNow - TimeSpan.FromDays(_idleDaysRemovalFree);
         var disableAccounts = accountsInfo
             .Where(a => a.Tier == AccountTier.Free && a.LastAccessed < cutoff)
-            .Select(a => a.Account)
+            .Select(a => a.EmailHash).OfType<string>()
             .ToArray();
 
         // Disable accounts
