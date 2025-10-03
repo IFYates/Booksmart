@@ -34,9 +34,9 @@ AND [IsDeleted] = 0
         return [.. results];
     }
 
-    public async Task<string?> CreateAccount(string emailAddress)
+    public async Task<string?> CreateAccount(string emailAddress, string password)
     {
-        emailAddress = emailAddress.Trim().ToLowerInvariant();
+        emailAddress = emailAddress.ToLowerInvariant();
         var emailMetric = $"{emailAddress[0]}{emailAddress.Length}";
         var emailHash = Utility.Sha256Base64(emailMetric, emailAddress);
 
@@ -63,10 +63,11 @@ WHERE [EmailHash] = @emailHash
         {
             cmd.CommandText = @"
 INSERT INTO [Account] ([EmailHash], [PasswordHash], [Tier], [LastAccessed])
-VALUES (@emailHash, '', 'None', STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'));
+VALUES (@emailHash, SHA256_BASE64(@emailHash, @password), 'None', STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'));
 SELECT last_insert_rowid();
 ";
             cmd.Parameters.AddWithValue("@emailHash", emailHash);
+            cmd.Parameters.AddWithValue("@password", password);
 
             newAccountId = await cmd.ExecuteScalarAsync() as long?;
             if (!newAccountId.HasValue)
@@ -75,16 +76,11 @@ SELECT last_insert_rowid();
             }
         }
 
-        // Record registration token
-        var registrationToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray())
-            .TrimEnd('=')
-            .Replace('+', '-')
-            .Replace('/', '_');
-        await SetAccountPassword(newAccountId.Value, registrationToken);
-        return registrationToken;
+        // Return registration token
+        return Utility.Sha256Base64(newAccountId.Value.ToString(), emailHash);
     }
 
-    public async Task<bool> ConfirmAccount(string emailHash, string token, string password)
+    public async Task<bool> ConfirmAccount(string emailHash, string token)
     {
         // Find account
         var (accountId, foundEmailHash, tier, _) = await GetAccountInfo(emailHash);
@@ -93,15 +89,15 @@ SELECT last_insert_rowid();
             return false;
         }
 
-        // Must match
-        if (!await TestAccountPassword(emailHash, token))
+        // Check token is as expected
+        var expectedToken = Utility.Sha256Base64(accountId.ToString(), foundEmailHash);
+        if (token != expectedToken)
         {
             return false;
         }
 
         // Activate account as Free tier
-        await UpdateAccountTier(accountId, AccountTier.Free);
-        await SetAccountPassword(accountId, password);
+        await SetAccountTier(accountId, AccountTier.Free);
         return true;
     }
 
@@ -121,7 +117,7 @@ AND [IsDeleted] = 0
         return await cmd.ExecuteScalarAsync() != null;
     }
 
-    public async Task<bool> UpdateAccountTier(long accountId, AccountTier tier)
+    public async Task<bool> SetAccountTier(long accountId, AccountTier tier)
     {
         using var cmd = sqlite.CreateCommand();
         cmd.CommandText = @"

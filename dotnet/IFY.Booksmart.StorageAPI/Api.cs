@@ -11,34 +11,47 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
 {
     public void RegisterRoutes(WebApplication app)
     {
-        app.MapPost("/booksmart/register", CreateAccount);
-        app.MapPost("/booksmart/register/{account}/{token}", ConfirmAccount);
-        app.MapPost("/booksmart/password", SetPassword);
-        app.MapGet("/booksmart/{key}", GetKeyValue);
-        app.MapPut("/booksmart/{key}", SetKeyValue);
-        app.MapPut("/booksmart/{key}/{version}", SetKeyValue);
+        app.MapPost("/register", CreateAccount);
+        app.MapGet("/register/{account}/{token}", ConfirmAccount);
+        app.MapPost("/password", SetPassword);
+        app.MapGet("/{key}", GetKeyValue);
+        app.MapPut("/{key}", SetKeyValue);
+        app.MapPut("/{key}/{version}", SetKeyValue);
     }
 
     // BadRequest = Invalid email address
     [Consumes(MediaTypeNames.Text.Plain)]
-    internal async Task<IResult> CreateAccount([FromBody] string emailAddress)
+    internal async Task<IResult> CreateAccount([FromBody] string emailAddressAndPassword)
     {
+        var parts = emailAddressAndPassword.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 2)
+        {
+            return Results.BadRequest();
+        }
+
         // Must be valid email address
+        var emailAddress = parts[0].Trim();
         if (!ValidEmailAddress().IsMatch(emailAddress))
         {
             return Results.BadRequest();
         }
 
-        // Create account in storage (hashes email address)
-        var x = await accStore.CreateAccount(emailAddress);
+        // Validate password
+        var password = parts[1].Trim();
+        if (string.IsNullOrEmpty(password))
+        {
+            return Results.BadRequest();
+        }
+
+        // Create account in storage
+        var token = await accStore.CreateAccount(emailAddress, password);
         // TODO: need welcome email to confirm?
-        return Results.Ok(x); // Returns OK even if nothing done
+        return Results.Text(token); // Returns OK even if nothing done
     }
 
     // BadRequest = Invalid or missing token
     // Forbidden = Unknown account or invalid registration token
-    [Consumes(MediaTypeNames.Text.Plain)]
-    internal async Task<IResult> ConfirmAccount(string account, string token, [FromBody] string password)
+    internal async Task<IResult> ConfirmAccount(string account, string token, [FromQuery] string? returnUrl)
     {
         // Validate token
         if (string.IsNullOrEmpty(token))
@@ -47,11 +60,14 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
         }
 
         // Confirm account in storage
-        if (!await accStore.ConfirmAccount(account, token, password))
+        if (!await accStore.ConfirmAccount(account, token))
         {
             return Results.StatusCode(403);
         }
-        return Results.Ok();
+
+        return returnUrl != null
+            ? Results.Redirect(returnUrl)
+            : Results.Ok();
     }
 
     // BadRequest = Invalid or missing passwordf

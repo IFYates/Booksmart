@@ -1,6 +1,7 @@
 ﻿using IFY.Booksmart.StorageAPI.Data;
 using System.Net.Mime;
 using System.Text;
+using System.Text.Json;
 
 namespace IFY.Booksmart.StorageAPI;
 
@@ -95,7 +96,7 @@ public static class Middleware
             context.Request.Body.Dispose();
 
             // Replace the body with a new stream containing the JSON string
-            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes($"\"{value}\""));
+            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value)));
             context.Request.ContentType = MediaTypeNames.Application.Json;
         }
         await next();
