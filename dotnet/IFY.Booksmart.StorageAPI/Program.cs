@@ -17,6 +17,7 @@ builder.Services.Configure<SqliteOptions>(cfg =>
 builder.Services.AddTransient<ISqliteConnection, SqliteConnection>();
 builder.Services.AddTransient<KeyValueStore>();
 builder.Services.AddHostedService<DisableInactiveAccountsTask>();
+builder.Services.AddSingleton<Api>();
 
 // Add the rate‑limiting service
 builder.Services.AddRateLimiter(options =>
@@ -58,6 +59,6 @@ app.UseRateLimiter();
 
 // Setup platform
 SqliteSchema.EnsureSchema(app.Services);
-Api.Register(app);
+app.Services.GetRequiredService<Api>().Register(app);
 
 app.Run();

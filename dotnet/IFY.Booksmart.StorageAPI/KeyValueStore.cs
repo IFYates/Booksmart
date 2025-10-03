@@ -101,7 +101,7 @@ AND [IsDeleted] = 0
         return accounts.ToArray();
     }
 
-    public async Task<(string Account, string? Value)?> GetKeyByAccountHash(string salt, string hash, StorageKey key)
+    public async Task<(string Account, string? Value)> GetKeyByAccountHash(string salt, string hash, StorageKey key)
     {
         // Find value
         (string Account, string? Value) result;
@@ -143,6 +143,7 @@ AND [IsDeleted] = 0
         }
 
         await setAccountValue(account, key.ToString(), value);
+        await markAccountAsAccessed(account);
     }
 
     private async Task<bool> setAccountValue(string account, string key, string value)

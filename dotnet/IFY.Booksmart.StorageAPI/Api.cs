@@ -1,73 +1,95 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Text.RegularExpressions;
 
 namespace IFY.Booksmart.StorageAPI;
 
-public static class Api
+public partial class Api(KeyValueStore store)
 {
-    public static void Register(WebApplication app)
+    public void Register(WebApplication app)
     {
         app.MapPost("/booksmart/register", CreateAccount);
         app.MapGet("/booksmart/{key}/{salt}/{hash}", GetByHashedEmail);
+        app.MapPut("/booksmart/{key}/{salt}/{hash}", SetByHashedAccount);
     }
 
-    public static async Task<ActionResult> CreateAccount([FromBody] string emailAddress, KeyValueStore storage)
+    public async Task<IResult> CreateAccount(HttpRequest request)
     {
-        // Create account in storage
-        await storage.CreateAccount(emailAddress);
+        // Must be valid email address
+        var emailAddress = await getWholeRequestBody(request);
+        if (!ValidEmailAddress().IsMatch(emailAddress))
+        {
+            return Results.BadRequest();
+        }
+
+        // Create account in storage (hashes email address)
+        await store.CreateAccount(emailAddress);
         // TODO: need welcome email to confirm?
-        return new OkResult();
+        return Results.Ok();
     }
 
     // hash = SHA256_BASE64(salt, SHA256_BASE64(email_metric, lower(email)))
-    public static async Task<ActionResult<string>> GetByHashedEmail(string key, string salt, string hash, KeyValueStore storage)
+    public async Task<IResult> GetByHashedEmail(string key, string salt, string hash)
     {
-        // salt must be UNIX timestamp within 5 minutes of now
-        if (!long.TryParse(salt, out var ts))
+        if (!isValidSalt(salt))
         {
-            return new BadRequestResult();
-        }
-        var diff = DateTimeOffset.UtcNow - DateTimeOffset.FromUnixTimeSeconds(ts);
-        if (diff.TotalMinutes is < -5 or > 5)
-        {
-            return new BadRequestResult();
+            return Results.BadRequest();
         }
 
         // key must be valid enum value
         if (!Enum.TryParse<KeyValueStore.StorageKey>(key, ignoreCase: true, out var skey))
         {
-            return new ForbidResult();
+            return Results.Forbid();
         }
 
         // Get value
-        var result = await storage.GetKeyByAccountHash(salt, hash, skey);
-        if (result == null)
+        var (account, value) = await store.GetKeyByAccountHash(salt, hash, skey);
+        if (account == null)
         {
-            return new NotFoundResult();
+            return Results.NotFound();
         }
-        return new OkObjectResult(result.Value);
+        return Results.Text(value ?? string.Empty);
     }
 
-    public static async Task<ActionResult> SetByHashedAccount(string key, string salt, string hash, [FromBody] string value, KeyValueStore storage)
+    public async Task<IResult> SetByHashedAccount(string key, string salt, string hash, HttpRequest request)
     {
-        // salt must be UNIX timestamp within 5 minutes of now
-        if (!long.TryParse(salt, out var ts))
+        if (!isValidSalt(salt))
         {
-            return new BadRequestResult();
-        }
-        var diff = DateTimeOffset.UtcNow - DateTimeOffset.FromUnixTimeSeconds(ts);
-        if (diff.TotalMinutes is < -5 or > 5)
-        {
-            return new BadRequestResult();
+            return Results.BadRequest();
         }
 
         // key must be valid enum value
         if (!Enum.TryParse<KeyValueStore.StorageKey>(key, ignoreCase: true, out var skey))
         {
-            return new ForbidResult();
+            return Results.Forbid();
         }
 
         // Set value
-        await storage.SetKeyByAccountHash(salt, hash, skey, value);
-        return new OkResult();
+        var value = await getWholeRequestBody(request);
+        await store.SetKeyByAccountHash(salt, hash, skey, value);
+        return Results.Ok();
+    }
+
+    [GeneratedRegex(@"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$")]
+    private static partial Regex ValidEmailAddress();
+
+    private static bool isValidSalt(string salt)
+    {
+#if DEBUG
+        return true;
+#endif
+
+        // Salt must be UNIX timestamp within 5 minutes of now
+        if (!long.TryParse(salt, out var ts))
+        {
+            return false;
+        }
+        var diff = DateTimeOffset.UtcNow - DateTimeOffset.FromUnixTimeSeconds(ts);
+        return diff.TotalMinutes is < -5 or > 5;
+    }
+
+    private static async Task<string> getWholeRequestBody(HttpRequest request)
+    {
+        using var r = new StreamReader(request.Body);
+        return await r.ReadToEndAsync();
     }
 }
