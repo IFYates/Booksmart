@@ -4,6 +4,36 @@ namespace IFY.Booksmart.StorageAPI.Data;
 
 public class AccountStore(ISqliteConnection sqlite) : ISchemaBuilder
 {
+    public async Task<(long AccountId, string? EmailHash, AccountTier Tier, DateTime LastAccessed)> GetAccountInfo(string forEmailHash)
+        => (await GetAllAccountsInfo(forEmailHash)).SingleOrDefault();
+    public async Task<(long AccountId, string? EmailHash, AccountTier Tier, DateTime LastAccessed)[]> GetAllAccountsInfo(string? forEmailHash = null)
+    {
+        using var cmd = sqlite.CreateCommand();
+        cmd.CommandText = @"
+SELECT [AccountId], [EmailHash], [Tier], [LastAccessed]
+FROM [Account]
+WHERE (@emailHash IS NULL OR [EmailHash] = @emailHash)
+AND [IsDeleted] = 0
+";
+        cmd.Parameters.AddWithValue("@emailHash", forEmailHash);
+
+        // Get Tier and LastAccessed date of all accounts
+        var results = new List<(long, string?, AccountTier, DateTime)>();
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var accountId = reader.GetInt64(0);
+            var emailHash = reader.GetStringOrNull(1);
+            if (!Enum.TryParse<AccountTier>(reader.GetStringOrNull(2) ?? nameof(AccountTier.None), true, out var tier))
+            {
+                tier = AccountTier.Free;
+            }
+            var lastAccessed = reader.GetDateTimeOrNull(3) ?? DateTime.MinValue;
+            results.Add((accountId, emailHash, tier, lastAccessed));
+        }
+        return [.. results];
+    }
+
     public async Task<string?> CreateAccount(string emailAddress)
     {
         emailAddress = emailAddress.Trim().ToLowerInvariant();
@@ -28,14 +58,21 @@ WHERE [EmailHash] = @emailHash
         }
 
         // Create account
+        long? newAccountId;
         using (var cmd = sqlite.CreateCommand())
         {
             cmd.CommandText = @"
 INSERT INTO [Account] ([EmailHash], [PasswordHash], [Tier], [LastAccessed])
-VALUES (@emailHash, '', 'None', STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'))
+VALUES (@emailHash, '', 'None', STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'));
+SELECT last_insert_rowid();
 ";
             cmd.Parameters.AddWithValue("@emailHash", emailHash);
-            await cmd.ExecuteNonQueryAsync();
+
+            newAccountId = await cmd.ExecuteScalarAsync() as long?;
+            if (!newAccountId.HasValue)
+            {
+                return null;
+            }
         }
 
         // Record registration token
@@ -43,14 +80,14 @@ VALUES (@emailHash, '', 'None', STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'))
             .TrimEnd('=')
             .Replace('+', '-')
             .Replace('/', '_');
-        await SetAccountPassword(emailHash, registrationToken);
+        await SetAccountPassword(newAccountId.Value, registrationToken);
         return registrationToken;
     }
 
     public async Task<bool> ConfirmAccount(string emailHash, string token, string password)
     {
         // Find account
-        var (_, foundEmailHash, tier, _) = await GetAccountInfo(emailHash);
+        var (accountId, foundEmailHash, tier, _) = await GetAccountInfo(emailHash);
         if (foundEmailHash == null || tier != AccountTier.None)
         {
             return false;
@@ -63,8 +100,8 @@ VALUES (@emailHash, '', 'None', STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'))
         }
 
         // Activate account as Free tier
-        await UpdateAccountTier(emailHash, AccountTier.Free);
-        await SetAccountPassword(emailHash, password);
+        await UpdateAccountTier(accountId, AccountTier.Free);
+        await SetAccountPassword(accountId, password);
         return true;
     }
 
@@ -84,36 +121,31 @@ AND [IsDeleted] = 0
         return await cmd.ExecuteScalarAsync() != null;
     }
 
-    public async Task<bool> UpdateAccountTier(string emailHash, AccountTier tier)
+    public async Task<bool> UpdateAccountTier(long accountId, AccountTier tier)
     {
         using var cmd = sqlite.CreateCommand();
         cmd.CommandText = @"
 UPDATE [Account]
 SET [Tier] = @tier, [LastAccessed] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'), [UpdatedAt] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')
-WHERE [EmailHash] = @emailHash
+WHERE [AccountId] = @accountId
 AND [IsDeleted] = 0
 ";
-        cmd.Parameters.AddWithValue("@emailHash", emailHash);
+        cmd.Parameters.AddWithValue("@accountId", accountId);
         cmd.Parameters.AddWithValue("@tier", tier.ToString());
 
         return await cmd.ExecuteNonQueryAsync() > 0;
     }
 
-    public async Task<bool> SetAccountPassword(string emailHash, string password)
+    public async Task<bool> SetAccountPassword(long accountId, string password)
     {
-        if (password.Length > 0)
-        {
-            password = Utility.Sha256Base64(emailHash, password);
-        }
-
         using var cmd = sqlite.CreateCommand();
         cmd.CommandText = @"
 UPDATE [Account]
-SET [PasswordHash] = @password, [LastAccessed] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'), [UpdatedAt] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')
-WHERE [EmailHash] = @emailHash
+SET [PasswordHash] = SHA256_BASE64([EmailHash], @password), [LastAccessed] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'), [UpdatedAt] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')
+WHERE [AccountId] = @accountId
 AND [IsDeleted] = 0
 ";
-        cmd.Parameters.AddWithValue("@emailHash", emailHash);
+        cmd.Parameters.AddWithValue("@accountId", accountId);
         cmd.Parameters.AddWithValue("@password", password);
 
         return await cmd.ExecuteNonQueryAsync() > 0;
@@ -142,56 +174,26 @@ AND [IsDeleted] = 0
         }
 
         var accountId = reader.GetInt64(0);
-        var emailHash = reader.GetString(1);
-        if (!Enum.TryParse<AccountTier>(reader.GetString(2) ?? nameof(AccountTier.None), true, out var tier))
+        var emailHash = reader.GetStringOrNull(1);
+        if (!Enum.TryParse<AccountTier>(reader.GetStringOrNull(2) ?? nameof(AccountTier.None), true, out var tier))
         {
             tier = AccountTier.Free;
         }
         return (accountId, emailHash, tier);
     }
 
-    public async Task<bool> MarkAccountAsAccessed(string emailHash)
+    public async Task<bool> MarkAccountAsAccessed(long accountId)
     {
         using var cmd = sqlite.CreateCommand();
         cmd.CommandText = @"
 UPDATE [Account]
 SET [LastAccessed] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')
-WHERE [EmailHash] = @emailHash
+WHERE [AccountId] = @accountId
 AND [IsDeleted] = 0
 ";
-        cmd.Parameters.AddWithValue("@emailHash", emailHash);
+        cmd.Parameters.AddWithValue("@accountId", accountId);
 
         return await cmd.ExecuteNonQueryAsync() > 0;
-    }
-
-    public async Task<(long AccountId, string? EmailHash, AccountTier Tier, DateTime LastAccessed)> GetAccountInfo(string forEmailHash)
-        => (await GetAllAccountsInfo(forEmailHash)).SingleOrDefault();
-    public async Task<(long AccountId, string? EmailHash, AccountTier Tier, DateTime LastAccessed)[]> GetAllAccountsInfo(string? forEmailHash = null)
-    {
-        using var cmd = sqlite.CreateCommand();
-        cmd.CommandText = @"
-SELECT [AccountId], [EmailHash], [Tier], [LastAccessed]
-FROM [Account]
-WHERE (@emailHash IS NULL OR [EmailHash] = @emailHash)
-AND [IsDeleted] = 0
-";
-        cmd.Parameters.AddWithValue("@emailHash", forEmailHash);
-
-        // Get Tier and LastAccessed date of all accounts
-        var results = new List<(long, string, AccountTier, DateTime)>();
-        using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            var accountId = reader.GetInt64(0);
-            var emailHash = reader.GetString(1);
-            if (!Enum.TryParse<AccountTier>(reader.GetString(2) ?? nameof(AccountTier.None), true, out var tier))
-            {
-                tier = AccountTier.Free;
-            }
-            var lastAccessed = reader.IsDBNull(3) ? DateTime.MinValue : DateTime.Parse(reader.GetString(3));
-            results.Add((accountId, emailHash, tier, lastAccessed));
-        }
-        return [.. results];
     }
 
     public async Task DisableAccount(string emailHash)

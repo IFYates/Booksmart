@@ -3,21 +3,29 @@
 # test@example.com hash: eaeQQX0An/xQ/jAg9fa2M0CpiGS6Z6FcuPXO9l+UQ7E= eaeQQX0An%2FxQ%2FjAg9fa2M0CpiGS6Z6FcuPXO9l%2BUQ7E%3D
 # 'salt' email hash: qMhdMUx9WemyWUqzrgdzGZsU239cOuROhizjO+5kSpI=
 
-### Register
+### Register account
 
 POST {{HOST}}/booksmart/register
 Content-Type: text/plain
 
 test@example.com
 
-### Confirm
+### Confirm account
 
-POST {{HOST}}/booksmart/register/eaeQQX0An%2FxQ%2FjAg9fa2M0CpiGS6Z6FcuPXO9l%2BUQ7E%3D/EjIyZSe7dkC9T-lzNAjjuw
+POST {{HOST}}/booksmart/register/eaeQQX0An%2FxQ%2FjAg9fa2M0CpiGS6Z6FcuPXO9l%2BUQ7E%3D/TZAfQ-Cp2ESSzEUA56l8vQ
 Content-Type: text/plain
 
 Passw0rd
 
-### Set value
+### Change password
+
+POST {{HOST}}/booksmart/password
+Authorization: SHA256 salt qMhdMUx9WemyWUqzrgdzGZsU239cOuROhizjO+5kSpI= Passw0rd
+Content-Type: text/plain
+
+Passw0rd
+
+### Set new value
 
 PUT {{HOST}}/booksmart/dashboard
 Authorization: SHA256 salt qMhdMUx9WemyWUqzrgdzGZsU239cOuROhizjO+5kSpI= Passw0rd
@@ -29,3 +37,15 @@ value2
 
 GET {{HOST}}/booksmart/dashboard
 Authorization: SHA256 salt qMhdMUx9WemyWUqzrgdzGZsU239cOuROhizjO+5kSpI= Passw0rd
+
+### Get value (no auth)
+
+GET {{HOST}}/booksmart/dashboard
+
+### Update value
+
+PUT {{HOST}}/booksmart/dashboard/3
+Authorization: SHA256 salt qMhdMUx9WemyWUqzrgdzGZsU239cOuROhizjO+5kSpI= Passw0rd
+Content-Type: text/plain
+
+value4

@@ -1,5 +1,7 @@
 ﻿using IFY.Booksmart.StorageAPI.Data;
 using Microsoft.AspNetCore.Mvc;
+using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Mime;
 using System.Text.RegularExpressions;
 
@@ -11,14 +13,15 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
     {
         app.MapPost("/booksmart/register", CreateAccount);
         app.MapPost("/booksmart/register/{account}/{token}", ConfirmAccount);
-        // TODO: change password
-        app.MapGet("/booksmart/{key}", GetByHashedAccount);
-        app.MapPut("/booksmart/{key}", SetByHashedAccount);
+        app.MapPost("/booksmart/password", SetPassword);
+        app.MapGet("/booksmart/{key}", GetKeyValue);
+        app.MapPut("/booksmart/{key}", SetKeyValue);
+        app.MapPut("/booksmart/{key}/{version}", SetKeyValue);
     }
 
     // BadRequest = Invalid email address
-    [Consumes("text/plain")]
-    public async Task<IResult> CreateAccount([FromBody] string emailAddress)
+    [Consumes(MediaTypeNames.Text.Plain)]
+    internal async Task<IResult> CreateAccount([FromBody] string emailAddress)
     {
         // Must be valid email address
         if (!ValidEmailAddress().IsMatch(emailAddress))
@@ -29,13 +32,13 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
         // Create account in storage (hashes email address)
         var x = await accStore.CreateAccount(emailAddress);
         // TODO: need welcome email to confirm?
-        return Results.Ok(x);
+        return Results.Ok(x); // Returns OK even if nothing done
     }
 
     // BadRequest = Invalid or missing token
     // Forbidden = Unknown account or invalid registration token
-    [Consumes("text/plain")]
-    public async Task<IResult> ConfirmAccount(string account, string token, [FromBody] string password)
+    [Consumes(MediaTypeNames.Text.Plain)]
+    internal async Task<IResult> ConfirmAccount(string account, string token, [FromBody] string password)
     {
         // Validate token
         if (string.IsNullOrEmpty(token))
@@ -51,10 +54,31 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
         return Results.Ok();
     }
 
-    // BadRequest = Invalid salt
+    // BadRequest = Invalid or missing passwordf
+    // Forbidden = Not authenticated
+    [Consumes(MediaTypeNames.Text.Plain)]
+    internal async Task<IResult> SetPassword([FromBody] string password, HttpContext context)
+    {
+        // Password must be non-empty
+        if (string.IsNullOrEmpty(password))
+        {
+            return Results.BadRequest();
+        }
+
+        // Find active account
+        if (!isAuthenticated(context, out var account))
+        {
+            return Results.StatusCode(403);
+        }
+
+        // Update password in storage
+        await accStore.SetAccountPassword(account.AccountId, password);
+        return Results.Ok();
+    }
+
     // NotFound = Invalid storage key
-    // Forbidden = Unknown account hash
-    public async Task<IResult> GetByHashedAccount(string key, HttpRequest request)
+    // Forbidden = Not authenticated
+    internal async Task<IResult> GetKeyValue(string key, HttpContext context)
     {
         // key must be valid enum value
         if (!Enum.TryParse<StorageKey>(key, ignoreCase: true, out var skey))
@@ -63,22 +87,22 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
         }
 
         // Find active account
-        var (accountId, account) = await resolveAccount(request);
-        if (account == null)
+        if (!isAuthenticated(context, out var account))
         {
             return Results.StatusCode(403);
         }
 
         // Get value
-        var value = await kvStore.GetAccountValue(accountId, skey);
+        var (value, version) = await kvStore.GetAccountValue(account.AccountId, skey);
+        context.Response.Headers.Append("X-Value-Version", version.ToString());
         return Results.Text(value ?? string.Empty);
     }
 
-    // BadRequest = Invalid salt
     // NotFound = Invalid storage key
-    // Forbidden = Unknown account hash
-    [Consumes("text/plain")]
-    public async Task<IResult> SetByHashedAccount(string key, [FromBody] string value, HttpRequest request)
+    // Forbidden = Not authenticated
+    // BadRequest = Value version mismatch
+    [Consumes(MediaTypeNames.Text.Plain)]
+    internal async Task<IResult> SetKeyValue(string key, int? version, [FromBody] string value, HttpContext context)
     {
         // key must be valid enum value
         if (!Enum.TryParse<StorageKey>(key, ignoreCase: true, out var skey))
@@ -87,68 +111,30 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
         }
 
         // Find active account
-        var (accountId, account) = await resolveAccount(request);
-        if (account == null)
+        if (!isAuthenticated(context, out var account))
         {
             return Results.StatusCode(403);
         }
 
         // Set value
-        await kvStore.SetAccountValue(accountId, skey, value);
-        return Results.Ok();
+        return await kvStore.SetAccountValue(account.AccountId, skey, version ?? 0, value)
+            ? Results.Ok()
+            : Results.BadRequest();
     }
 
     [GeneratedRegex(@"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$")]
     private static partial Regex ValidEmailAddress();
 
-    // Authorisation header must be in format:
-    //   Authorization: SHA256 {salt} {hash} {password}
-    //      where {salt} is a UNIX timestamp within 5 minutes of now
-    //      and {hash} is SHA256_BASE64(salt, SHA256_BASE64(email_metric, LCASE(email)))
-    //      and {password} is the plain-text password to verify
-    private async Task<(long AccountId, string? Account)> resolveAccount(HttpRequest request, bool forNoneTier = false)
+    private static bool isAuthenticated(HttpContext context, out (long AccountId, string EmailHash) account)
     {
-        var authHeader = request.Headers.Authorization.ToString();
-        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("SHA256 "))
+        if (!context.Items.TryGetValue("Account", out var value)
+            || value is not (long, string))
         {
-            return default;
-        }
-
-        var parts = authHeader[7..].Split(' ');
-        if (parts.Length != 3)
-        {
-            return default;
-        }
-
-        var salt = parts[0];
-        if (!isValidSalt(salt))
-        {
-            return default;
-        }
-
-        var (accountId, account, tier) = await accStore.FindAccountByHash(salt, parts[1]);
-        if (account == null || forNoneTier != (tier == AccountTier.None))
-        {
-            return default;
-        }
-
-        return await accStore.TestAccountPassword(account, parts[2])
-            ? (accountId, account)
-            : default;
-    }
-
-    private static bool isValidSalt(string salt)
-    {
-#if DEBUG
-        return true;
-#else
-        // Salt must be UNIX timestamp within 5 minutes of now
-        if (!long.TryParse(salt, out var ts))
-        {
+            account = default;
             return false;
         }
-        var diff = DateTimeOffset.UtcNow - DateTimeOffset.FromUnixTimeSeconds(ts);
-        return diff.TotalMinutes is < -5 or > 5;
-#endif
+
+        account = ((long AccountId, string EmailHash))value;
+        return true;
     }
 }
