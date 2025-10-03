@@ -1,13 +1,15 @@
-﻿using System.Text.RegularExpressions;
+﻿using IFY.Booksmart.StorageAPI.Data;
+using System.Text.RegularExpressions;
 
 namespace IFY.Booksmart.StorageAPI;
 
-public partial class Api(KeyValueStore store)
+public partial class Api(AccountStore accStore, KeyValueStore kvStore)
 {
-    public void Register(WebApplication app)
+    public void RegisterRoutes(WebApplication app)
     {
         app.MapPost("/booksmart/register", CreateAccount); // Body = email address
-        app.MapPost("/booksmart/register/{account}", ConfirmAccount); // Body = registration token
+        app.MapPost("/booksmart/register/{account}/{token}", ConfirmAccount); // Body = new password
+        // TODO: change password
         app.MapGet("/booksmart/{key}/{salt}/{hash}", GetByHashedAccount);
         app.MapPut("/booksmart/{key}/{salt}/{hash}", SetByHashedAccount); // Body = value
     }
@@ -23,24 +25,24 @@ public partial class Api(KeyValueStore store)
         }
 
         // Create account in storage (hashes email address)
-        await store.CreateAccount(emailAddress);
+        var x = await accStore.CreateAccount(emailAddress);
         // TODO: need welcome email to confirm?
-        return Results.Ok();
+        return Results.Ok(x);
     }
 
     // BadRequest = Invalid or missing token
     // Forbidden = Unknown account or invalid registration token
-    public async Task<IResult> ConfirmAccount(string account, HttpRequest request)
+    public async Task<IResult> ConfirmAccount(string account, string token, HttpRequest request)
     {
-        // Get token from body
-        var token = await getWholeRequestBody(request);
+        // Validate token
         if (string.IsNullOrEmpty(token))
         {
             return Results.BadRequest();
         }
 
         // Confirm account in storage
-        if (!await store.ConfirmAccount(account, token))
+        var password = await getWholeRequestBody(request);
+        if (!await accStore.ConfirmAccount(account, token, password))
         {
             return Results.StatusCode(403);
         }
@@ -58,20 +60,20 @@ public partial class Api(KeyValueStore store)
         }
 
         // key must be valid enum value
-        if (!Enum.TryParse<KeyValueStore.StorageKey>(key, ignoreCase: true, out var skey))
+        if (!Enum.TryParse<StorageKey>(key, ignoreCase: true, out var skey))
         {
             return Results.NotFound();
         }
 
         // Find active account
-        var (account, tier) = await store.FindAccountByHash(salt, hash);
-        if (account == null || tier == KeyValueStore.AccountTier.None)
+        var (account, tier) = await accStore.FindAccountByHash(salt, hash);
+        if (account == null || tier == AccountTier.None)
         {
             return Results.StatusCode(403);
         }
 
         // Get value
-        var value = await store.GetAccountValue(account, skey.ToString());
+        var value = await kvStore.GetAccountValue(account, skey.ToString());
         return Results.Text(value ?? string.Empty);
     }
 
@@ -86,21 +88,21 @@ public partial class Api(KeyValueStore store)
         }
 
         // key must be valid enum value
-        if (!Enum.TryParse<KeyValueStore.StorageKey>(key, ignoreCase: true, out var skey))
+        if (!Enum.TryParse<StorageKey>(key, ignoreCase: true, out var skey))
         {
             return Results.NotFound();
         }
 
         // Find active account
-        var (account, tier) = await store.FindAccountByHash(salt, hash);
-        if (account == null || tier == KeyValueStore.AccountTier.None)
+        var (account, tier) = await accStore.FindAccountByHash(salt, hash);
+        if (account == null || tier == AccountTier.None)
         {
             return Results.StatusCode(403);
         }
 
         // Set value
         var value = await getWholeRequestBody(request);
-        await store.SetAccountValue(account, skey.ToString(), value);
+        await kvStore.SetAccountValue(account, skey.ToString(), value);
         return Results.Ok();
     }
 
@@ -111,8 +113,7 @@ public partial class Api(KeyValueStore store)
     {
 #if DEBUG
         return true;
-#endif
-
+#else
         // Salt must be UNIX timestamp within 5 minutes of now
         if (!long.TryParse(salt, out var ts))
         {
@@ -120,6 +121,7 @@ public partial class Api(KeyValueStore store)
         }
         var diff = DateTimeOffset.UtcNow - DateTimeOffset.FromUnixTimeSeconds(ts);
         return diff.TotalMinutes is < -5 or > 5;
+#endif
     }
 
     private static async Task<string> getWholeRequestBody(HttpRequest request)

@@ -29,6 +29,13 @@ public sealed class SqliteConnection : ISqliteConnection
         return _connection.CreateCommand();
     }
 
+    public void ExecuteNonQuery(string sql)
+    {
+        using var command = CreateCommand();
+        command.CommandText = sql;
+        command.ExecuteNonQuery();
+    }
+
     public void Dispose()
     {
         _connection.Dispose();

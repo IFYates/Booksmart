@@ -1,6 +1,8 @@
-﻿namespace IFY.Booksmart.StorageAPI;
+﻿using IFY.Booksmart.StorageAPI.Data;
 
-public class DisableInactiveAccountsTask(KeyValueStore store, IConfiguration config) : BackgroundService
+namespace IFY.Booksmart.StorageAPI;
+
+public class DisableInactiveAccountsTask(AccountStore store, IConfiguration config) : BackgroundService
 {
     private readonly TimeSpan _runTime = new(00, 00, 05); // 5 seconds after midnight
     private readonly int _idleDaysRemovalFree = config.GetValue<int?>("IdleDaysRemoval_Free") ?? 30;
@@ -30,7 +32,7 @@ public class DisableInactiveAccountsTask(KeyValueStore store, IConfiguration con
         // Find accounts inactive since cutoff
         var cutoff = DateTime.UtcNow - TimeSpan.FromDays(_idleDaysRemovalFree);
         var disableAccounts = accountsInfo
-            .Where(a => a.Tier == KeyValueStore.AccountTier.Free && a.LastAccessed < cutoff)
+            .Where(a => a.Tier == AccountTier.Free && a.LastAccessed < cutoff)
             .Select(a => a.Account)
             .ToArray();
 

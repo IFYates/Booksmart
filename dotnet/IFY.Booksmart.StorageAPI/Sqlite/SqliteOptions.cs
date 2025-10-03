@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace IFY.Booksmart.StorageAPI.Sqlite;
+﻿namespace IFY.Booksmart.StorageAPI.Sqlite;
 
 public sealed class SqliteOptions
 {
