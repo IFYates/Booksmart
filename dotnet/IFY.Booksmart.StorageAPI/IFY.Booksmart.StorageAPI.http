@@ -7,6 +7,13 @@ Content-Type: text/plain
 
 ian@iyates.co.uk
 
+### Confirm
+
+POST {{HOST}}/booksmart/register/qjaiKAS5Wys%2BXQAkFs2VPyG4csmlA1ur%2FifkryUeBl8%3D
+Content-Type: text/plain
+
+CzxfTMkVSU-StXdNAYalWw
+
 ### Set value
 
 PUT {{HOST}}/booksmart/dashboard/test/LxNjHSOgEZUpT7JCjCse7O8FqgM7R0vctyGTIUfNr7M=

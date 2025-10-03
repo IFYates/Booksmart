@@ -6,11 +6,13 @@ public partial class Api(KeyValueStore store)
 {
     public void Register(WebApplication app)
     {
-        app.MapPost("/booksmart/register", CreateAccount);
-        app.MapGet("/booksmart/{key}/{salt}/{hash}", GetByHashedEmail);
-        app.MapPut("/booksmart/{key}/{salt}/{hash}", SetByHashedAccount);
+        app.MapPost("/booksmart/register", CreateAccount); // Body = email address
+        app.MapPost("/booksmart/register/{account}", ConfirmAccount); // Body = registration token
+        app.MapGet("/booksmart/{key}/{salt}/{hash}", GetByHashedAccount);
+        app.MapPut("/booksmart/{key}/{salt}/{hash}", SetByHashedAccount); // Body = value
     }
 
+    // BadRequest = Invalid email address
     public async Task<IResult> CreateAccount(HttpRequest request)
     {
         // Must be valid email address
@@ -26,8 +28,29 @@ public partial class Api(KeyValueStore store)
         return Results.Ok();
     }
 
-    // hash = SHA256_BASE64(salt, SHA256_BASE64(email_metric, lower(email)))
-    public async Task<IResult> GetByHashedEmail(string key, string salt, string hash)
+    // BadRequest = Invalid or missing token
+    // Forbidden = Unknown account or invalid registration token
+    public async Task<IResult> ConfirmAccount(string account, HttpRequest request)
+    {
+        // Get token from body
+        var token = await getWholeRequestBody(request);
+        if (string.IsNullOrEmpty(token))
+        {
+            return Results.BadRequest();
+        }
+
+        // Confirm account in storage
+        if (!await store.ConfirmAccount(account, token))
+        {
+            return Results.StatusCode(403);
+        }
+        return Results.Ok();
+    }
+
+    // BadRequest = Invalid salt
+    // NotFound = Invalid storage key
+    // Forbidden = Unknown account hash
+    public async Task<IResult> GetByHashedAccount(string key, string salt, string hash)
     {
         if (!isValidSalt(salt))
         {
@@ -37,18 +60,24 @@ public partial class Api(KeyValueStore store)
         // key must be valid enum value
         if (!Enum.TryParse<KeyValueStore.StorageKey>(key, ignoreCase: true, out var skey))
         {
-            return Results.Forbid();
+            return Results.NotFound();
+        }
+
+        // Find active account
+        var (account, tier) = await store.FindAccountByHash(salt, hash);
+        if (account == null || tier == KeyValueStore.AccountTier.None)
+        {
+            return Results.StatusCode(403);
         }
 
         // Get value
-        var (account, value) = await store.GetKeyByAccountHash(salt, hash, skey);
-        if (account == null)
-        {
-            return Results.NotFound();
-        }
+        var value = await store.GetAccountValue(account, skey.ToString());
         return Results.Text(value ?? string.Empty);
     }
 
+    // BadRequest = Invalid salt
+    // NotFound = Invalid storage key
+    // Forbidden = Unknown account hash
     public async Task<IResult> SetByHashedAccount(string key, string salt, string hash, HttpRequest request)
     {
         if (!isValidSalt(salt))
@@ -59,12 +88,19 @@ public partial class Api(KeyValueStore store)
         // key must be valid enum value
         if (!Enum.TryParse<KeyValueStore.StorageKey>(key, ignoreCase: true, out var skey))
         {
-            return Results.Forbid();
+            return Results.NotFound();
+        }
+
+        // Find active account
+        var (account, tier) = await store.FindAccountByHash(salt, hash);
+        if (account == null || tier == KeyValueStore.AccountTier.None)
+        {
+            return Results.StatusCode(403);
         }
 
         // Set value
         var value = await getWholeRequestBody(request);
-        await store.SetKeyByAccountHash(salt, hash, skey, value);
+        await store.SetAccountValue(account, skey.ToString(), value);
         return Results.Ok();
     }
 
@@ -89,6 +125,7 @@ public partial class Api(KeyValueStore store)
     private static async Task<string> getWholeRequestBody(HttpRequest request)
     {
         using var r = new StreamReader(request.Body);
-        return await r.ReadToEndAsync();
+        var value = await r.ReadToEndAsync();
+        return value.Trim();
     }
 }

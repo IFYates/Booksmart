@@ -1,4 +1,5 @@
 ﻿using IFY.Booksmart.StorageAPI.Sqlite;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using System.Security.Principal;
 
@@ -16,10 +17,71 @@ public class KeyValueStore(ISqliteConnection sqlite)
     {
         //LastAccessed, // datetime in ISO 8601 format
         //Tier, // See AccountTier
+        //RegistrationToken, // Token to confirm account registration
         Dashboard, // Base64-encoded binary data (decrypted at client)
     }
 
-    private async Task<(string? Account, AccountTier Tier)> findAccountByHash(string salt, string hash)
+    public async Task<string?> CreateAccount(string emailAddress)
+    {
+        var emailMetric = $"{emailAddress[0]}{emailAddress.Length}";
+        var account = Utility.Sha256Base64(emailMetric, emailAddress.Trim().ToLowerInvariant());
+
+        // Check if account already exists
+        using (var cmd = sqlite.CreateCommand())
+        {
+            cmd.CommandText = @"
+SELECT [IsDeleted]
+FROM [KeyValue]
+WHERE [Account] = @account
+";
+            cmd.Parameters.AddWithValue("@account", account);
+
+            var exists = await cmd.ExecuteScalarAsync();
+            if (exists != null)
+            {
+                return null;
+            }
+        }
+
+        await SetAccountValue(account, "Tier", nameof(AccountTier.None));
+
+        // Record registration token
+        var registrationToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        await SetAccountValue(account, "RegistrationToken", registrationToken);
+        await MarkAccountAsAccessed(account);
+        return registrationToken;
+    }
+
+    public async Task<bool> ConfirmAccount(string account, string token)
+    {
+        // Find account
+        var (foundAccount, tier, _) = (await GetAllAccountsInfo(account)).FirstOrDefault();
+        if (foundAccount == null || tier != AccountTier.None)
+        {
+            return false;
+        }
+
+        // Find registration token
+        var storedToken = await GetAccountValue(account, "RegistrationToken");
+
+        // Must match
+        if (storedToken != token)
+        {
+            return false;
+        }
+
+        // Activate account as Free tier
+        await SetAccountValue(account, "Tier", nameof(AccountTier.Free));
+        await SetAccountValue(account, "RegistrationToken", string.Empty);
+        await MarkAccountAsAccessed(account);
+        return true;
+    }
+
+    // hash = SHA256_BASE64(salt, SHA256_BASE64(email_metric, lower(email)))
+    public async Task<(string? Account, AccountTier Tier)> FindAccountByHash(string salt, string hash)
     {
         using var cmd = sqlite.CreateCommand();
         cmd.CommandText = @"
@@ -46,62 +108,36 @@ AND [IsDeleted] = 0
         return (account, tier);
     }
 
-    private async Task markAccountAsAccessed(string account)
+    public Task<bool> MarkAccountAsAccessed(string account)
     {
-        await setAccountValue(account, "LastAccessed", DateTime.UtcNow.ToString("o"));
+        return SetAccountValue(account, "LastAccessed", DateTime.UtcNow.ToString("o"));
     }
 
-    public async Task<bool> CreateAccount(string emailAddress)
+    public async Task<(string Account, AccountTier Tier, DateTime LastAccessed)[]> GetAllAccountsInfo(string? forAccount = null)
     {
-        var emailMetric = $"{emailAddress[0]}{emailAddress.Length}";
-        var account = Utility.Sha256Base64(emailMetric, emailAddress.Trim().ToLowerInvariant());
-
-        // Check if account already exists
-        using (var cmd = sqlite.CreateCommand())
-        {
-            cmd.CommandText = @"
-SELECT [IsDeleted]
-FROM [KeyValue]
-WHERE [Account] = @account
-";
-            cmd.Parameters.AddWithValue("@account", account);
-
-            var exists = await cmd.ExecuteScalarAsync();
-            if (exists != null)
-            {
-                return false;
-            }
-        }
-
-        await setAccountValue(account, "Tier", nameof(AccountTier.Free));
-        return true;
-    }
-
-    public async Task<(string Account, AccountTier Tier, DateTime LastAccessed)[]> GetAllAccountsInfo()
-    {
-        // Get Tier and LastAccessed date of all accounts
-        var results = new List<(string Account, AccountTier Tier, DateTime LastAccessed)>();
-        using (var cmd = sqlite.CreateCommand())
-        {
-            cmd.CommandText = @"
-SELECT LA.[Account], LA.[Value] AS [LastAccessed], T.[Value] AS [Tier]
+        using var cmd = sqlite.CreateCommand();
+        cmd.CommandText = @"
+SELECT LA.[Account], T.[Value] AS [Tier], LA.[Value] AS [LastAccessed]
 FROM [KeyValue] LA
 LEFT JOIN [KeyValue] T ON T.[Account] = LA.[Account] AND T.[Key] = 'Tier' AND T.[IsDeleted] = 0
-WHERE LA.[Key] = 'LastAccessed'
+WHERE (@account IS NULL OR LA.[Account] = @account)
+AND LA.[Key] = 'LastAccessed'
 AND LA.[IsDeleted] = 0
 ";
+        cmd.Parameters.AddWithValue("@account", forAccount);
 
-            using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+        // Get Tier and LastAccessed date of all accounts
+        var results = new List<(string Account, AccountTier Tier, DateTime LastAccessed)>();
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var account = reader.GetString(0);
+            if (!Enum.TryParse<AccountTier>(reader.GetString(1) ?? nameof(AccountTier.None), true, out var tier))
             {
-                var account = reader.GetString(0);
-                if (!Enum.TryParse<AccountTier>(reader.GetString(1) ?? nameof(AccountTier.None), true, out var tier))
-                {
-                    tier = AccountTier.Free;
-                }
-                var lastAccessed = reader.IsDBNull(2) ? DateTime.MinValue : DateTime.Parse(reader.GetString(2));
-                results.Add((account, tier, lastAccessed));
+                tier = AccountTier.Free;
             }
+            var lastAccessed = reader.IsDBNull(2) ? DateTime.MinValue : DateTime.Parse(reader.GetString(2));
+            results.Add((account, tier, lastAccessed));
         }
         return [.. results];
     }
@@ -120,69 +156,56 @@ AND [IsDeleted] = 0
         await cmd.ExecuteNonQueryAsync();
     }
 
-    public async Task<(string Account, string? Value)> GetKeyByAccountHash(string salt, string hash, StorageKey key)
+    public async Task<string?> GetAccountValue(string account, string key)
     {
-        // Find account
-        var (account, tier) = await findAccountByHash(salt, hash);
-        if (account == null || tier == AccountTier.None)
-        {
-            return default;
-        }
-
-        // Find value
-        (string Account, string? Value) result;
-        using (var cmd = sqlite.CreateCommand())
-        {
-            cmd.CommandText = @"
+        using var cmd = sqlite.CreateCommand();
+        cmd.CommandText = @"
 SELECT [Value]
 FROM [KeyValue]
 WHERE [Account] = @account
 AND [Key] = @key
 AND [IsDeleted] = 0
 ";
-            cmd.Parameters.AddWithValue("@account", account);
-            cmd.Parameters.AddWithValue("@key", key.ToString());
+        cmd.Parameters.AddWithValue("@account", account);
+        cmd.Parameters.AddWithValue("@key", key.ToString());
 
-            using var reader = await cmd.ExecuteReaderAsync();
-            if (!await reader.ReadAsync())
-            {
-                return default;
-            }
-
-            var value = reader.IsDBNull(1) ? null : reader.GetString(1);
-            result = (account, value);
-        }
-
-        await markAccountAsAccessed(result.Account);
-        return result;
-    }
-
-    public async Task SetKeyByAccountHash(string salt, string hash, StorageKey key, string value)
-    {
-        // Find account
-        var (account, tier) = await findAccountByHash(salt, hash);
-        if (account == null || tier == AccountTier.None)
+        using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync())
         {
-            return;
+            return null;
         }
 
-        await setAccountValue(account, key.ToString(), value);
-        await markAccountAsAccessed(account);
+        return reader.IsDBNull(0) ? null : reader.GetString(0);
     }
 
-    private async Task<bool> setAccountValue(string account, string key, string value)
+    public async Task<bool> SetAccountValue(string account, string key, string value)
     {
         // Upsert value
         using var cmd = sqlite.CreateCommand();
         cmd.CommandText = @"
-INSERT INTO [KeyValue] ([Account], [Key], [Value], [CreatedAt], [UpdatedAt], [IsDeleted])
-VALUES (@account, @key, @value, STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'), STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'), 0)
+INSERT INTO [KeyValue] ([Account], [Key], [Value])
+VALUES (@account, @key, @value)
 ON CONFLICT([Account], [Key]) DO UPDATE
 SET [Value] = @value, [UpdatedAt] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'), [IsDeleted] = 0
 ";
         cmd.Parameters.AddWithValue("@account", account);
         cmd.Parameters.AddWithValue("@key", key);
         cmd.Parameters.AddWithValue("@value", value);
+
+        return await cmd.ExecuteNonQueryAsync() > 0;
+    }
+
+    public async Task<bool> RemoveAccountValue(string account, string key)
+    {
+        // Upsert value
+        using var cmd = sqlite.CreateCommand();
+        cmd.CommandText = @"
+UPDATE [KeyValue]
+SET [IsDeleted] = 1, [UpdatedAt] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')
+WHERE [Account] = @account
+";
+        cmd.Parameters.AddWithValue("@account", account);
+        cmd.Parameters.AddWithValue("@key", key);
 
         return await cmd.ExecuteNonQueryAsync() > 0;
     }

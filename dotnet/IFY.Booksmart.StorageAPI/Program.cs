@@ -56,9 +56,42 @@ builder.Services.AddRateLimiter(options =>
 var app = builder.Build();
 
 app.UseRateLimiter();
+app.UseRouteValueSlashDecoder();
 
 // Setup platform
 SqliteSchema.EnsureSchema(app.Services);
 app.Services.GetRequiredService<Api>().Register(app);
 
 app.Run();
+
+file static class MiddlewareExtensions
+{
+    /// <summary>
+    /// Replaces any remaining "%2F" or "%5C" in ALL route values
+    /// with the actual '/' or '\' character.
+    /// </summary>
+    /// <remarks>
+    /// This is because ASP.NET Core routing leaves only these characters encoded.
+    /// </remarks>
+    public static IApplicationBuilder UseRouteValueSlashDecoder(this IApplicationBuilder app)
+    {
+        return app.Use(async (context, next) =>
+        {
+            foreach (var kvp in context.Request.RouteValues.ToArray())
+            {
+                if (kvp.Value is string raw && !string.IsNullOrEmpty(raw))
+                {
+                    var decoded = raw
+                        .Replace("%2F", "/", StringComparison.OrdinalIgnoreCase)
+                        .Replace("%5C", "\\", StringComparison.OrdinalIgnoreCase);
+                    if (!ReferenceEquals(decoded, raw))
+                    {
+                        context.Request.RouteValues[kvp.Key] = decoded;
+                    }
+                }
+            }
+
+            await next();
+        });
+    }
+}
