@@ -1,6 +1,6 @@
 ﻿using IFY.Booksmart.StorageAPI.Data;
 
-namespace IFY.Booksmart.StorageAPI;
+namespace IFY.Booksmart.StorageAPI.Tasks;
 
 public class DisableInactiveAccountsTask(AccountStore store, IConfiguration config) : BackgroundService
 {

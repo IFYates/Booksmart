@@ -1,6 +1,7 @@
 ﻿using IFY.Booksmart.StorageAPI;
 using IFY.Booksmart.StorageAPI.Data;
 using IFY.Booksmart.StorageAPI.Sqlite;
+using IFY.Booksmart.StorageAPI.Tasks;
 using Microsoft.Extensions.Options;
 using System.Threading.RateLimiting;
 
@@ -18,8 +19,10 @@ builder.Services.Configure<SqliteOptions>(cfg =>
 builder.Services.AddTransient<ISqliteConnection, SqliteConnection>();
 builder.Services.AddTransient<KeyValueStore>();
 builder.Services.AddTransient<AccountStore>();
-builder.Services.AddHostedService<DisableInactiveAccountsTask>();
 builder.Services.AddSingleton<Api>();
+
+builder.Services.AddHostedService<DisableInactiveAccountsTask>();
+builder.Services.AddHostedService<NightlyBackupTask>();
 
 // Add the rate‑limiting service
 builder.Services.AddRateLimiter(options =>
