@@ -110,7 +110,7 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
 
         // Get value
         var (value, version) = await kvStore.GetAccountValue(account.AccountId, skey);
-        context.Response.Headers.Append("X-Value-Version", version.ToString());
+        context.Response.Headers.Append("X-Version", version.ToString());
         return Results.Text(value ?? string.Empty);
     }
 
