@@ -1,5 +1,6 @@
 ﻿using IFY.Booksmart.StorageAPI;
 using IFY.Booksmart.StorageAPI.Data;
+using IFY.Booksmart.StorageAPI.Middlewares;
 using IFY.Booksmart.StorageAPI.Sqlite;
 using IFY.Booksmart.StorageAPI.Tasks;
 using Microsoft.Extensions.Options;
@@ -28,9 +29,9 @@ builder.AddRateLimiter();
 // Build app
 var app = builder.Build();
 app.UseRateLimiter();
-app.Use(Middleware.RouteValueSlashDecoder);
-app.Use(Middleware.PlainTextBodyParser);
-app.Use(Middleware.AccountResolver);
+app.UseRouteValueSlashDecoder);
+app.UsePlainTextBodyParser();
+app.UseAccountResolver();
 
 // Setup database
 using (var sqlite = app.Services.GetRequiredService<ISqliteConnection>())

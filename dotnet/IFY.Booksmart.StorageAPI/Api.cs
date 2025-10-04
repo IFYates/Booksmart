@@ -11,6 +11,9 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
 {
     public void RegisterRoutes(WebApplication app)
     {
+        var dt = DateTime.UtcNow;
+        app.MapGet("/debug", () => Results.Text($"Started: {dt}"));
+
         app.MapPost("/register", CreateAccount);
         app.MapGet("/register/{account}/{token}", ConfirmAccount);
         app.MapPost("/password", SetPassword);
