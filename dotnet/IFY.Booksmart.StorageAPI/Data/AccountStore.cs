@@ -38,7 +38,7 @@ AND [IsDeleted] = 0
     {
         emailAddress = emailAddress.ToLowerInvariant();
         var emailMetric = $"{emailAddress[0]}{emailAddress.Length}";
-        var emailHash = Utility.Sha256Base64(emailMetric, emailAddress);
+        var emailHash = Utility.Sha3Base64(emailMetric, emailAddress);
 
         // Check if account already exists
         using (var cmd = sqlite.CreateCommand())
@@ -77,7 +77,13 @@ SELECT last_insert_rowid();
         }
 
         // Return registration token
-        return Utility.Sha256Base64(newAccountId.Value.ToString(), emailHash);
+        return getRegistrationToken(newAccountId.Value, emailHash);
+    }
+
+    private string getRegistrationToken(long accountId, string emailHash)
+    {
+        // TODO
+        return Utility.Sha256Base64(accountId.ToString(), emailHash);
     }
 
     public async Task<bool> ConfirmAccount(string emailHash, string token)
@@ -90,7 +96,7 @@ SELECT last_insert_rowid();
         }
 
         // Check token is as expected
-        var expectedToken = Utility.Sha256Base64(accountId.ToString(), foundEmailHash);
+        var expectedToken = getRegistrationToken(accountId, foundEmailHash);
         if (token != expectedToken)
         {
             return false;
@@ -147,9 +153,9 @@ AND [IsDeleted] = 0
         return await cmd.ExecuteNonQueryAsync() > 0;
     }
 
-    // hash = SHA256_BASE64(
+    // hash = SHA3_BASE64(
     //     salt, // UNIX timestamp within 5 minutes of now
-    //     SHA256_BASE64(email_metric, LCASE(email)) // EmailHash
+    //     SHA3_BASE64(email_metric, LCASE(email)) // EmailHash
     // )
     public async Task<(long AccountId, string? EmailHash, AccountTier Tier)> FindAccountByHash(string salt, string hash)
     {
@@ -157,7 +163,7 @@ AND [IsDeleted] = 0
         cmd.CommandText = @"
 SELECT [AccountId], [EmailHash], [Tier]
 FROM [Account]
-WHERE SHA256_BASE64(@salt, [EmailHash]) = @hash
+WHERE SHA3_BASE64(@salt, [EmailHash]) = @hash
 AND [IsDeleted] = 0
 ";
         cmd.Parameters.AddWithValue("@salt", salt);
@@ -223,8 +229,8 @@ AND [IsDeleted] = 0
         const string createTableSql = @"
 CREATE TABLE [Account] (
     [AccountId] INTEGER PRIMARY KEY AUTOINCREMENT, -- Never goes external
-    [EmailHash] CHAR(44) NOT NULL, -- SHA256_BASE64(email_metric, LCASE(email))
-    [PasswordHash] CHAR(44) NOT NULL, -- SHA256_BASE64(EmailHash, password)
+    [EmailHash] CHAR(88) NOT NULL, -- SHA3_BASE64(email_metric, LCASE(email))
+    [PasswordHash] TEXT NOT NULL, -- SHA256_BASE64(EmailHash, password)
     [Tier] VARCHAR(5) NOT NULL DEFAULT 'None', -- From AccountTier
     [LastAccessed] DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')),
     [CreatedAt] DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')),

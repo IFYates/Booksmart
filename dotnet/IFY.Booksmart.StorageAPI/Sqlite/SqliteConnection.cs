@@ -13,6 +13,9 @@ public sealed class SqliteConnection : ISqliteConnection
 
         // Register the user-defined function
         _connection.CreateFunction<string, string, string>(
+            name: "SHA3_BASE64",
+            function: Utility.Sha3Base64);
+        _connection.CreateFunction<string, string, string>(
             name: "SHA256_BASE64",
             function: Utility.Sha256Base64);
     }

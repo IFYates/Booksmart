@@ -27,7 +27,7 @@ GET /register/{account key}/{registration token}
 ## Request
 ```
 POST /password
-Authorization: SHA256 {ts_salt} {salted account key} {password}
+Authorization: SHA3 {ts_salt} {salted account key} {password}
 Content-Type: text/plain
 
 {new password}
@@ -42,7 +42,7 @@ Content-Type: text/plain
 ## Request
 ```
 PUT /{key}/{version}
-Authorization: SHA256 {ts_salt} {salted account key} {password}
+Authorization: SHA3 {ts_salt} {salted account key} {password}
 Content-Type: text/plain
 
 {value}
@@ -58,7 +58,7 @@ Content-Type: text/plain
 ## Request
 ```
 GET /{key}
-Authorization: SHA256 {ts_salt} {salted account key} {password}
+Authorization: SHA3 {ts_salt} {salted account key} {password}
 ```
 
 ## Responses

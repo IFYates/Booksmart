@@ -17,17 +17,17 @@ public static class Middleware
             return;
         }
 
-        // Authorisation header must be in format: SHA256 {salt} {hash} {password}
+        // Authorisation header must be in format: SHA3 {salt} {hash} {password}
         //   where {salt} is a UNIX timestamp within 5 minutes of now
-        //   and {hash} is SHA256_BASE64(salt, SHA256_BASE64(email_metric, LCASE(email)))
+        //   and {hash} is SHA3_BASE64(salt, SHA3_BASE64(email_metric, LCASE(email)))
         //   and {password} is the plain-text password to verify - Has to be plain-text to allow hashing with the email hash (emails are not private)
         async Task<(long AccountId, string? Account)> resolveAccount()
         {
-            if (!authHeader.StartsWith("SHA256 "))
+            if (!authHeader.StartsWith("SHA3 "))
             {
                 return default;
             }
-            var parts = authHeader[7..].Split(' ');
+            var parts = authHeader[5..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length != 3)
             {
                 return default;
