@@ -1,7 +1,7 @@
 @HOST = http://localhost:5000
 
 # test@example.com hash: DJkchqZcmGSQkYJ7cdFnc6mayeKILjel71xWHJyX+eiXHuCH2CZXjpKRCw9zUPUczQkrCx4htcwrBZpqaaYbqw eaeQQX0An%2FxQ%2FjAg9fa2M0CpiGS6Z6FcuPXO9l%2BUQ7E%3D
-# Registration token: dW7LIgdieofg3HnD/Tn3+7SLcO6fD/GiMllZLnyNBLc=
+# Registration token 1: TYCN_N8MEYT886ZMPnPrGmcl1iVjxyS1exr_fANxwSaK8PQ4JacyzY9s1SdRN-XdS-7m3o8B9wW6P8XSpWNjJw
 # 'salt' email hash: SOmhjd4uG1jmh1ewfIq7CVSRpt3eIQd39Gw69uxKlIRdfXFdT68PDiWD+0+/HmRHnQW7ciDDjvaZ8jOunMr4wg
 
 ### Register account
@@ -12,7 +12,7 @@ test@example.com
 Passw0rd
 
 ### Confirm account
-GET {{HOST}}/register/DJkchqZcmGSQkYJ7cdFnc6mayeKILjel71xWHJyX+eiXHuCH2CZXjpKRCw9zUPUczQkrCx4htcwrBZpqaaYbqw/dW7LIgdieofg3HnD%2FTn3+7SLcO6fD%2FGiMllZLnyNBLc=?returnUrl=https://google.com
+GET {{HOST}}/register/DJkchqZcmGSQkYJ7cdFnc6mayeKILjel71xWHJyX+eiXHuCH2CZXjpKRCw9zUPUczQkrCx4htcwrBZpqaaYbqw/TYCN_N8MEYT886ZMPnPrGmcl1iVjxyS1exr_fANxwSaK8PQ4JacyzY9s1SdRN-XdS-7m3o8B9wW6P8XSpWNjJw #?returnUrl=https://google.com
 
 ### Change password
 POST {{HOST}}/password
@@ -36,7 +36,7 @@ Authorization: SHA3 salt SOmhjd4uG1jmh1ewfIq7CVSRpt3eIQd39Gw69uxKlIRdfXFdT68PDiW
 GET {{HOST}}/dashboard
 
 ### Update value
-PUT {{HOST}}/dashboard/3
+PUT {{HOST}}/dashboard/1
 Authorization: SHA3 salt SOmhjd4uG1jmh1ewfIq7CVSRpt3eIQd39Gw69uxKlIRdfXFdT68PDiWD+0+/HmRHnQW7ciDDjvaZ8jOunMr4wg Passw0rd
 Content-Type: text/plain
 

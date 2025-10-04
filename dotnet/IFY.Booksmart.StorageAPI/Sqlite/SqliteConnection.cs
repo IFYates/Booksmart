@@ -15,9 +15,9 @@ public sealed class SqliteConnection : ISqliteConnection
         _connection.CreateFunction<string, string, string>(
             name: "SHA3_BASE64",
             function: Utility.Sha3Base64);
-        _connection.CreateFunction<string, string, string>(
-            name: "SHA256_BASE64",
-            function: Utility.Sha256Base64);
+        _connection.CreateFunction<long, string, string, string>(
+            name: "ARGON2ID",
+            function: Utility.Argon2id);
     }
 
     public Microsoft.Data.Sqlite.SqliteConnection Open()

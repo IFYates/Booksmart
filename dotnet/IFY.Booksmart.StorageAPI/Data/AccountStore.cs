@@ -1,4 +1,5 @@
 ﻿using IFY.Booksmart.StorageAPI.Sqlite;
+using System.Diagnostics;
 
 namespace IFY.Booksmart.StorageAPI.Data;
 
@@ -63,11 +64,10 @@ WHERE [EmailHash] = @emailHash
         {
             cmd.CommandText = @"
 INSERT INTO [Account] ([EmailHash], [PasswordHash], [Tier], [LastAccessed])
-VALUES (@emailHash, SHA256_BASE64(@emailHash, @password), 'None', STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'));
+VALUES (@emailHash, '', 'None', STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'));
 SELECT last_insert_rowid();
 ";
             cmd.Parameters.AddWithValue("@emailHash", emailHash);
-            cmd.Parameters.AddWithValue("@password", password);
 
             newAccountId = await cmd.ExecuteScalarAsync() as long?;
             if (!newAccountId.HasValue)
@@ -76,14 +76,20 @@ SELECT last_insert_rowid();
             }
         }
 
+        var sw = Stopwatch.StartNew();
+        await SetAccountPassword(newAccountId.Value, password);
+        sw.Stop();
+
         // Return registration token
         return getRegistrationToken(newAccountId.Value, emailHash);
     }
 
     private string getRegistrationToken(long accountId, string emailHash)
     {
-        // TODO
-        return Utility.Sha256Base64(accountId.ToString(), emailHash);
+        return Utility.Sha3Base64(accountId.ToString(), emailHash)
+            .Replace('+', '-')
+            .Replace('/', '_')
+            .TrimEnd('=');
     }
 
     public async Task<bool> ConfirmAccount(string emailHash, string token)
@@ -114,11 +120,11 @@ SELECT last_insert_rowid();
 SELECT 1
 FROM [Account]
 WHERE [EmailHash] = @emailHash
-AND [PasswordHash] = @password
+AND [PasswordHash] = ARGON2ID([AccountId], [EmailHash], @password)
 AND [IsDeleted] = 0
 ";
         cmd.Parameters.AddWithValue("@emailHash", emailHash);
-        cmd.Parameters.AddWithValue("@password", Utility.Sha256Base64(emailHash, password));
+        cmd.Parameters.AddWithValue("@password", password);
 
         return await cmd.ExecuteScalarAsync() != null;
     }
@@ -143,7 +149,7 @@ AND [IsDeleted] = 0
         using var cmd = sqlite.CreateCommand();
         cmd.CommandText = @"
 UPDATE [Account]
-SET [PasswordHash] = SHA256_BASE64([EmailHash], @password), [LastAccessed] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'), [UpdatedAt] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')
+SET [PasswordHash] = ARGON2ID([AccountId], [EmailHash], @password), [LastAccessed] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW'), [UpdatedAt] = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')
 WHERE [AccountId] = @accountId
 AND [IsDeleted] = 0
 ";
@@ -230,7 +236,7 @@ AND [IsDeleted] = 0
 CREATE TABLE [Account] (
     [AccountId] INTEGER PRIMARY KEY AUTOINCREMENT, -- Never goes external
     [EmailHash] CHAR(88) NOT NULL, -- SHA3_BASE64(email_metric, LCASE(email))
-    [PasswordHash] TEXT NOT NULL, -- SHA256_BASE64(EmailHash, password)
+    [PasswordHash] TEXT NOT NULL, -- ARGON2ID(AccountId, EmailHash, password)
     [Tier] VARCHAR(5) NOT NULL DEFAULT 'None', -- From AccountTier
     [LastAccessed] DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')),
     [CreatedAt] DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'NOW')),
