@@ -2,11 +2,68 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
+using System.Threading.RateLimiting;
 
 namespace IFY.Booksmart.StorageAPI;
 
 public static class Middleware
 {
+    const int RATELIMIT_WINDOWS_SECS = 60;
+    const int RATELIMIT_CAP = 100;
+    private static PartitionedRateLimiter<HttpContext>? _rateLimiter = null;
+
+    public static WebApplicationBuilder AddRateLimiter(this WebApplicationBuilder builder)
+    {
+        _rateLimiter ??= PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        {
+            // Partition key = client IP
+            var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            // Fixed‑window: X req per Y secs
+            var fixedWindow = RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: ip,
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = RATELIMIT_CAP,
+                    Window = TimeSpan.FromSeconds(RATELIMIT_WINDOWS_SECS),
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0 // reject immediately when limit exceeded
+                });
+            return fixedWindow;
+
+            // TODO
+            //// Concurrency limiter: max 1 concurrent request per IP
+            //var concurrency = RateLimitPartition.GetConcurrencyLimiter(
+            //    partitionKey: ip,
+            //    factory: _ => new ConcurrencyLimiterOptions
+            //    {
+            //        PermitLimit = 1,
+            //        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            //        QueueLimit = 0 // reject immediately when limit exceeded
+            //    });
+
+            //// Combine them
+            //return RateLimiter.CreateChained([fixedWindow, concurrency]);
+
+        });
+        ///builder.Services.AddSingleton(_rateLimiter);
+
+        builder.Services.AddRateLimiter(options =>
+        {
+            // Global limiter policy
+            options.GlobalLimiter = _rateLimiter;
+
+            // 429 response on breach
+            options.OnRejected = (context, token) =>
+            {
+                context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                context.HttpContext.Response.Headers.RetryAfter = RATELIMIT_WINDOWS_SECS.ToString();
+                return ValueTask.CompletedTask;
+            };
+        });
+        return builder;
+    }
+
     public static async Task AccountResolver(HttpContext context, Func<Task> next)
     {
         // Ignore if no Authorization header
@@ -14,7 +71,28 @@ public static class Middleware
         if (string.IsNullOrEmpty(authHeader))
         {
             await next();
-            return;
+        }
+        else
+        {
+            // If present, must be valid
+            var (accountId, account) = await resolveAccount();
+            if (account == null)
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            }
+            else
+            {
+                context.Items["Account"] = (accountId, account);
+                await next();
+            }
+        }
+
+        if (context.Response.StatusCode == StatusCodes.Status403Forbidden)
+        {
+            // Charge more for an authentication failure
+            // TODO: Not working
+            var limiter = context.RequestServices.GetRequiredService<PartitionedRateLimiter<HttpContext>>();
+            limiter.AttemptAcquire(context, 10);
         }
 
         // Authorisation header must be in format: SHA3 {salt} {hash} {password}
@@ -60,16 +138,6 @@ public static class Middleware
                 ? (accountId, account)
                 : default;
         }
-
-        var (accountId, account) = await resolveAccount();
-        if (account == null)
-        {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            return;
-        }
-
-        context.Items["Account"] = (accountId, account);
-        await next();
     }
 
     /// <summary>

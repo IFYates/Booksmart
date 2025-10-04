@@ -35,6 +35,10 @@ Authorization: SHA3 salt SOmhjd4uG1jmh1ewfIq7CVSRpt3eIQd39Gw69uxKlIRdfXFdT68PDiW
 ### Get value (no auth)
 GET {{HOST}}/dashboard
 
+### Get value (bad auth)
+GET {{HOST}}/dashboard
+Authorization: SHA3 salt xxxxxxx Passw0rd
+
 ### Update value
 PUT {{HOST}}/dashboard/1
 Authorization: SHA3 salt SOmhjd4uG1jmh1ewfIq7CVSRpt3eIQd39Gw69uxKlIRdfXFdT68PDiWD+0+/HmRHnQW7ciDDjvaZ8jOunMr4wg Passw0rd

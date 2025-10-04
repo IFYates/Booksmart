@@ -3,7 +3,6 @@ using IFY.Booksmart.StorageAPI.Data;
 using IFY.Booksmart.StorageAPI.Sqlite;
 using IFY.Booksmart.StorageAPI.Tasks;
 using Microsoft.Extensions.Options;
-using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,38 +23,7 @@ builder.Services.AddSingleton<Api>();
 builder.Services.AddHostedService<DisableInactiveAccountsTask>();
 builder.Services.AddHostedService<NightlyBackupTask>();
 
-// Add the rate‑limiting service
-builder.Services.AddRateLimiter(options =>
-{
-    const int windowSeconds = 60;
-    const int requestLimit = 100;
-
-    // Global fallback policy
-    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
-    {
-        // Partition key = client IP
-        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-
-        // Fixed‑window: X req per Y secs
-        return RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: ip,
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = requestLimit,
-                Window = TimeSpan.FromSeconds(windowSeconds),
-                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                QueueLimit = 0 // reject immediately when limit exceeded
-            });
-    });
-
-    // 429 response on breach
-    options.OnRejected = (context, token) =>
-    {
-        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-        context.HttpContext.Response.Headers.RetryAfter = windowSeconds.ToString();
-        return ValueTask.CompletedTask;
-    };
-});
+builder.AddRateLimiter();
 
 // Build app
 var app = builder.Build();
