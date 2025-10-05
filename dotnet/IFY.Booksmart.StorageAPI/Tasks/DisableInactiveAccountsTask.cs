@@ -5,7 +5,8 @@ namespace IFY.Booksmart.StorageAPI.Tasks;
 public class DisableInactiveAccountsTask(AccountStore store, IConfiguration config) : BackgroundService
 {
     private readonly TimeSpan _runTime = new(00, 00, 05); // 5 seconds after midnight
-    private readonly int _idleDaysRemovalFree = config.GetValue<int?>("IdleDaysRemoval_Free") ?? 30;
+    private readonly int _idleDaysRemovalNone = config.GetValue<int?>("IdleDaysRemoval_None") ?? 7;
+    private readonly int _idleDaysRemovalFree = config.GetValue<int?>("IdleDaysRemoval_Free") ?? 7;
     private int _executionCount;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -30,9 +31,15 @@ public class DisableInactiveAccountsTask(AccountStore store, IConfiguration conf
         var accountsInfo = await store.GetAllAccountsInfo();
 
         // Find accounts inactive since cutoff
-        var cutoff = DateTime.UtcNow - TimeSpan.FromDays(_idleDaysRemovalFree);
+        var cutoffNone = DateTime.UtcNow - TimeSpan.FromDays(_idleDaysRemovalNone);
+        var cutoffFree = DateTime.UtcNow - TimeSpan.FromDays(_idleDaysRemovalFree);
         var disableAccounts = accountsInfo
-            .Where(a => a.Tier == AccountTier.Free && a.LastAccessed < cutoff)
+            .Where(a => a.Tier switch
+            {
+                AccountTier.None => a.LastAccessed < cutoffNone,
+                AccountTier.Free => a.LastAccessed < cutoffFree,
+                _ => false
+            })
             .Select(a => a.EmailHash).OfType<string>()
             .ToArray();
 
