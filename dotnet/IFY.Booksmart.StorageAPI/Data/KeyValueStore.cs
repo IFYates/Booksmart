@@ -4,6 +4,28 @@ namespace IFY.Booksmart.StorageAPI.Data;
 
 public class KeyValueStore(ISqliteConnection sqlite) : ISchemaBuilder
 {
+    public async Task<int> GetAccountKeyVersion(long accountId, StorageKey key)
+    {
+        using var cmd = sqlite.CreateCommand();
+        cmd.CommandText = @"
+SELECT [Version]
+FROM [KeyValue]
+WHERE [AccountId] = @accountId
+AND [Key] = @key
+AND [IsDeleted] = 0
+";
+        cmd.Parameters.AddWithValue("@accountId", accountId);
+        cmd.Parameters.AddWithValue("@key", key.ToString());
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync())
+        {
+            return default;
+        }
+
+        return (reader.GetInt32(0));
+    }
+
     public async Task<(string? Value, int Version)> GetAccountValue(long accountId, StorageKey key)
     {
         using var cmd = sqlite.CreateCommand();

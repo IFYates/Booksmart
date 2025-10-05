@@ -29,7 +29,7 @@ builder.AddRateLimiter();
 // Build app
 var app = builder.Build();
 app.UseRateLimiter();
-app.UseRouteValueSlashDecoder);
+app.UseRouteValueSlashDecoder();
 app.UsePlainTextBodyParser();
 app.UseAccountResolver();
 

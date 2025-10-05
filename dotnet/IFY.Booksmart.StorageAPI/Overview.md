@@ -25,6 +25,11 @@ sequenceDiagram
     D-->>S: Success
     S->>-C: 200 OK (value set)
 
+    C->>+S: HEAD /{key} <br> Authorization: SHA3 {ts} {salted account key} {password*}
+    S->>D: Verify authorisation <br> Get value
+    D-->>S: Success
+    S->>-C: 200 OK <br> X-Version: {version}
+
     C->>+S: GET /{key} <br> Authorization: SHA3 {ts} {salted account key} {password*}
     S->>D: Verify authorisation <br> Get value
     D-->>S: Success
@@ -50,6 +55,7 @@ All bodies sent as `text/plain`.
 | Confirm account | `GET` | `/register/{account key}/{registration token}?requestUrl={url}` | No | None | `200 OK` Account confirmed and active (omitted `returnUrl`) <br> `300 Redirect` to `returnUrl`, if specified | `400 Bad Request` Missing token <br> `403 Forbidden` Token invalid or expired
 | Change password | `POST` | `/password` | Yes | `{new password}` | `200 OK` Password changed | `400 Bad Request` Missing body <br> `403 Forbidden` Authorisation failed
 | Set value | `PUT` | `/{key}/{version}` | Yes | `{value}` | `200 OK` Value set | `400 Bad Request` Incorrect version <br> `404 Not Found` Unknown key <br> `403 Forbidden` Authorisation failed
+| Get value version | `HEAD` | `/{key}` | Yes | None | `200 OK` Value retrieved. Header `X-Version: {version}` contains the version, required for updating. | `403 Forbidden` Authorisation failed <br> `404 Not Found` Unknown key
 | Get value | `GET` | `/{key}` | Yes | None | `200 OK` Value retrieved. Body contains the value. Header `X-Version: {version}` contains the version, required for updating. | `403 Forbidden` Authorisation failed <br> `404 Not Found` Unknown key
 
 # Authentication

@@ -17,6 +17,9 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
         app.MapPost("/register", CreateAccount);
         app.MapGet("/register/{account}/{token}", ConfirmAccount);
         app.MapPost("/password", SetPassword);
+
+        // TODO: Future app.MapDelete
+        app.MapMethods("/{key}", ["HEAD"], GetKeyVersion);
         app.MapGet("/{key}", GetKeyValue);
         app.MapPut("/{key}", SetKeyValue);
         app.MapPut("/{key}/{version}", SetKeyValue);
@@ -92,6 +95,28 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
 
         // Update password in storage
         await accStore.SetAccountPassword(account.AccountId, password);
+        return Results.Ok();
+    }
+
+    // NotFound = Invalid storage key
+    // Forbidden = Not authenticated
+    internal async Task<IResult> GetKeyVersion(string key, HttpContext context)
+    {
+        // key must be valid enum value
+        if (!Enum.TryParse<StorageKey>(key, ignoreCase: true, out var skey))
+        {
+            return Results.NotFound();
+        }
+
+        // Find active account
+        if (!isAuthenticated(context, out var account))
+        {
+            return Results.StatusCode(403);
+        }
+
+        // Get value
+        var version = await kvStore.GetAccountKeyVersion(account.AccountId, skey);
+        context.Response.Headers.Append("X-Version", version.ToString());
         return Results.Ok();
     }
 
