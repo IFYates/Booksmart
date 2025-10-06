@@ -200,6 +200,7 @@ The associated account will be deleted in 7 days, if not confirmed.</p>"
         // Get value
         var version = await kvStore.GetAccountKeyVersion(account.AccountId, skey);
         context.Response.Headers.Append("X-Version", version.ToString());
+        context.Response.Headers.Append("Access-Control-Expose-Headers", "X-Version");
         return Results.Ok();
     }
 
@@ -222,6 +223,7 @@ The associated account will be deleted in 7 days, if not confirmed.</p>"
         // Get value
         var (value, version) = await kvStore.GetAccountValue(account.AccountId, skey);
         context.Response.Headers.Append("X-Version", version.ToString());
+        context.Response.Headers.Append("Access-Control-Expose-Headers", "X-Version");
         return Results.Text(value ?? string.Empty);
     }
 

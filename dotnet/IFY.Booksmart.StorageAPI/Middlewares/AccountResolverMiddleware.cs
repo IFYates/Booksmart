@@ -63,16 +63,16 @@ public static class AccountResolverMiddleware
         // Validate salt is a recent UNIX timestamp
         var salt = parts[0];
 #if !DEBUG
-            if (!long.TryParse(salt, out var ts))
-            {
-                return default;
-            }
-            var time = DateTimeOffset.FromUnixTimeSeconds(0).DateTime;
-            var diff = Math.Abs((DateTime.UtcNow - time).TotalMinutes);
-            if (diff > 2.5)
-            {
-                return default;
-            }
+        if (!long.TryParse(salt, out var ts))
+        {
+            return default;
+        }
+    var time = DateTimeOffset.FromUnixTimeSeconds(ts).DateTime;
+        var diff = Math.Abs((DateTime.UtcNow - time).TotalMinutes);
+        if (diff > 2.5)
+        {
+            return default;
+        }
 #endif
 
         // Lookup account by salted hash
