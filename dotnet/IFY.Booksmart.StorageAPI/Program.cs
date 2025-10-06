@@ -14,6 +14,7 @@ builder.Services.Configure<SqliteOptions>(cfg =>
         ?? throw new OptionsValidationException("ConnectionString", typeof(SqliteOptions), ["ConnectionStrings:Sqlite cannot be null or empty"]);
     cfg.ConnectionString = val;
 });
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 
 // Register services
 builder.Services.AddTransient<ISqliteConnection, SqliteConnection>();

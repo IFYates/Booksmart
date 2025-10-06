@@ -7,3 +7,4 @@
 /dotnet/**/obj
 /dotnet/**/TestResults
 /dotnet/**/*.user
+/dotnet/**/appsettings.Local.json

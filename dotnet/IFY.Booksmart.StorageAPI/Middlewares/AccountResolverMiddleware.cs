@@ -3,6 +3,15 @@ using System.Threading.RateLimiting;
 
 namespace IFY.Booksmart.StorageAPI.Middlewares;
 
+/// <summary>
+/// Resolves the account from the Authorization header, if present.
+/// </summary>
+/// <remarks>
+/// Authorisation header must be in format: SHA3 {salt} {hash} {password}
+///   where {salt} is a UNIX timestamp within 5 minutes of now
+///   and {hash} is SHA3_BASE64(salt, SHA3_BASE64(email_metric, LCASE(email)))
+///   and {password} is the plain-text password to verify - Has to be plain-text to allow hashing with the email hash (emails are not private)
+/// </remarks>
 public static class AccountResolverMiddleware
 {
     public static IApplicationBuilder UseAccountResolver(this IApplicationBuilder app)
@@ -18,7 +27,7 @@ public static class AccountResolverMiddleware
         else
         {
             // If present, must be valid
-            var (accountId, account) = await resolveAccount();
+            var (accountId, account) = await resolveAccount(context, authHeader);
             if (account == null)
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
@@ -37,25 +46,22 @@ public static class AccountResolverMiddleware
             var limiter = context.RequestServices.GetRequiredService<PartitionedRateLimiter<HttpContext>>();
             limiter.AttemptAcquire(context, 10);
         }
+    }
 
-        // Authorisation header must be in format: SHA3 {salt} {hash} {password}
-        //   where {salt} is a UNIX timestamp within 5 minutes of now
-        //   and {hash} is SHA3_BASE64(salt, SHA3_BASE64(email_metric, LCASE(email)))
-        //   and {password} is the plain-text password to verify - Has to be plain-text to allow hashing with the email hash (emails are not private)
-        async Task<(long AccountId, string? Account)> resolveAccount()
+    private static async Task<(long AccountId, string? Account)> resolveAccount(HttpContext context, string authHeader)
+    {
+        if (!authHeader.StartsWith("SHA3 "))
         {
-            if (!authHeader.StartsWith("SHA3 "))
-            {
-                return default;
-            }
-            var parts = authHeader[5..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length != 3)
-            {
-                return default;
-            }
+            return default;
+        }
+        var parts = authHeader[5..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 3)
+        {
+            return default;
+        }
 
-            // Validate salt is a recent UNIX timestamp
-            var salt = parts[0];
+        // Validate salt is a recent UNIX timestamp
+        var salt = parts[0];
 #if !DEBUG
             if (!long.TryParse(salt, out var ts))
             {
@@ -69,17 +75,16 @@ public static class AccountResolverMiddleware
             }
 #endif
 
-            // Lookup account by salted hash
-            var storage = context.RequestServices.GetRequiredService<AccountStore>();
-            var (accountId, account, tier) = await storage.FindAccountByHash(salt, parts[1]);
-            if (account == null || tier == AccountTier.None)
-            {
-                return default;
-            }
-
-            return await storage.TestAccountPassword(account, parts[2])
-                ? (accountId, account)
-                : default;
+        // Lookup account by salted hash
+        var storage = context.RequestServices.GetRequiredService<AccountStore>();
+        var (accountId, account, tier) = await storage.FindAccountByHash(salt, parts[1]);
+        if (account == null || tier == AccountTier.None)
+        {
+            return default;
         }
+
+        return await storage.TestAccountPassword(account, parts[2])
+            ? (accountId, account)
+            : default;
     }
 }

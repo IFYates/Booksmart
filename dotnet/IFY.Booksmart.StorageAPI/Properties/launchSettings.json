@@ -16,7 +16,7 @@
       "commandName": "Project",
       "workingDirectory": "bin\\Debug\\net10.0",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Local"
       }
     },
     "Container (.NET SDK)": {

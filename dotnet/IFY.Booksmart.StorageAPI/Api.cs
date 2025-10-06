@@ -1,14 +1,16 @@
 ﻿using IFY.Booksmart.StorageAPI.Data;
 using Microsoft.AspNetCore.Mvc;
-using System.Data;
-using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Options;
 using System.Net.Mime;
+using System.Text.Encodings.Web;
 using System.Text.RegularExpressions;
 
 namespace IFY.Booksmart.StorageAPI;
 
-public partial class Api(AccountStore accStore, KeyValueStore kvStore)
+public partial class Api(AccountStore accStore, KeyValueStore kvStore, IOptions<SmtpOptions> smtp)
 {
+    private readonly SmtpOptions _smtp = smtp.Value;
+
     public void RegisterRoutes(WebApplication app)
     {
         var dt = DateTime.UtcNow;
@@ -27,7 +29,7 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
 
     // BadRequest = Invalid email address
     [Consumes(MediaTypeNames.Text.Plain)]
-    internal async Task<IResult> CreateAccount([FromBody] string emailAddressAndPassword)
+    internal async Task<IResult> CreateAccount([FromBody] string emailAddressAndPassword, CancellationToken cancellationToken)
     {
         var parts = emailAddressAndPassword.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 2)
@@ -50,9 +52,47 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
         }
 
         // Create account in storage
-        var token = await accStore.CreateAccount(emailAddress, password);
-        // TODO: need welcome email to confirm?
-        return Results.Text(token); // Returns OK even if nothing done
+        var (emailHash, token) = await accStore.CreateAccount(emailAddress, password); // TODO: in transaction
+
+        // Send welcome email, if account created
+        if (emailHash != null && token != null)
+        {
+            using var smtp = new MailKit.Net.Smtp.SmtpClient();
+            await smtp.ConnectAsync(_smtp.Host, (int)_smtp.Port, MailKit.Security.SecureSocketOptions.StartTls, cancellationToken);
+            await smtp.AuthenticateAsync(_smtp.Username, _smtp.Password, cancellationToken);
+
+            var confirmUrl = $"{_smtp.BaseUri}/register/{Uri.EscapeDataString(emailHash)}/{Uri.EscapeDataString(token)}";
+            if (_smtp.ReturnUrl?.Length > 0)
+            {
+                confirmUrl += $"?returnUrl={UrlEncoder.Default.Encode(_smtp.ReturnUrl)}";
+            }
+            var body = new MimeKit.BodyBuilder
+            {
+                TextBody = @$"Thank you for registering with Booksmart.
+
+Please confirm your account by clicking the link below:
+    {confirmUrl}
+
+If you did not register for Booksmart, please ignore this email.
+The associated account will be deleted in 7 days, if not confirmed.",
+                HtmlBody = @$"<p>Thank you for registering with Booksmart.</p>
+<p>Please confirm your account by clicking the link below:<br/>
+<a href=""{confirmUrl}"">Confirm Account</a></p>
+<p>If you did not register for Booksmart, please ignore this email.<br/>
+The associated account will be deleted in 7 days, if not confirmed.</p>"
+            };
+
+            var msg = new MimeKit.MimeMessage()
+            {
+                Subject = "Welcome to Booksmart",
+                Body = body.ToMessageBody()
+            };
+            msg.From.Add(new MimeKit.MailboxAddress(null, "booksmart@iyates.co.uk"));
+            msg.To.Add(new MimeKit.MailboxAddress(null, emailAddress));
+            var r = await smtp.SendAsync(msg, cancellationToken);
+        }
+
+        return Results.Ok(); // Returns OK even if nothing done
     }
 
     // BadRequest = Invalid or missing token
@@ -71,9 +111,34 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore)
             return Results.StatusCode(403);
         }
 
-        return returnUrl != null
-            ? Results.Redirect(returnUrl)
-            : Results.Ok();
+        // Redirect via HTML meta refresh
+        var html = (returnUrl is null) switch
+        {
+            true => $@"<!DOCTYPE html>
+<html>
+<head>
+    <title>Account Confirmed</title>
+</head>
+<body>
+    <p>Account confirmed.</p>
+    <p>You can close this page.</p>
+</body>
+</html>",
+            false => $@"<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""UTF-8"">
+    <title>Account Confirmed</title>
+    <meta http-equiv=""refresh"" content=""0; url={HtmlEncoder.Default.Encode(returnUrl)}"">
+</head>
+<body>
+    <p>Account confirmed. Redirecting...</p>
+    <p>If you are not redirected automatically, <a href=""{HtmlEncoder.Default.Encode(returnUrl)}"">click here</a>.</p>
+</body>
+</html>"
+        };
+
+        return Results.Text(html, MediaTypeNames.Text.Html);
     }
 
     // BadRequest = Invalid or missing passwordf

@@ -1,5 +1,4 @@
 ﻿using IFY.Booksmart.StorageAPI.Sqlite;
-using System.Diagnostics;
 
 namespace IFY.Booksmart.StorageAPI.Data;
 
@@ -35,7 +34,7 @@ AND [IsDeleted] = 0
         return [.. results];
     }
 
-    public async Task<string?> CreateAccount(string emailAddress, string password)
+    public async Task<(string? EmailHash, string? RegistrationToken)> CreateAccount(string emailAddress, string password)
     {
         emailAddress = emailAddress.ToLowerInvariant();
         var emailMetric = $"{emailAddress[0]}{emailAddress.Length}";
@@ -54,7 +53,7 @@ WHERE [EmailHash] = @emailHash
             var exists = await cmd.ExecuteScalarAsync();
             if (exists != null)
             {
-                return null;
+                return default;
             }
         }
 
@@ -72,19 +71,17 @@ SELECT last_insert_rowid();
             newAccountId = await cmd.ExecuteScalarAsync() as long?;
             if (!newAccountId.HasValue)
             {
-                return null;
+                return default;
             }
         }
 
-        var sw = Stopwatch.StartNew();
         await SetAccountPassword(newAccountId.Value, password);
-        sw.Stop();
 
         // Return registration token
-        return getRegistrationToken(newAccountId.Value, emailHash);
+        return (emailHash, getRegistrationToken(newAccountId.Value, emailHash));
     }
 
-    private string getRegistrationToken(long accountId, string emailHash)
+    private static string getRegistrationToken(long accountId, string emailHash)
     {
         return Utility.Sha3Base64(accountId.ToString(), emailHash)
             .Replace('+', '-')
