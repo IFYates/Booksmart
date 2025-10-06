@@ -27,5 +27,7 @@ RUN dotnet publish "./IFY.Booksmart.StorageAPI.csproj" -c $BUILD_CONFIGURATION -
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+USER root
 RUN apt-get update && apt-get install -y curl
+USER $APP_UID
 ENTRYPOINT ["dotnet", "IFY.Booksmart.StorageAPI.dll"]

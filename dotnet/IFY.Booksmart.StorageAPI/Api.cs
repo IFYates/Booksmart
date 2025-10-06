@@ -21,10 +21,22 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore, IOptions<
         app.MapPost("/password", SetPassword);
 
         // TODO: Future app.MapDelete
-        app.MapMethods("/{key}", ["HEAD"], GetKeyVersion);
-        app.MapGet("/{key}", GetKeyValue);
-        app.MapPut("/{key}", SetKeyValue);
-        app.MapPut("/{key}/{version}", SetKeyValue);
+        app.MapMethods("/key/{key}", ["HEAD"], GetKeyVersion);
+        app.MapGet("/key/{key}", GetKeyValue);
+        app.MapPut("/key/{key}", SetKeyValue);
+        app.MapPut("/key/{key}/{version}", SetKeyValue);
+
+        app.MapGet("{**path}", (HttpRequest req, HttpResponse resp) =>
+        {
+            // Output request info
+            resp.StatusCode = 404;
+            return Results.Text(@$"
+Method: {req.Method}
+Path: {req.Path}
+Host: {req.Host}
+Headers: {string.Join("\r\n", req.Headers.SelectMany(h => h.Value.Select(v => $"{h.Key}: {v}")))}
+");
+        });
     }
 
     // BadRequest = Invalid email address
