@@ -29,7 +29,13 @@ public sealed class SqliteConnection : ISqliteConnection
     public SqliteCommand CreateCommand()
     {
         _connection.Open();
-        return _connection.CreateCommand();
+        var command = _connection.CreateCommand();
+        command.Disposed += (sender, args) =>
+        {
+            // Close the connection when the command is disposed
+            _connection.Dispose();
+        };
+        return command;
     }
 
     public void ExecuteNonQuery(string sql)
