@@ -1,21 +1,43 @@
 1. Build the container with the following command:
     ```
-    docker build -t booksmart-api:latest .
+    docker build . -t booksmart-api:version
     ```
 
 1. Extract the container to a tar file:
     ```
-    docker save booksmart-api:latest -o booksmart-api.tar
+    docker save -o booksmart-api.tar booksmart-api:version
     ```
 
 1. Open 'Container Manager'
     1. Go to 'Image' tab
     1. Use 'Action' -> 'Import' to import the `booksmart-api.tar` file
+    1. Ensure the correct tag is displayed
 
-1. Run the image as a container
-    - Can set up port forwarding. e.g., `9080` -> `8080`
-    - Set the local storage volume. e.g., `/volume1/docker/booksmart:/storage:rw`
-    - Set the connection string as an environment variable. e.g., `CONNECTIONSTRING__SQLITE` = `Data Source=/storage/booksmart.db`
+1. Update the `docker-compose.yml` file to run the new container
     - The container details will show the IP address of the container
 
 The internal port can be accessed via `http://<Container_IP>:<port>` or `http://<Host_IP>:<forwarded_port>`.
+
+`docker-compose.yml`
+```
+version: '3.8'
+
+services:
+  api:
+    image: booksmart-api:version
+    user: "uuuu:gggg" # Permissioned user to access the volume
+    ports:
+      - "9080:8080" # Host port (9080) to container port mapping (8080)
+    environment:
+      BaseApiPath: "/booksmart"
+      EnableDebugEndpoints: false
+
+      # Database
+      CONNECTIONSTRINGS__SQLITE: "Data Source=/storage/data.db;Mode=ReadWriteCreate"
+
+      # SMTP configuration
+      SMTP__Username: "..."
+      SMTP__Password: "..."
+    volumes:
+      - /host_data_volume:/storage # Host path to the data volume
+```

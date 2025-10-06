@@ -7,36 +7,42 @@ using System.Text.RegularExpressions;
 
 namespace IFY.Booksmart.StorageAPI;
 
-public partial class Api(AccountStore accStore, KeyValueStore kvStore, IOptions<SmtpOptions> smtp)
+public partial class Api(AccountStore accStore, KeyValueStore kvStore, IOptions<AppOptions> config)
 {
-    private readonly SmtpOptions _smtp = smtp.Value;
+    private readonly AppOptions _config = config.Value;
+    private readonly SmtpOptions _smtp = config.Value.Smtp;
 
     public void RegisterRoutes(WebApplication app)
     {
-        var dt = DateTime.UtcNow;
-        app.MapGet("/debug", () => Results.Text($"Started: {dt}"));
+        var basePath = _config.BaseApiPath?.TrimEnd('/') ?? string.Empty;
 
-        app.MapPost("/register", CreateAccount);
-        app.MapGet("/register/{account}/{token}", ConfirmAccount);
-        app.MapPost("/password", SetPassword);
+        app.MapPost(basePath + "/register", CreateAccount);
+        app.MapGet(basePath + "/register/{account}/{token}", ConfirmAccount);
+        app.MapPost(basePath + "/password", SetPassword);
 
         // TODO: Future app.MapDelete
-        app.MapMethods("/key/{key}", ["HEAD"], GetKeyVersion);
-        app.MapGet("/key/{key}", GetKeyValue);
-        app.MapPut("/key/{key}", SetKeyValue);
-        app.MapPut("/key/{key}/{version}", SetKeyValue);
+        app.MapMethods(basePath + "/key/{key}", ["HEAD"], GetKeyVersion);
+        app.MapGet(basePath + "/key/{key}", GetKeyValue);
+        app.MapPut(basePath + "/key/{key}", SetKeyValue);
+        app.MapPut(basePath + "/key/{key}/{version}", SetKeyValue);
 
-        app.MapGet("{**path}", (HttpRequest req, HttpResponse resp) =>
+        if (_config.EnableDebugEndpoints)
         {
-            // Output request info
-            resp.StatusCode = 404;
-            return Results.Text(@$"
+            var dt = DateTime.UtcNow;
+            app.MapGet(basePath + "/debug", () => Results.Text($"Started: {dt}"));
+
+            app.MapGet("{**path}", (HttpRequest req, HttpResponse resp) =>
+            {
+                // Output request info
+                resp.StatusCode = 404;
+                return Results.Text(@$"
 Method: {req.Method}
 Path: {req.Path}
 Host: {req.Host}
 Headers: {string.Join("\r\n", req.Headers.SelectMany(h => h.Value.Select(v => $"{h.Key}: {v}")))}
 ");
-        });
+            });
+        }
     }
 
     // BadRequest = Invalid email address
@@ -73,7 +79,7 @@ Headers: {string.Join("\r\n", req.Headers.SelectMany(h => h.Value.Select(v => $"
             await smtp.ConnectAsync(_smtp.Host, (int)_smtp.Port, MailKit.Security.SecureSocketOptions.StartTls, cancellationToken);
             await smtp.AuthenticateAsync(_smtp.Username, _smtp.Password, cancellationToken);
 
-            var confirmUrl = $"{_smtp.BaseUri}/register/{Uri.EscapeDataString(emailHash)}/{Uri.EscapeDataString(token)}";
+            var confirmUrl = $"{_config.BaseUri}/register/{Uri.EscapeDataString(emailHash)}/{Uri.EscapeDataString(token)}";
             if (_smtp.ReturnUrl?.Length > 0)
             {
                 confirmUrl += $"?returnUrl={UrlEncoder.Default.Encode(_smtp.ReturnUrl)}";

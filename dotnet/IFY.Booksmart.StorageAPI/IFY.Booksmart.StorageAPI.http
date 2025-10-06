@@ -1,12 +1,12 @@
 @HOST = http://localhost:5000
-#@HOST = https://api.iyates.co.uk
+#@HOST = https://api.iyates.co.uk/booksmart
 
 # test@example.com hash: DJkchqZcmGSQkYJ7cdFnc6mayeKILjel71xWHJyX+eiXHuCH2CZXjpKRCw9zUPUczQkrCx4htcwrBZpqaaYbqw eaeQQX0An%2FxQ%2FjAg9fa2M0CpiGS6Z6FcuPXO9l%2BUQ7E%3D
 # Registration token 1: TYCN_N8MEYT886ZMPnPrGmcl1iVjxyS1exr_fANxwSaK8PQ4JacyzY9s1SdRN-XdS-7m3o8B9wW6P8XSpWNjJw
 # 'salt' email hash: SOmhjd4uG1jmh1ewfIq7CVSRpt3eIQd39Gw69uxKlIRdfXFdT68PDiWD+0+/HmRHnQW7ciDDjvaZ8jOunMr4wg
 
-### TETST
-GET {{HOST}}/x
+### TEST
+GET {{HOST}}/debug
 
 ### Register account
 POST {{HOST}}/register
