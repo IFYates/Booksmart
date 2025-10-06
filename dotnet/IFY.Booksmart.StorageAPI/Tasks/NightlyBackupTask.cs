@@ -1,14 +1,17 @@
-﻿using IFY.Booksmart.StorageAPI.Data;
+﻿using IFY.Booksmart.StorageAPI.Sqlite;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Options;
 
 namespace IFY.Booksmart.StorageAPI.Tasks;
 
-public class NightlyBackupTask(IConfiguration config) : BackgroundService
+public class NightlyBackupTask(IOptions<SqliteOptions> opts) : BackgroundService
 {
     private readonly TimeSpan _runTime = new(00, 01, 00); // 1AM
-    private int _executionCount;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var connStr = new SqliteConnectionStringBuilder(opts.Value.ConnectionString);
+
         while (!stoppingToken.IsCancellationRequested)
         {
             // Determine the time to wait until the next run time
@@ -18,12 +21,16 @@ public class NightlyBackupTask(IConfiguration config) : BackgroundService
             var sleepTime = nextRun - now;
             await Task.Delay(sleepTime, stoppingToken);
 
-            await doWork();
+            await doWork(connStr.DataSource);
         }
     }
 
-    private async Task doWork()
+    private static Task doWork(string dataSource)
     {
-        // TODO: Make named copy of SQLite db
+        // TODO: Tidy up old backups?
+
+        // Make named copy of SQLite db
+        File.Copy(dataSource, $"{dataSource}-{DateTime.Now:yyyy-MM-dd}.backup", true);
+        return Task.CompletedTask;
     }
 }
