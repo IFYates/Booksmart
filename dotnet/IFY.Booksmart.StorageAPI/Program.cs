@@ -28,8 +28,20 @@ builder.Services.AddHostedService<NightlyBackupTask>();
 
 builder.AddRateLimiter();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ChromeExtension", policy =>
+    {
+        policy.SetIsOriginAllowed(origin => origin.StartsWith("chrome-extension://", StringComparison.OrdinalIgnoreCase))
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // Build app
 var app = builder.Build();
+
+app.UseCors("ChromeExtension");
 app.UseRateLimiter();
 app.UseRouteValueSlashDecoder();
 app.UsePlainTextBodyParser();
