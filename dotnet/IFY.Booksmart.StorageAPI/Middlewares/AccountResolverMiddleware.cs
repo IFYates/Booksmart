@@ -1,4 +1,5 @@
 ﻿using IFY.Booksmart.StorageAPI.Data;
+using Microsoft.Extensions.Options;
 using System.Threading.RateLimiting;
 
 namespace IFY.Booksmart.StorageAPI.Middlewares;
@@ -12,11 +13,11 @@ namespace IFY.Booksmart.StorageAPI.Middlewares;
 ///   and {hash} is SHA3_BASE64(salt, SHA3_BASE64(email_metric, LCASE(email)))
 ///   and {password} is the plain-text password to verify - Has to be plain-text to allow hashing with the email hash (emails are not private)
 /// </remarks>
-public static class AccountResolverMiddleware
+public class AccountResolverMiddleware(IOptions<AppOptions> config)
 {
-    public static IApplicationBuilder UseAccountResolver(this IApplicationBuilder app)
-        => app.Use(logic);
-    private static async Task logic(HttpContext context, Func<Task> next)
+    private readonly double _allowedSaltDrift = config.Value.TimestampSaltRangeMins / 2;
+
+    public async Task Execute(HttpContext context, Func<Task> next)
     {
         // Ignore if no Authorization header
         var authHeader = context.Request.Headers.Authorization.ToString();
@@ -48,7 +49,7 @@ public static class AccountResolverMiddleware
         }
     }
 
-    private static async Task<(long AccountId, string? Account)> resolveAccount(HttpContext context, string authHeader)
+    private async Task<(long AccountId, string? Account)> resolveAccount(HttpContext context, string authHeader)
     {
         if (!authHeader.StartsWith("SHA3 "))
         {
@@ -62,14 +63,14 @@ public static class AccountResolverMiddleware
 
         // Validate salt is a recent UNIX timestamp
         var salt = parts[0];
-#if !DEBUG
+#if DEBUG
         if (!long.TryParse(salt, out var ts))
         {
             return default;
         }
-    var time = DateTimeOffset.FromUnixTimeSeconds(ts).DateTime;
+        var time = DateTimeOffset.FromUnixTimeSeconds(ts).DateTime;
         var diff = Math.Abs((DateTime.UtcNow - time).TotalMinutes);
-        if (diff > 2.5)
+        if (diff > _allowedSaltDrift)
         {
             return default;
         }
@@ -86,5 +87,14 @@ public static class AccountResolverMiddleware
         return await storage.TestAccountPassword(account, parts[2])
             ? (accountId, account)
             : default;
+    }
+}
+
+public static class AccountResolverMiddlewareExtensions
+{
+    public static IApplicationBuilder UseAccountResolver(this IApplicationBuilder app)
+    {
+        var middleware = ActivatorUtilities.CreateInstance<AccountResolverMiddleware>(app.ApplicationServices);
+        return app.Use(middleware.Execute);
     }
 }
