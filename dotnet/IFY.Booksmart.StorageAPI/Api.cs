@@ -31,15 +31,12 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore, IOptions<
             var dt = DateTime.UtcNow;
             app.MapGet(basePath + "/debug", () => Results.Text($"Started: {dt}"));
 
-            app.MapGet("{**path}", (HttpRequest req, HttpResponse resp) =>
+            app.MapGet("{**path}", (HttpRequest req, HttpResponse resp, string path) =>
             {
                 // Output request info
                 resp.StatusCode = 404;
-                return Results.Text(@$"
-Method: {req.Method}
-Path: {req.Path}
-Host: {req.Host}
-Headers: {string.Join("\r\n", req.Headers.SelectMany(h => h.Value.Select(v => $"{h.Key}: {v}")))}
+                return Results.Text(@$"{req.Method} {path}
+{string.Join("\r\n", req.Headers.SelectMany(h => h.Value.Select(v => $"{h.Key}: {v}")))}
 ");
             });
         }
@@ -181,6 +178,14 @@ The associated account will be deleted in 7 days, if not confirmed.</p>"
         return Results.Ok();
     }
 
+    private static void setKeyHeaders(HttpResponse response, int version, DateTime lastModified)
+    {
+        response.Headers.Append(KEY_META_HEADERS[0], version.ToString());
+        response.Headers.Append(KEY_META_HEADERS[1], lastModified.ToString("o"));
+        response.Headers.Append("Access-Control-Expose-Headers", KEY_META_HEADERS);
+    }
+    private static readonly string[] KEY_META_HEADERS = ["X-Version", "X-LastModified"];
+
     // NotFound = Invalid storage key
     // Forbidden = Not authenticated
     internal async Task<IResult> GetKeyVersion(string key, HttpContext context)
@@ -198,9 +203,8 @@ The associated account will be deleted in 7 days, if not confirmed.</p>"
         }
 
         // Get value
-        var version = await kvStore.GetAccountKeyVersion(account.AccountId, skey);
-        context.Response.Headers.Append("X-Version", version.ToString());
-        context.Response.Headers.Append("Access-Control-Expose-Headers", "X-Version");
+        var (version, lastModified) = await kvStore.GetAccountKeyVersion(account.AccountId, skey);
+        setKeyHeaders(context.Response, version, lastModified);
         return Results.Ok();
     }
 
@@ -221,9 +225,8 @@ The associated account will be deleted in 7 days, if not confirmed.</p>"
         }
 
         // Get value
-        var (value, version) = await kvStore.GetAccountValue(account.AccountId, skey);
-        context.Response.Headers.Append("X-Version", version.ToString());
-        context.Response.Headers.Append("Access-Control-Expose-Headers", "X-Version");
+        var (value, version, lastModified) = await kvStore.GetAccountValue(account.AccountId, skey);
+        setKeyHeaders(context.Response, version, lastModified);
         return Results.Text(value ?? string.Empty);
     }
 
