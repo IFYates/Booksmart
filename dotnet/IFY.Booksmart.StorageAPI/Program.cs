@@ -4,6 +4,7 @@ using IFY.Booksmart.StorageAPI.Middlewares;
 using IFY.Booksmart.StorageAPI.Sqlite;
 using IFY.Booksmart.StorageAPI.Tasks;
 using Microsoft.Extensions.Options;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,16 @@ builder.Services.Configure<SqliteOptions>(cfg =>
 });
 builder.Services.Configure<AppOptions>(builder.Configuration);
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+
+// Logging
+builder.Services.AddLogging(b =>
+{
+    var logger = new LoggerConfiguration()
+        //.ReadFrom.Configuration(builder.Configuration)
+        .WriteTo.Console()
+        .CreateLogger();
+    b.AddSerilog(logger, true);
+});
 
 // Register services
 builder.Services.AddTransient<ISqliteConnection, SqliteConnection>();

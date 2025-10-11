@@ -2,32 +2,17 @@
 
 namespace IFY.Booksmart.StorageAPI.Tasks;
 
-public class DisableInactiveAccountsTask(AccountStore store, IConfiguration config) : BackgroundService
+public class DisableInactiveAccountsTask(AccountStore store, IConfiguration config, ILogger<DisableInactiveAccountsTask> log)
+    : BaseScheduledTask(log)
 {
-    private readonly TimeSpan _runTime = new(00, 00, 05); // 5 seconds after midnight
     private readonly int _idleDaysRemovalNone = config.GetValue<int?>("IdleDaysRemoval_None") ?? 7;
-    private readonly int _idleDaysRemovalFree = config.GetValue<int?>("IdleDaysRemoval_Free") ?? 7;
-    private int _executionCount;
+    private readonly int _idleDaysRemovalFree = config.GetValue<int?>("IdleDaysRemoval_Free") ?? 30;
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    private readonly TimeSpan _runTime = new(00, 00, 05); // 5 seconds after midnight
+    protected override TimeSpan GetNextWakeTime() => _runTime;
+
+    protected override async Task doWork()
     {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            // Determine the time to wait until the next run time
-            var now = DateTime.Now;
-            var nextRun = now.Date.Add(_runTime);
-            nextRun = now < nextRun ? nextRun : nextRun.AddDays(1);
-            var sleepTime = nextRun - now;
-            await Task.Delay(sleepTime, stoppingToken);
-
-            await doWork();
-        }
-    }
-
-    private async Task doWork()
-    {
-        Interlocked.Increment(ref _executionCount);
-
         var accountsInfo = await store.GetAllAccountsInfo();
 
         // Find accounts inactive since cutoff

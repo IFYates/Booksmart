@@ -4,33 +4,22 @@ using Microsoft.Extensions.Options;
 
 namespace IFY.Booksmart.StorageAPI.Tasks;
 
-public class NightlyBackupTask(IOptions<SqliteOptions> opts) : BackgroundService
+public class NightlyBackupTask(IOptions<SqliteOptions> opts, ILogger<NightlyBackupTask> log)
+    : BaseScheduledTask(log)
 {
     private readonly TimeSpan _runTime = new(00, 01, 00); // 1AM
+    private readonly string _dataSource = new SqliteConnectionStringBuilder(opts.Value.ConnectionString).DataSource;
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        var connStr = new SqliteConnectionStringBuilder(opts.Value.ConnectionString);
+    protected override TimeSpan GetNextWakeTime() => _runTime;
 
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            // Determine the time to wait until the next run time
-            var now = DateTime.Now;
-            var nextRun = now.Date.Add(_runTime);
-            nextRun = now < nextRun ? nextRun : nextRun.AddDays(1);
-            var sleepTime = nextRun - now;
-            await Task.Delay(sleepTime, stoppingToken);
-
-            await doWork(connStr.DataSource);
-        }
-    }
-
-    private static Task doWork(string dataSource)
+    protected override Task doWork()
     {
         // TODO: Tidy up old backups?
 
         // Make named copy of SQLite db
-        File.Copy(dataSource, $"{dataSource}-{DateTime.Now:yyyy-MM-dd}.backup", true);
+        var filename = $"{_dataSource}-{DateTime.Now:yyyy-MM-dd}.backup";
+        log.LogInformation("Backing up database to {file}", filename);
+        File.Copy(_dataSource, filename, true);
         return Task.CompletedTask;
     }
 }
