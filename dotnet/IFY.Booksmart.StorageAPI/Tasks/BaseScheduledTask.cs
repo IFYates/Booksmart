@@ -10,7 +10,7 @@ public abstract class BaseScheduledTask(ILogger log) : BackgroundService
         {
             // Determine the time to wait until the next run time
             var nextWakeTime = GetNextWakeTime();
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
             var nextRun = now.Date.Add(nextWakeTime);
             nextRun = now < nextRun ? nextRun : nextRun.AddDays(1);
             var sleepTime = nextRun - now;
@@ -19,8 +19,15 @@ public abstract class BaseScheduledTask(ILogger log) : BackgroundService
             await Task.Delay(sleepTime, stoppingToken);
 
             log.LogInformation("Performing work");
-            await doWork();
-            log.LogInformation("Work complete");
+            try
+            {
+                await doWork();
+                log.LogInformation("Work complete");
+            }
+            catch (Exception ex)
+            {
+                log.LogError(ex, "Failed to complete: {message}", ex.Message);
+            }
         }
     }
 

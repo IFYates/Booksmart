@@ -23,7 +23,7 @@ builder.Services.AddLogging(b =>
 {
     var logger = new LoggerConfiguration()
         //.ReadFrom.Configuration(builder.Configuration)
-        .WriteTo.Console()
+        .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] ({SourceContext}) {Message:lj}{NewLine}{Exception}")
         .CreateLogger();
     b.AddSerilog(logger, true);
 });
