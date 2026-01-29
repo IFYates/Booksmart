@@ -16,6 +16,8 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore, IOptions<
     {
         var basePath = _config.BaseApiPath?.TrimEnd('/') ?? string.Empty;
 
+        app.MapGet(basePath + "/remote-image", GetRemoteImage);
+
         app.MapPost(basePath + "/register", CreateAccount);
         app.MapGet(basePath + "/register/{account}/{token}", ConfirmAccount);
         app.MapPost(basePath + "/password", SetPassword);
@@ -39,6 +41,33 @@ public partial class Api(AccountStore accStore, KeyValueStore kvStore, IOptions<
 {string.Join("\r\n", req.Headers.SelectMany(h => h.Value.Select(v => $"{h.Key}: {v}")))}
 ");
             });
+        }
+    }
+
+    // Download an image from a remote URL without enforcing CORS
+    internal async Task<IResult> GetRemoteImage(string url)
+    {
+        using var httpClient = new HttpClient();
+        try
+        {
+            var response = await httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                return Results.StatusCode((int)response.StatusCode);
+            }
+
+            var contentType = response.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Octet;
+            if (!contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.StatusCode(415); // Unsupported Media Type
+            }
+
+            var contentStream = await response.Content.ReadAsStreamAsync();
+            return Results.File(contentStream, contentType);
+        }
+        catch (HttpRequestException)
+        {
+            return Results.StatusCode(502); // Bad Gateway
         }
     }
 

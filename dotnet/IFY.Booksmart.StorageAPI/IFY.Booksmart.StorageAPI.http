@@ -8,6 +8,9 @@
 ### TEST
 GET {{HOST}}/debug
 
+### Remote Image
+GET {{HOST}}/remote-image/?url=https%3A%2F%2Fwww.bing.com%2Fth%3Fid%3DOHR.MilwaukeeHall_EN-GB2048442838_UHD.jpg
+
 ### Register account
 POST {{HOST}}/register
 Content-Type: text/plain
