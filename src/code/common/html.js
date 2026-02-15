@@ -84,7 +84,7 @@ HTMLElement.prototype.extend(
     }
 )
 
-const CORS_PROXY = 'https://corsproxy.io/?url='
+const CORS_PROXY = 'https://api.iyates.co.uk/booksmart/remote-image/?url='
 HTMLImageElement.prototype.extend(
     function showImageAsDataUrl(url) {
         const img = this
@@ -98,7 +98,7 @@ HTMLImageElement.prototype.extend(
             // Check it isn't a disguised 404
             if (isURL(url)) {
                 var failure = null
-                await fetch('https://corsproxy.io/?url=' + encodeURIComponent(url))
+                await fetch(CORS_PROXY + encodeURIComponent(url))
                     .then(data => failure = !data.ok ? data : null)
                     .catch(e => failure = e)
                 if (failure) {
